@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
   "description": "Personal finance tracker with wallets, categories, and trend analysis.",
-  "author": "PennyWallet",
-  "authorUrl": "",
+  "author": "twrusstw",
+  "authorUrl": "https://github.com/twrusstw/penny-wallet",
   "isDesktopOnly": false
 }
