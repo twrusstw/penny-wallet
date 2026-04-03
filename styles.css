@@ -754,20 +754,91 @@
 .pw-stat-expense .pw-stat-value { color: #EF9F27; }
 
 /* ── Settings ── */
-.pw-add-wallet-form .setting-item {
-  border-top: none;
-  padding: 4px 0;
+.pw-add-wallet-card {
+  margin-left: 0;
+  padding: 0.875rem 1rem 1rem 0.875rem;
+}
+
+.pw-add-wallet-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.pw-add-wallet-field {
+  min-width: 0;
+}
+
+.pw-add-wallet-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.pw-add-wallet-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+select.pw-add-wallet-input {
+  appearance: auto;
+  padding-right: 28px;
+}
+
+.pw-add-wallet-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 1px var(--interactive-accent-hover);
 }
 
 .pw-balance-hint {
   font-size: 12px;
   color: var(--text-muted);
-  margin: 2px 0 10px 0;
-  padding-left: 2px;
+  margin: 10px 0 0;
+}
+
+.pw-wallet-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pw-wallet-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pw-wallet-edit-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pw-wallet-edit-form .pw-field-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.pw-wallet-edit-hint {
+  margin-top: -2px;
 }
 
 .pw-add-wallet-submit {
-  padding: 8px 0 4px 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 0 0;
 }
 
 .pw-category-tags {
@@ -825,6 +896,14 @@
 
 /* ── Mobile responsiveness ── */
 @media (max-width: 480px) {
+  .pw-add-wallet-submit {
+    justify-content: stretch;
+  }
+
+  .pw-add-wallet-submit button {
+    width: 100%;
+  }
+
   .pw-tx-date {
     font-size: 11px;
   }
