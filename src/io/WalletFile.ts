@@ -543,9 +543,9 @@ export class WalletFile {
   private getLocaleCashName(): string {
     try {
       const lang = (window as any).moment?.locale?.() ?? ''
-      if (lang.startsWith('zh')) return '現金'
+      if (lang.startsWith('zh')) return '預設錢包'
     } catch { /* ignore */ }
-    return 'Cash'
+    return 'Default Wallet'
   }
 
 }

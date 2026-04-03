@@ -5,7 +5,7 @@ import { t } from '../i18n'
 export const TREND_VIEW_TYPE = 'penny-wallet-trend'
 
 const C_INCOME  = '#1D9E75'
-const C_EXPENSE = '#85B7EB'
+const C_EXPENSE = '#D85A30'
 const C_NET     = '#7F77DD'
 
 interface MonthData {
@@ -68,6 +68,8 @@ export class TrendView extends ItemView {
       net: netTimeline.get(ym) ?? null,
     }))
 
+    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
+
     // ── Income / Expense bar chart ───────────────────────────────────────────
     const incExpCard = contentEl.createDiv('pw-card')
     incExpCard.createEl('div', { text: t('trend.monthlyIncomeExpense'), cls: 'pw-card-title' })
@@ -76,7 +78,7 @@ export class TrendView extends ItemView {
     addRectLegend(legRow1, C_EXPENSE, t('dash.expense'))
     const chartWrap1 = incExpCard.createDiv('pw-chart-wrap')
     const tooltip1 = chartWrap1.createDiv('pw-tooltip')
-    requestAnimationFrame(() => drawIncExpChart(chartWrap1, tooltip1, data))
+    requestAnimationFrame(() => drawIncExpChart(chartWrap1, tooltip1, data, dp))
 
     // ── Net asset line chart ─────────────────────────────────────────────────
     const netCard = contentEl.createDiv('pw-card')
@@ -85,7 +87,7 @@ export class TrendView extends ItemView {
     addDotLegend(legRow2, C_NET, t('dash.netAsset'))
     const chartWrap2 = netCard.createDiv('pw-chart-wrap')
     const tooltip2 = chartWrap2.createDiv('pw-tooltip')
-    requestAnimationFrame(() => drawNetChart(chartWrap2, tooltip2, data))
+    requestAnimationFrame(() => drawNetChart(chartWrap2, tooltip2, data, dp))
 
     // ── Summary metrics ──────────────────────────────────────────────────────
     const activeData = data.filter(d => d.income > 0 || d.expense > 0)
@@ -95,21 +97,21 @@ export class TrendView extends ItemView {
     const netChange  = netValues.length >= 2 ? netValues[netValues.length - 1] - netValues[0] : 0
 
     const metricsEl = contentEl.createDiv('pw-metrics')
-    createMetric(metricsEl, t('trend.avgIncome'),     avgIncome,  'income')
-    createMetric(metricsEl, t('trend.avgExpense'),    avgExpense, 'expense')
-    createMetric(metricsEl, t('trend.netAssetChange'), netChange, netChange >= 0 ? 'positive' : 'negative')
+    createMetric(metricsEl, t('trend.avgIncome'),     avgIncome,  'income',   2)
+    createMetric(metricsEl, t('trend.avgExpense'),    avgExpense, 'expense',  2)
+    createMetric(metricsEl, t('trend.netAssetChange'), netChange, netChange >= 0 ? 'positive' : 'negative', 2)
   }
 }
 
 // ─── Income / Expense bar chart ───────────────────────────────────────────────
 
-function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[]) {
+function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[], dp: 0 | 2 = 0) {
   const canvas = container.createEl('canvas')
   canvas.style.display = 'block'
 
   const width   = container.clientWidth || 480
   const count   = data.length
-  const incH    = 130, expH = 95, padTop = 18, padBot = 18
+  const incH    = 130, expH = 95, padTop = 18, padBot = 28
   const totalH  = incH + expH + padTop + padBot
   const dpr     = window.devicePixelRatio || 1
 
@@ -155,22 +157,27 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
   ctx.stroke()
 
   // Grid lines + Y-axis labels — income side
-  const incUsable = incH - 28
-  const expBase   = baselineY + padBot / 2
+  const incUsable = baselineY - padTop
+  const expBase   = baselineY
   const expUsable = expH - 20
+
+  // Zero label at baseline
+  ctx.fillStyle = colorMuted; ctx.font = '9px sans-serif'; ctx.textAlign = 'right'
+  ctx.fillText('0', leftPad - 4, baselineY + 3)
+
   for (const frac of [0.5, 1]) {
-    const y = incH - incUsable * frac
+    const y = baselineY - incUsable * frac
     ctx.beginPath(); ctx.strokeStyle = colorGrid; ctx.lineWidth = 0.5
     ctx.moveTo(leftPad, y); ctx.lineTo(width - rightPad, y); ctx.stroke()
     ctx.fillStyle = colorMuted; ctx.font = '9px sans-serif'; ctx.textAlign = 'right'
-    ctx.fillText(formatK(Math.round(maxInc * frac)), leftPad - 4, y + 3)
+    ctx.fillText(formatK(Math.round(maxInc * frac), dp), leftPad - 4, y + 3)
   }
   for (const frac of [0.5, 1]) {
     const y = expBase + expUsable * frac
     ctx.beginPath(); ctx.strokeStyle = colorGrid; ctx.lineWidth = 0.5
     ctx.moveTo(leftPad, y); ctx.lineTo(width - rightPad, y); ctx.stroke()
     ctx.fillStyle = colorMuted; ctx.font = '9px sans-serif'; ctx.textAlign = 'right'
-    ctx.fillText(formatK(Math.round(maxExp * frac)), leftPad - 4, y + 3)
+    ctx.fillText(formatK(Math.round(maxExp * frac), dp), leftPad - 4, y + 3)
   }
 
   // Bars + value labels
@@ -181,12 +188,12 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
 
     // Income bar (upward from baseline)
     const incBarH = d.income / maxInc * incUsable
-    const incTop  = incH - incBarH
+    const incTop  = baselineY - incBarH
     ctx.fillStyle = C_INCOME
     ctx.fillRect(bx, incTop, barW, incBarH)
     if (d.income > 0) {
       ctx.fillStyle = colorLabel; ctx.font = `${labelSize}px sans-serif`; ctx.textAlign = 'center'
-      ctx.fillText(formatK(d.income), cx, incTop - 4)
+      ctx.fillText(formatK(d.income, dp), cx, incTop - 4)
     }
 
     // Expense bar (downward from baseline)
@@ -195,12 +202,12 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
     ctx.fillRect(bx, expBase, barW, expBarH)
     if (d.expense > 0) {
       ctx.fillStyle = colorLabel; ctx.font = `${labelSize}px sans-serif`; ctx.textAlign = 'center'
-      ctx.fillText(formatK(d.expense), cx, expBase + expBarH + 11)
+      ctx.fillText(formatK(d.expense, dp), cx, expBase + expBarH + 11)
     }
 
-    // Month label
+    // Month label (X-axis at bottom)
     ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
-    ctx.fillText(d.month, cx, baselineY + 4)
+    ctx.fillText(d.month, cx, totalH - 8)
 
     hitAreas.push({ cx, d })
   })
@@ -214,8 +221,8 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
       const { cx, d } = hitAreas[col]
       tooltip.innerHTML = `
         <div class="pw-tt-month">${d.month}</div>
-        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_INCOME}"></div>${t('dash.income')}: ${d.income.toLocaleString()}</div>
-        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_EXPENSE}"></div>${t('dash.expense')}: ${d.expense.toLocaleString()}</div>`
+        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_INCOME}"></div>${t('dash.income')}: ${d.income.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>
+        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_EXPENSE}"></div>${t('dash.expense')}: ${d.expense.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
       tooltip.style.display = 'block'
       tooltip.style.left = Math.min(cx + 8, width - 140) + 'px'
       tooltip.style.top  = '8px'
@@ -228,7 +235,7 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
 
 // ─── Net asset line chart ─────────────────────────────────────────────────────
 
-function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[]) {
+function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[], dp: 0 | 2 = 0) {
   const canvas = container.createEl('canvas')
   canvas.style.display = 'block'
 
@@ -272,7 +279,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
     ctx.moveTo(pad.l, y); ctx.lineTo(width - pad.r, y); ctx.stroke()
     const val = Math.round(maxVal - (maxVal - minVal) / 3 * row)
     ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'
-    ctx.fillText(formatK(val), pad.l - 5, y + 3)
+    ctx.fillText(formatK(val, dp), pad.l - 5, y + 3)
   }
 
   // Line
@@ -308,7 +315,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
     if (minDist < 28 && data[closest].net !== null) {
       tooltip.innerHTML = `
         <div class="pw-tt-month">${data[closest].month}</div>
-        <div class="pw-tt-row"><div style="width:7px;height:7px;border-radius:50%;background:${C_NET}"></div>${t('dash.netAsset')}: ${data[closest].net!.toLocaleString()}</div>`
+        <div class="pw-tt-row"><div style="width:7px;height:7px;border-radius:50%;background:${C_NET}"></div>${t('dash.netAsset')}: ${data[closest].net!.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
       tooltip.style.display = 'block'
       tooltip.style.left = Math.min(xOf(closest) + 8, width - 130) + 'px'
       tooltip.style.top  = yOf(data[closest].net!) - 42 + 'px'
@@ -335,18 +342,18 @@ function average(arr: number[]): number {
   return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
-function formatK(n: number): string {
+function formatK(n: number, dp: 0 | 2 = 0): string {
   return Math.abs(n) >= 10000
     ? (n / 1000).toFixed(0) + 'k'
-    : Math.abs(n).toLocaleString()
+    : Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })
 }
 
-function createMetric(container: HTMLElement, label: string, value: number, cls: string) {
+function createMetric(container: HTMLElement, label: string, value: number, cls: string, dp: 0 | 2 = 0) {
   const card = container.createDiv('pw-metric')
   card.createEl('div', { text: label, cls: 'pw-metric-label' })
   const prefix = cls === 'income' || cls === 'positive' ? '+' : cls === 'expense' || cls === 'negative' ? '-' : ''
   card.createEl('div', {
-    text: prefix + Math.abs(value).toLocaleString(),
+    text: prefix + Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }),
     cls: `pw-metric-value ${cls}`,
   })
 }

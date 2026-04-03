@@ -46,6 +46,7 @@ export class DetailView extends ItemView {
 
     const transactions = (await this.walletFile.readMonth(this.currentYearMonth))
       .sort((a, b) => b.date.localeCompare(a.date))
+    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
 
     // ── Block 1: Month nav ────────────────────────────────────────────────────
     const navRow = contentEl.createDiv('pw-nav-row')
@@ -122,7 +123,7 @@ export class DetailView extends ItemView {
       listEl.createEl('p', { text: t('detail.noTransactions'), cls: 'pw-no-data' })
     } else {
       for (const tx of filtered) {
-        this.renderTxRow(listEl, tx)
+        this.renderTxRow(listEl, tx, dp)
       }
     }
 
@@ -134,16 +135,16 @@ export class DetailView extends ItemView {
     }
     const subtotalEl = contentEl.createDiv('pw-subtotal-row')
     subtotalEl.createEl('span', {
-      text: `${t('detail.subtotalIncome')}: ${formatAmount(subIncome)}`,
+      text: `${t('detail.subtotalIncome')}: ${formatAmount(subIncome, dp)}`,
       cls: 'pw-subtotal-income',
     })
     subtotalEl.createEl('span', {
-      text: `${t('detail.subtotalExpense')}: ${formatAmount(subExpense)}`,
+      text: `${t('detail.subtotalExpense')}: ${formatAmount(subExpense, dp)}`,
       cls: 'pw-subtotal-expense',
     })
   }
 
-  private renderTxRow(container: HTMLElement, tx: Transaction) {
+  private renderTxRow(container: HTMLElement, tx: Transaction, dp: 0 | 2 = 0) {
     const row = container.createDiv('pw-tx-row')
 
     row.createEl('span', { text: tx.date, cls: 'pw-tx-date' })
@@ -166,7 +167,7 @@ export class DetailView extends ItemView {
       : 'pw-tx-amount'
     const amountPrefix = tx.type === 'expense' ? '-' : tx.type === 'income' ? '+' : ''
     row.createEl('span', {
-      text: amountPrefix + formatAmount(tx.amount),
+      text: amountPrefix + formatAmount(tx.amount, dp),
       cls: amountCls,
     })
 
@@ -250,6 +251,6 @@ function isAfterCurrentMonth(ym: string): boolean {
   return ym > currentYearMonth()
 }
 
-function formatAmount(n: number): string {
-  return n.toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+function formatAmount(n: number, dp: 0 | 2 = 0): string {
+  return n.toLocaleString('zh-TW', { minimumFractionDigits: dp, maximumFractionDigits: dp })
 }

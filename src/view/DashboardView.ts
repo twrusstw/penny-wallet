@@ -85,10 +85,12 @@ export class DashboardView extends ItemView {
     }
     const monthBalance = monthIncome - monthExpense
 
+    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
+
     const metricsEl = contentEl.createDiv('pw-metrics')
-    createMetric(metricsEl, t('dash.income'),  monthIncome,   'income')
-    createMetric(metricsEl, t('dash.expense'), monthExpense,  'expense')
-    createMetric(metricsEl, t('dash.balance'), monthBalance,  monthBalance >= 0 ? 'positive' : 'negative')
+    createMetric(metricsEl, t('dash.income'),  monthIncome,   'income',   dp)
+    createMetric(metricsEl, t('dash.expense'), monthExpense,  'expense',  dp)
+    createMetric(metricsEl, t('dash.balance'), monthBalance,  monthBalance >= 0 ? 'positive' : 'negative', dp)
 
     // ── Wallet balances card ─────────────────────────────────────────────────
     const walletCard = contentEl.createDiv('pw-card')
@@ -107,7 +109,7 @@ export class DashboardView extends ItemView {
 
       const displayBalance = wallet.type === 'creditCard' ? -balance : balance
       row.createEl('span', {
-        text: formatAmount(displayBalance),
+        text: formatAmount(displayBalance, dp),
         cls: 'pw-wallet-balance' + (displayBalance < 0 ? ' is-negative' : ''),
       })
     }
@@ -115,7 +117,7 @@ export class DashboardView extends ItemView {
     const netRow = walletCard.createDiv('pw-wallet-row pw-net-asset-row')
     netRow.createEl('span', { text: t('dash.netAsset'), cls: 'pw-net-label' })
     netRow.createEl('span', {
-      text: formatAmount(netAsset),
+      text: formatAmount(netAsset, dp),
       cls: 'pw-net-value' + (netAsset < 0 ? ' is-negative' : ''),
     })
 
@@ -206,12 +208,12 @@ function drawPie(container: HTMLElement, data: Map<string, number>) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function createMetric(container: HTMLElement, label: string, value: number, cls: string) {
+function createMetric(container: HTMLElement, label: string, value: number, cls: string, dp: 0 | 2 = 0) {
   const card = container.createDiv('pw-metric')
   card.createEl('div', { text: label, cls: 'pw-metric-label' })
   const prefix = cls === 'income' || cls === 'positive' ? '+' : cls === 'expense' || cls === 'negative' ? '-' : ''
   card.createEl('div', {
-    text: prefix + formatAmount(Math.abs(value)),
+    text: prefix + formatAmount(Math.abs(value), dp),
     cls: `pw-metric-value ${cls}`,
   })
 }
@@ -231,6 +233,6 @@ function isAfterCurrentMonth(ym: string): boolean {
   return ym > currentYearMonth()
 }
 
-function formatAmount(n: number): string {
-  return Math.abs(n).toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+function formatAmount(n: number, dp: 0 | 2 = 0): string {
+  return Math.abs(n).toLocaleString('zh-TW', { minimumFractionDigits: dp, maximumFractionDigits: dp })
 }

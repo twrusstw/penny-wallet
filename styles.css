@@ -231,6 +231,13 @@
   border-bottom: none;
 }
 
+.pw-wallet-left { display: flex; align-items: center; gap: 8px; }
+
+.pw-wallet-badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 500; flex-shrink: 0; white-space: nowrap; }
+.pw-badge-cash       { background: rgba(29,158,117,0.12); color: #1D9E75; }
+.pw-badge-bank       { background: rgba(55,138,221,0.12); color: #378ADD; }
+.pw-badge-creditCard { background: rgba(216,90,48,0.12);  color: #D85A30; }
+
 .pw-wallet-name {
   color: var(--text-normal);
   font-size: 14px;

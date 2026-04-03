@@ -37,6 +37,7 @@ export interface PennyWalletConfig {
   customIncomeCategories: string[]
   defaultWallet: string
   folderName: string
+  decimalPlaces: 0 | 2
 }
 
 export interface TransactionModalParams {
@@ -62,7 +63,7 @@ export const DEFAULT_INCOME_CATEGORIES = [
 export const DEFAULT_CONFIG: PennyWalletConfig = {
   wallets: [
     {
-      name: '現金',
+      name: 'Default Wallet',
       type: 'cash',
       initialBalance: 0,
       status: 'active',
@@ -71,6 +72,7 @@ export const DEFAULT_CONFIG: PennyWalletConfig = {
   ],
   customExpenseCategories: [],
   customIncomeCategories: [],
-  defaultWallet: '現金',
+  defaultWallet: 'Default Wallet',
   folderName: 'PennyWallet',
+  decimalPlaces: 0,
 }

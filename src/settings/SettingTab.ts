@@ -58,6 +58,20 @@ export class PennyWalletSettingTab extends PluginSettingTab {
           await this.walletFile.saveConfig()
         })
       })
+
+    new Setting(containerEl)
+      .setName(t('settings.decimalPlaces'))
+      .setDesc(t('settings.decimalPlacesDesc'))
+      .addDropdown(drop => {
+        drop.addOption('0', t('settings.dp0'))
+        drop.addOption('2', t('settings.dp2'))
+        drop.setValue(String(config.decimalPlaces ?? 0))
+        drop.onChange(async (value) => {
+          this.walletFile.updateConfig({ decimalPlaces: Number(value) as 0 | 2 })
+          await this.walletFile.saveConfig()
+          ;(this.app.workspace as any).trigger('penny-wallet:refresh')
+        })
+      })
   }
 
   private renderActiveWallets(walletBalances: WalletBalance[]) {

@@ -200,9 +200,11 @@ export class TransactionModal extends Modal {
     })
 
     this.addField(this.fieldsEl, t('modal.amount'), () => {
-      const input = createEl('input', { type: 'number', placeholder: '0' })
+      const dp = this.walletFile.getConfig().decimalPlaces ?? 0
+      const input = createEl('input', { type: 'number', placeholder: dp === 2 ? '0.00' : '0' })
       input.value = this.amount
       input.setAttribute('min', '0')
+      input.setAttribute('step', dp === 2 ? '0.01' : '1')
       input.addEventListener('input', () => { this.amount = input.value })
       setTimeout(() => input.focus(), 50)
       return input
@@ -243,9 +245,11 @@ export class TransactionModal extends Modal {
 
   private validate(): boolean {
     this.clearError()
+    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
     const amount = parseFloat(this.amount)
     if (!this.amount || isNaN(amount)) { this.showError(t('err.amountRequired')); return false }
     if (amount <= 0) { this.showError(t('err.amountPositive')); return false }
+    if (dp === 0 && !Number.isInteger(amount)) { this.showError(t('err.amountInteger')); return false }
 
     if (this.type === 'expense' || this.type === 'income') {
       if (!this.wallet) { this.showError(t('err.walletRequired')); return false }
