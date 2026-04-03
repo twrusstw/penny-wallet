@@ -2,8 +2,11 @@
 
 import { rm } from 'fs/promises'
 import { dirname, join } from 'path'
+import process from 'node:process'
 import { fileURLToPath } from 'url'
 import { spawn } from 'child_process'
+
+const { console } = globalThis
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)))
 const demoPluginDir = join(rootDir, 'demo-vault', '.obsidian', 'plugins', 'penny-wallet')
