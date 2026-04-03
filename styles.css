@@ -328,6 +328,8 @@
   color: var(--text-muted);
 }
 
+.pw-legend-name { flex: 1; }
+
 .pw-legend-dot {
   width: 10px;
   height: 10px;
