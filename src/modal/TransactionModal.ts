@@ -1,7 +1,7 @@
 import { App, Modal, Notice } from 'obsidian'
 import { Transaction, TransactionType, TransactionModalParams, PennyWalletConfig } from '../types'
 import { WalletFile, dateToMonthDay, dateToYearMonth } from '../io/WalletFile'
-import { t, translateCategory, tn } from '../i18n'
+import { t, translateCategory } from '../i18n'
 
 export class TransactionModal extends Modal {
   private walletFile: WalletFile

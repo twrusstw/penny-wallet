@@ -2,3 +2,4 @@ node_modules/
 *.local
 .DS_Store
 .claude/
+main.js
