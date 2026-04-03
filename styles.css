@@ -314,9 +314,9 @@
 }
 
 .pw-pie-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
   width: 100%;
 }
 
