@@ -1,5 +1,13 @@
 /* ── PennyWallet Plugin Styles ── */
 
+/* Allow text selection in all PennyWallet views (Obsidian sets user-select: none on leaves) */
+.pw-dashboard,
+.pw-detail,
+.pw-trend {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* ── Modal ── */
 
 /* Mobile: when any input in our modal is focused (keyboard visible),

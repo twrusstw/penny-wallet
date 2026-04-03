@@ -20,7 +20,7 @@ export class DetailView extends ItemView {
 
   getViewType() { return DETAIL_VIEW_TYPE }
   getDisplayText() { return t('detail.title') }
-  getIcon() { return 'list' }
+  getIcon() { return 'pw-icon' }
 
   async setState(state: any, result: any) {
     if (state?.yearMonth) this.currentYearMonth = state.yearMonth

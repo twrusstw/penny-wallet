@@ -18,8 +18,8 @@ export class DashboardView extends ItemView {
   }
 
   getViewType() { return DASHBOARD_VIEW_TYPE }
-  getDisplayText() { return 'PennyWallet' }
-  getIcon() { return 'wallet' }
+  getDisplayText() { return t('dashboard.title') }
+  getIcon() { return 'pw-icon' }
 
   async onOpen() {
     this.registerEvent(

@@ -26,7 +26,7 @@ export class TrendView extends ItemView {
 
   getViewType() { return TREND_VIEW_TYPE }
   getDisplayText() { return t('trend.title') }
-  getIcon() { return 'trending-up' }
+  getIcon() { return 'pw-icon' }
 
   async onOpen() {
     this.registerEvent(

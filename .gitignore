@@ -6,3 +6,5 @@ main.js
 demo-vault/.penny-wallet.json
 demo-vault/ledgers/*
 demo-vault/.obsidian/plugins/penny-wallet/
+demo-vault/.obsidian/workspace.json
+demo-vault/.obsidian/workspace-mobile.json

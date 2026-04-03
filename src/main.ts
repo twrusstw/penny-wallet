@@ -1,4 +1,4 @@
-import { Notice, ObsidianProtocolData, Plugin, WorkspaceLeaf } from 'obsidian'
+import { Notice, ObsidianProtocolData, Plugin, WorkspaceLeaf, addIcon } from 'obsidian'
 import { WalletFile } from './io/WalletFile'
 import { TransactionModal } from './modal/TransactionModal'
 import { DashboardView, DASHBOARD_VIEW_TYPE } from './view/DashboardView'
@@ -14,6 +14,14 @@ export default class PennyWalletPlugin extends Plugin {
   async onload() {
     initI18n()
 
+    addIcon('pw-icon', `
+      <ellipse cx="50" cy="40" rx="28" ry="32" fill="none" stroke="currentColor" stroke-width="6"/>
+      <path d="M 44,71 L 50,77 L 56,71" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 50,77 Q 60,87 44,96" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 62,33 A 14,14 0 1 0 62,47" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <line x1="50" y1="24" x2="50" y2="56" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    `)
+
     this.walletFile = new WalletFile(this.app)
 
     // ── All synchronous registrations FIRST (so ribbon/commands survive restart) ──
@@ -21,11 +29,11 @@ export default class PennyWalletPlugin extends Plugin {
     this.registerView(DETAIL_VIEW_TYPE, (leaf) => new DetailView(leaf, this.walletFile))
     this.registerView(TREND_VIEW_TYPE, (leaf) => new TrendView(leaf, this.walletFile))
 
-    this.addRibbonIcon('wallet', 'PennyWallet', () => this.openDashboard())
+    this.addRibbonIcon('pw-icon', 'PennyWallet', () => this.openDashboard())
 
-    this.addCommand({ id: 'open-dashboard', name: 'Open Dashboard', callback: () => this.openDashboard() })
+    this.addCommand({ id: 'open-dashboard', name: 'Open Overview', callback: () => this.openDashboard() })
     this.addCommand({ id: 'add-transaction', name: 'Add Transaction', callback: () => this.openTransactionModal() })
-    this.addCommand({ id: 'open-detail', name: 'Open Detail View', callback: () => this.openDetailView() })
+    this.addCommand({ id: 'open-detail', name: 'Open Records', callback: () => this.openDetailView() })
 
     this.addSettingTab(new PennyWalletSettingTab(this.app, this, this.walletFile))
 
