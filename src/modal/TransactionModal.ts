@@ -224,13 +224,12 @@ export class TransactionModal extends Modal {
   }
 
   private getCategoryOptions(config: PennyWalletConfig): { key: string; label: string }[] {
-    const defaultKeys = this.type === 'expense'
-      ? ['food', 'transport', 'shopping', 'entertainment', 'medical', 'housing', 'other']
-      : ['salary', 'bonus', 'side_income', 'other']
+    const catOptions = this.type === 'expense'
+      ? config.options.categories.expense
+      : config.options.categories.income
 
-    const customs = this.type === 'expense'
-      ? config.customExpenseCategories
-      : config.customIncomeCategories
+    const defaultKeys = catOptions.default
+    const customs = catOptions.custom
 
     return [
       ...defaultKeys.map(key => ({ key, label: translateCategory(key) })),

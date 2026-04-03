@@ -7,6 +7,8 @@ import {
   MonthSummary,
   PennyWalletConfig,
   DEFAULT_CONFIG,
+  DEFAULT_EXPENSE_CATEGORIES,
+  DEFAULT_INCOME_CATEGORIES,
 } from '../types'
 
 const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
@@ -159,12 +161,11 @@ export class WalletFile {
   private isValidConfigShape(value: unknown): value is PennyWalletConfig {
     if (!value || typeof value !== 'object') return false
 
-    const config = value as Partial<PennyWalletConfig>
+    const config = value as any
     return Array.isArray(config.wallets)
-      && Array.isArray(config.customExpenseCategories)
-      && Array.isArray(config.customIncomeCategories)
       && typeof config.defaultWallet === 'string'
       && typeof config.folderName === 'string'
+      && (config.options !== undefined || Array.isArray(config.customExpenseCategories))
   }
 
   async loadConfig(): Promise<PennyWalletConfig> {
@@ -218,6 +219,24 @@ export class WalletFile {
         (w.type as string) === 'credit' ? { ...w, type: 'creditCard' as WalletType } : w,
       )
     }
+
+    // Migrate flat customExpenseCategories / customIncomeCategories → options
+    const raw = this.config as any
+    if (!this.config.options) {
+      const expenseCustom: string[] = raw.customExpenseCategories ?? []
+      const incomeCustom: string[] = raw.customIncomeCategories ?? []
+      this.config.options = {
+        ...DEFAULT_CONFIG.options,
+        categories: {
+          expense: { default: [...DEFAULT_EXPENSE_CATEGORIES], custom: expenseCustom },
+          income:  { default: [...DEFAULT_INCOME_CATEGORIES],  custom: incomeCustom  },
+        },
+      }
+    }
+    // Remove legacy fields
+    delete (this.config as any).customExpenseCategories
+    delete (this.config as any).customIncomeCategories
+    delete (this.config as any).uriHandlerData
   }
 
   private async migrateConfigToRoot(loadedPath: string): Promise<void> {
@@ -231,6 +250,20 @@ export class WalletFile {
       }
     } catch {
       // Keep the legacy file if cleanup fails; root config is already saved.
+    }
+  }
+
+  updateCustomCategories(type: 'expense' | 'income', custom: string[]): void {
+    const { options } = this.config
+    this.config = {
+      ...this.config,
+      options: {
+        ...options,
+        categories: {
+          ...options.categories,
+          [type]: { ...options.categories[type], custom },
+        },
+      },
     }
   }
 

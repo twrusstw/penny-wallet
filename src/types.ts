@@ -31,13 +31,25 @@ export interface WalletBalance {
   balance: number   // creditCard: positive = debt owed (displayed as negative in net asset)
 }
 
+export interface OptionsListGroup {
+  default: string[]   // built-in, immutable
+  custom: string[]    // user-defined
+}
+
+export interface PennyWalletOptions {
+  types: OptionsListGroup
+  categories: {
+    expense: OptionsListGroup
+    income: OptionsListGroup
+  }
+}
+
 export interface PennyWalletConfig {
   wallets: Wallet[]
-  customExpenseCategories: string[]
-  customIncomeCategories: string[]
   defaultWallet: string
   folderName: string
   decimalPlaces: 0 | 2
+  options: PennyWalletOptions
 }
 
 export interface TransactionModalParams {
@@ -70,9 +82,23 @@ export const DEFAULT_CONFIG: PennyWalletConfig = {
       includeInNetAsset: true,
     }
   ],
-  customExpenseCategories: [],
-  customIncomeCategories: [],
   defaultWallet: 'Default Wallet',
   folderName: 'PennyWallet',
   decimalPlaces: 0,
+  options: {
+    types: {
+      default: ['expense', 'income', 'transfer', 'repayment'],
+      custom: [],
+    },
+    categories: {
+      expense: {
+        default: [...DEFAULT_EXPENSE_CATEGORIES],
+        custom: [],
+      },
+      income: {
+        default: [...DEFAULT_INCOME_CATEGORIES],
+        custom: [],
+      },
+    },
+  },
 }
