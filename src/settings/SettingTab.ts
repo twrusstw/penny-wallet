@@ -173,7 +173,6 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         .setPlaceholder(t('settings.walletName'))
         .onChange(v => { newName = v.trim() }))
 
-    let balanceHintEl: HTMLElement
     new Setting(formEl)
       .setName(t('settings.walletType'))
       .addDropdown(drop => {
@@ -193,7 +192,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         .setPlaceholder('0')
         .onChange(v => { newBalance = parseFloat(v) || 0 }))
 
-    balanceHintEl = formEl.createDiv('pw-balance-hint')
+    const balanceHintEl = formEl.createDiv('pw-balance-hint')
     updateBalanceHint()
 
     function updateBalanceHint() {

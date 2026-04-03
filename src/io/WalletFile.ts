@@ -275,7 +275,7 @@ export class WalletFile {
     const content = await this.readMonthFile(yearMonth)
     const transactions = content ? parseMonthFile(content) : []
     transactions.push(tx)
-    transactions.sort((a, b) => a.date.localeCompare(b.date))
+    transactions.sort((a, b) => b.date.localeCompare(a.date))
     const summary = this.computeSummary(transactions)
     await this.writeMonthFile(yearMonth, buildMonthContent(yearMonth, transactions, summary))
   }
@@ -296,7 +296,7 @@ export class WalletFile {
       const transactions = content ? parseMonthFile(content) : []
       const idx = this.findTransactionIndex(transactions, oldTx)
       if (idx !== -1) transactions[idx] = newTx
-      transactions.sort((a, b) => a.date.localeCompare(b.date))
+      transactions.sort((a, b) => b.date.localeCompare(a.date))
       const summary = this.computeSummary(transactions)
       await this.writeMonthFile(oldYearMonth, buildMonthContent(oldYearMonth, transactions, summary))
     } else {
