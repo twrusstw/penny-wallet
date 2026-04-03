@@ -65,7 +65,3 @@ Each file has a frontmatter cache (`income`, `expense`, `netAsset`) for fast Das
 <!-- screenshot: detail view -->
 
 <!-- screenshot: trend view -->
-
-## License
-
-MIT

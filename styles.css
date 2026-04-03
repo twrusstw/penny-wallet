@@ -1,6 +1,22 @@
 /* ── PennyWallet Plugin Styles ── */
 
 /* ── Modal ── */
+
+/* Mobile: when any input in our modal is focused (keyboard visible),
+   shift the modal to the top so it clears the keyboard.
+   Uses :has() which is supported in WKWebView (iOS 15.4+). */
+.modal-container:has(.pw-modal input:focus),
+.modal-container:has(.pw-modal select:focus) {
+  align-items: flex-start;
+  padding-top: 20px;
+}
+
+.modal-container:has(.pw-modal input:focus) .modal,
+.modal-container:has(.pw-modal select:focus) .modal {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
 .pw-modal h2 {
   margin-bottom: 16px;
 }

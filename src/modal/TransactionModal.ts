@@ -195,7 +195,9 @@ export class TransactionModal extends Modal {
     this.addField(this.fieldsEl, t('modal.note'), () => {
       const input = createEl('input', { type: 'text', placeholder: t('modal.note') })
       input.value = this.note
+      input.setAttribute('enterkeyhint', 'done')
       input.addEventListener('input', () => { this.note = input.value })
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur() })
       return input
     })
 
@@ -205,7 +207,9 @@ export class TransactionModal extends Modal {
       input.value = this.amount
       input.setAttribute('min', '0')
       input.setAttribute('step', dp === 2 ? '0.01' : '1')
+      input.setAttribute('enterkeyhint', 'done')
       input.addEventListener('input', () => { this.amount = input.value })
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur() })
       setTimeout(() => input.focus(), 50)
       return input
     })
