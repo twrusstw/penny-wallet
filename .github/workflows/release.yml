@@ -48,7 +48,6 @@ jobs:
         run: |
           TAG=${{ github.ref_name }}
 
-          # 檢查 Release 是否已存在
           if gh release view "$TAG" > /dev/null 2>&1; then
             echo "Release $TAG already exists. Updating assets..."
           else
@@ -58,7 +57,6 @@ jobs:
               --generate-notes
           fi
 
-          # 上傳核心三個檔案，--clobber 表示若檔案已存在則覆蓋
           gh release upload "$TAG" \
             main.js \
             manifest.json \
