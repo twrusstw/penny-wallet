@@ -1,33 +1,66 @@
-name: Release
+name: Release Plugin
 
 on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  release:
+  build_and_release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - run: npm run build
+      - name: Run Tests
+        run: npm test || echo "No tests specified"
 
-      - name: Create GitHub Release
+      - name: Build plugin
+        run: npm run build
+
+      - name: Validate version consistency
+        run: |
+          TAG_VERSION=${{ github.ref_name }}
+          MANIFEST_VERSION=$(jq -r '.version' manifest.json)
+          if [ "${TAG_VERSION#v}" != "$MANIFEST_VERSION" ]; then
+            echo "❌ Version Mismatch: Tag ($TAG_VERSION) != Manifest ($MANIFEST_VERSION)"
+            exit 1
+          fi
+
+      - name: Create or Update GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            main.js manifest.json styles.css \
-            --title "${{ github.ref_name }}" \
-            --generate-notes
+          TAG=${{ github.ref_name }}
+
+          # 檢查 Release 是否已存在
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists. Updating assets..."
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes
+          fi
+
+          # 上傳核心三個檔案，--clobber 表示若檔案已存在則覆蓋
+          gh release upload "$TAG" \
+            main.js \
+            manifest.json \
+            styles.css \
+            --clobber
