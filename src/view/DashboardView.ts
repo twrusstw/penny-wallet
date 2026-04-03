@@ -2,7 +2,6 @@ import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { t, translateCategory } from '../i18n'
-import { WalletBalance } from '../types'
 
 export const DASHBOARD_VIEW_TYPE = 'penny-wallet-dashboard'
 

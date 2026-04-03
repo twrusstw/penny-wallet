@@ -45,7 +45,7 @@ export class DetailView extends ItemView {
     contentEl.addClass('pw-detail')
 
     const transactions = (await this.walletFile.readMonth(this.currentYearMonth))
-      .sort((a, b) => a.date.localeCompare(b.date))
+      .sort((a, b) => b.date.localeCompare(a.date))
 
     // ── Block 1: Month nav ────────────────────────────────────────────────────
     const navRow = contentEl.createDiv('pw-nav-row')

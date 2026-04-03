@@ -7,7 +7,9 @@ THIS IS A GENERATED/COMPILED FILE AND NOT MEANT TO BE EDITED.
 */
 `
 
-const prod = process.argv[2] === 'production'
+const mode = process.argv[2] ?? 'watch'
+const prod = mode === 'production'
+const watch = mode === 'watch'
 
 const context = await esbuild.context({
   banner: { js: banner },
@@ -38,7 +40,7 @@ const context = await esbuild.context({
   outfile: 'main.js',
 })
 
-if (prod) {
+if (!watch) {
   await context.rebuild()
   process.exit(0)
 } else {
