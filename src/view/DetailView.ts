@@ -96,6 +96,9 @@ export class DetailView extends ItemView {
 
     const allCategories = new Set<string>()
     transactions.forEach(tx => { if (tx.category) allCategories.add(tx.category) })
+    if (this.filterCategory !== 'all' && !allCategories.has(this.filterCategory)) {
+      this.filterCategory = 'all'
+    }
     if (allCategories.size > 0) {
       const catSel = filterRow.createEl('select', { cls: 'pw-cat-filter' })
       catSel.createEl('option', { text: t('detail.allCategories'), value: 'all' })

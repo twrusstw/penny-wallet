@@ -292,9 +292,12 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       t('settings.expenseCategories'),
       config.customExpenseCategories,
       async (updated) => {
+        const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
+        const scrollTop = scrollEl?.scrollTop ?? 0
         this.walletFile.updateConfig({ customExpenseCategories: updated })
         await this.walletFile.saveConfig()
-        this.display()
+        await this.display()
+        if (scrollEl) scrollEl.scrollTop = scrollTop
       },
     )
 
@@ -303,9 +306,12 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       t('settings.incomeCategories'),
       config.customIncomeCategories,
       async (updated) => {
+        const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
+        const scrollTop = scrollEl?.scrollTop ?? 0
         this.walletFile.updateConfig({ customIncomeCategories: updated })
         await this.walletFile.saveConfig()
-        this.display()
+        await this.display()
+        if (scrollEl) scrollEl.scrollTop = scrollTop
       },
     )
   }
