@@ -50,10 +50,10 @@ All parameters except `amount` are optional. Omitted fields use defaults (today'
 Transactions are stored as Markdown tables — one file per month:
 
 ```
-PennyWallet/
+ledgers/
 ├── 2026-04.md
 ├── 2026-03.md
-└── config.json
+└── .penny-wallet.json
 ```
 
 Each file has a frontmatter cache (`income`, `expense`, `netAsset`) for fast Dashboard loading, and a plain Markdown table of transactions. Compatible with Git sync and Dataview queries.

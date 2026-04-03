@@ -114,8 +114,9 @@ const translations = {
     'settings.walletType': '類型',
     'settings.initialBalance': '初始餘額',
     'settings.includeInNetAsset': '納入淨資產',
-    'settings.expenseCategories': '自訂支出分類',
-    'settings.incomeCategories': '自訂收入分類',
+    'settings.customCategories': '自訂分類',
+    'settings.expenseCategories': '支出',
+    'settings.incomeCategories': '收入',
     'settings.addCategory': '新增分類',
     'settings.categoryPlaceholder': '輸入分類名稱',
 
@@ -147,6 +148,7 @@ const translations = {
     'err.creditNegativeBalance': '信用卡未還金額不能為負數，請填正數欠款金額',
     'err.creditNegativeBalanceShort': '信用卡未還金額請填正數',
     'err.categoryExists': '分類已存在',
+    'err.categoryExistsInOtherList': '此分類名稱已存在於另一個清單中',
   },
   'en': {
     'type.expense': 'Expense',
@@ -250,8 +252,9 @@ const translations = {
     'settings.walletType': 'Type',
     'settings.initialBalance': 'Initial Balance',
     'settings.includeInNetAsset': 'Include in Net Assets',
-    'settings.expenseCategories': 'Custom Expense Categories',
-    'settings.incomeCategories': 'Custom Income Categories',
+    'settings.customCategories': 'Custom Categories',
+    'settings.expenseCategories': 'Expense',
+    'settings.incomeCategories': 'Income',
     'settings.addCategory': 'Add Category',
     'settings.categoryPlaceholder': 'Enter category name',
 
@@ -278,6 +281,7 @@ const translations = {
     'err.creditNegativeBalance': 'Credit card balance cannot be negative, enter positive debt amount',
     'err.creditNegativeBalanceShort': 'Enter positive amount for credit card debt',
     'err.categoryExists': 'Category already exists',
+    'err.categoryExistsInOtherList': 'This category already exists in the other list',
   },
 } as const
 

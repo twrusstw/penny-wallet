@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 .claude/
 main.js
+demo-vault/.penny-wallet.json
+demo-vault/ledgers/*
+demo-vault/.obsidian/plugins/penny-wallet/

@@ -185,7 +185,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const nameField = formEl.createDiv('pw-add-wallet-field')
     nameField.createEl('label', {
       text: t('settings.walletName'),
-      cls: 'pw-add-wallet-label',
+      cls: 'pw-setting-input-subtitle',
     })
     const nameInput = nameField.createEl('input', {
       type: 'text',
@@ -199,7 +199,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const typeField = formEl.createDiv('pw-add-wallet-field')
     typeField.createEl('label', {
       text: t('settings.walletType'),
-      cls: 'pw-add-wallet-label',
+      cls: 'pw-setting-input-subtitle',
     })
     const typeSelect = typeField.createEl('select', { cls: 'pw-add-wallet-input' })
     const walletTypes: WalletType[] = ['cash', 'bank', 'creditCard']
@@ -218,7 +218,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const balanceField = formEl.createDiv('pw-add-wallet-field')
     balanceField.createEl('label', {
       text: t('settings.initialBalance'),
-      cls: 'pw-add-wallet-label',
+      cls: 'pw-setting-input-subtitle',
     })
     const balanceInput = balanceField.createEl('input', {
       type: 'number',
@@ -287,29 +287,38 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const config = this.walletFile.getConfig()
     const { containerEl } = this
 
+    containerEl.createEl('h3', { text: t('settings.customCategories') })
+    const cardEl = containerEl.createDiv('pw-card pw-category-card')
+
     this.renderCategorySection(
-      containerEl,
+      cardEl,
       t('settings.expenseCategories'),
       config.customExpenseCategories,
+      config.customIncomeCategories,
       async (updated) => {
         const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
         const scrollTop = scrollEl?.scrollTop ?? 0
         this.walletFile.updateConfig({ customExpenseCategories: updated })
         await this.walletFile.saveConfig()
+        ;(this.app.workspace as any).trigger('penny-wallet:refresh')
         await this.display()
         if (scrollEl) scrollEl.scrollTop = scrollTop
       },
     )
 
+    cardEl.createEl('hr', { cls: 'pw-category-divider' })
+
     this.renderCategorySection(
-      containerEl,
+      cardEl,
       t('settings.incomeCategories'),
       config.customIncomeCategories,
+      config.customExpenseCategories,
       async (updated) => {
         const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
         const scrollTop = scrollEl?.scrollTop ?? 0
         this.walletFile.updateConfig({ customIncomeCategories: updated })
         await this.walletFile.saveConfig()
+        ;(this.app.workspace as any).trigger('penny-wallet:refresh')
         await this.display()
         if (scrollEl) scrollEl.scrollTop = scrollTop
       },
@@ -320,9 +329,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     container: HTMLElement,
     title: string,
     categories: string[],
+    otherCategories: string[],
     onChange: (updated: string[]) => void,
   ) {
-    container.createEl('h3', { text: title })
+    container.createEl('div', { text: title, cls: 'pw-setting-input-subtitle' })
 
     const tagsEl = container.createDiv('pw-category-tags')
     for (const cat of categories) {
@@ -345,6 +355,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       const val = input.value.trim()
       if (!val) return
       if (categories.includes(val)) { new Notice(t('err.categoryExists')); return }
+      if (otherCategories.includes(val)) { new Notice(t('err.categoryExistsInOtherList')); return }
       onChange([...categories, val])
     })
     input.addEventListener('keydown', (e) => {

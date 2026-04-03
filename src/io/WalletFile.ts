@@ -9,6 +9,12 @@ import {
   DEFAULT_CONFIG,
 } from '../types'
 
+const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
+const LEGACY_CONFIG_PATHS = [
+  normalizePath('config.json'),
+  normalizePath('ledgers/config.json'),
+  normalizePath('PennyWallet/config.json'),
+]
 const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Amount |
 |------|------|--------|------|----|----------|------|--------|`
 
@@ -120,8 +126,49 @@ export class WalletFile {
 
   // ── Config ──────────────────────────────────────────────────────────────────
 
+  private async resolveConfigPath(): Promise<string> {
+    const candidatePaths = [ROOT_CONFIG_PATH, ...LEGACY_CONFIG_PATHS]
+
+    for (const candidatePath of candidatePaths) {
+      if (this.app.vault.getAbstractFileByPath(candidatePath)) {
+        return candidatePath
+      }
+
+      if (await this.app.vault.adapter.exists(candidatePath)) {
+        return candidatePath
+      }
+    }
+
+    for (const file of this.app.vault.getFiles()) {
+      if (file.path !== ROOT_CONFIG_PATH && !LEGACY_CONFIG_PATHS.includes(file.path)) continue
+
+      try {
+        const raw = await this.app.vault.read(file)
+        const parsed = JSON.parse(raw)
+        if (this.isValidConfigShape(parsed)) {
+          return file.path
+        }
+      } catch {
+        // Ignore unrelated or malformed config files.
+      }
+    }
+
+    return ROOT_CONFIG_PATH
+  }
+
+  private isValidConfigShape(value: unknown): value is PennyWalletConfig {
+    if (!value || typeof value !== 'object') return false
+
+    const config = value as Partial<PennyWalletConfig>
+    return Array.isArray(config.wallets)
+      && Array.isArray(config.customExpenseCategories)
+      && Array.isArray(config.customIncomeCategories)
+      && typeof config.defaultWallet === 'string'
+      && typeof config.folderName === 'string'
+  }
+
   async loadConfig(): Promise<PennyWalletConfig> {
-    const path = normalizePath(`${this.config.folderName}/config.json`)
+    const path = await this.resolveConfigPath()
     const file = this.app.vault.getAbstractFileByPath(path)
 
     if (!file) {
@@ -132,6 +179,7 @@ export class WalletFile {
           const raw = await this.app.vault.adapter.read(path)
           this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
           this.migrateConfig()
+          await this.migrateConfigToRoot(path)
         } catch {
           this.config = { ...DEFAULT_CONFIG }
         }
@@ -155,6 +203,7 @@ export class WalletFile {
         const raw = await this.app.vault.read(file)
         this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
         this.migrateConfig()
+        await this.migrateConfigToRoot(path)
       } catch {
         this.config = { ...DEFAULT_CONFIG }
       }
@@ -171,9 +220,22 @@ export class WalletFile {
     }
   }
 
+  private async migrateConfigToRoot(loadedPath: string): Promise<void> {
+    if (loadedPath === ROOT_CONFIG_PATH) return
+
+    await this.saveConfig()
+
+    try {
+      if (await this.app.vault.adapter.exists(loadedPath)) {
+        await this.app.vault.adapter.remove(loadedPath)
+      }
+    } catch {
+      // Keep the legacy file if cleanup fails; root config is already saved.
+    }
+  }
+
   async saveConfig(): Promise<void> {
-    await this.ensureFolder()
-    const path = normalizePath(`${this.config.folderName}/config.json`)
+    const path = ROOT_CONFIG_PATH
     const content = JSON.stringify(this.config, null, 2)
     const file = this.app.vault.getAbstractFileByPath(path)
     if (file instanceof TFile) {

@@ -1,6 +1,9 @@
 import esbuild from 'esbuild'
+import { copyFile, mkdir } from 'fs/promises'
+import { dirname, join } from 'path'
 import process from 'process'
 import builtins from 'builtin-modules'
+import { fileURLToPath } from 'url'
 
 const banner = `/*
 THIS IS A GENERATED/COMPILED FILE AND NOT MEANT TO BE EDITED.
@@ -10,6 +13,21 @@ THIS IS A GENERATED/COMPILED FILE AND NOT MEANT TO BE EDITED.
 const mode = process.argv[2] ?? 'watch'
 const prod = mode === 'production'
 const watch = mode === 'watch'
+const rootDir = dirname(fileURLToPath(import.meta.url))
+const outputFile = join(rootDir, 'main.js')
+const demoPluginDir = join(rootDir, 'demo-vault', '.obsidian', 'plugins', 'penny-wallet')
+
+async function syncDemoVault() {
+  await mkdir(demoPluginDir, { recursive: true })
+
+  await Promise.all([
+    copyFile(outputFile, join(demoPluginDir, 'main.js')),
+    copyFile(join(rootDir, 'manifest.json'), join(demoPluginDir, 'manifest.json')),
+    copyFile(join(rootDir, 'styles.css'), join(demoPluginDir, 'styles.css')),
+  ])
+
+  console.log(`[dev-sync] Synced plugin files to ${demoPluginDir}`)
+}
 
 const context = await esbuild.context({
   banner: { js: banner },
@@ -37,7 +55,25 @@ const context = await esbuild.context({
   minify: prod,
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
-  outfile: 'main.js',
+  outfile: outputFile,
+  plugins: [
+    {
+      name: 'sync-demo-vault',
+      setup(build) {
+        if (prod) {
+          return
+        }
+
+        build.onEnd(async (result) => {
+          if (result.errors.length > 0) {
+            return
+          }
+
+          await syncDemoVault()
+        })
+      },
+    },
+  ],
 })
 
 if (!watch) {

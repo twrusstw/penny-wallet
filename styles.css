@@ -763,8 +763,11 @@
 .pw-stat-expense .pw-stat-value { color: #EF9F27; }
 
 /* ── Settings ── */
-.pw-add-wallet-card {
+.pw-add-wallet-card,
+.pw-category-card {
+  background: var(--setting-items-background);
   margin-left: 0;
+  margin-top: 8px;
   padding: 0.875rem 1rem 1rem 0.875rem;
 }
 
@@ -776,13 +779,6 @@
 
 .pw-add-wallet-field {
   min-width: 0;
-}
-
-.pw-add-wallet-label {
-  display: block;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
 }
 
 .pw-add-wallet-input {
@@ -850,6 +846,22 @@ select.pw-add-wallet-input {
   padding: 12px 0 0;
 }
 
+.pw-setting-input-subtitle {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.pw-category-divider {
+  border: none;
+  border-top: 1px solid var(--background-modifier-border);
+  margin: 14px 0;
+}
+
 .pw-category-tags {
   display: flex;
   gap: 8px;
@@ -863,7 +875,7 @@ select.pw-add-wallet-input {
   gap: 4px;
   padding: 3px 10px 3px 12px;
   border-radius: 16px;
-  background: var(--background-secondary);
+  background: var(--background-modifier-hover);
   border: 1px solid var(--background-modifier-border);
   font-size: 13px;
 }

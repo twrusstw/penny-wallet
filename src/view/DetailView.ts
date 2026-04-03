@@ -94,8 +94,11 @@ export class DetailView extends ItemView {
       })
     }
 
+    const catSource = (this.filterType === 'all' || this.filterType === 'transfer' || this.filterType === 'repayment')
+      ? transactions
+      : transactions.filter(tx => tx.type === this.filterType)
     const allCategories = new Set<string>()
-    transactions.forEach(tx => { if (tx.category) allCategories.add(tx.category) })
+    catSource.forEach(tx => { if (tx.category) allCategories.add(tx.category) })
     if (this.filterCategory !== 'all' && !allCategories.has(this.filterCategory)) {
       this.filterCategory = 'all'
     }

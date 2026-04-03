@@ -4,7 +4,10 @@
   "description": "Personal finance tracker Obsidian plugin",
   "main": "main.js",
   "scripts": {
-    "dev": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs development",
+    "dev:watch": "node esbuild.config.mjs",
+    "dev:clean": "node scripts/dev-clean.mjs",
+    "demo:data": "node scripts/generate-demo-data.mjs",
     "build": "node esbuild.config.mjs production",
     "build:dev": "node esbuild.config.mjs development",
     "lint": "eslint \"src/**/*.ts\" && tsc --noEmit --pretty",
