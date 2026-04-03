@@ -38,7 +38,7 @@ Search **PennyWallet** in Obsidian → Community Plugins.
 Trigger the transaction modal pre-filled from an iOS Shortcut:
 
 ```
-obsidian://ledger?type=expense&amount=250&note=Lunch&category=food&wallet=Cash&date=2026-04-03
+obsidian://penny-wallet?type=expense&amount=250&note=Lunch&category=food&wallet=Cash&date=2026-04-03
 ```
 
 All parameters except `amount` are optional. Omitted fields use defaults (today's date, default wallet, expense type).

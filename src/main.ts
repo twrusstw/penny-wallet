@@ -29,7 +29,7 @@ export default class PennyWalletPlugin extends Plugin {
 
     this.addSettingTab(new PennyWalletSettingTab(this.app, this, this.walletFile))
 
-    this.registerObsidianProtocolHandler('ledger', (params: ObsidianProtocolData) => {
+    this.registerObsidianProtocolHandler('penny-wallet', (params: ObsidianProtocolData) => {
       this.handleURI(params)
     })
 

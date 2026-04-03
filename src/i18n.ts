@@ -230,7 +230,7 @@ const translations = {
     'settings.title': 'PennyWallet Settings',
     'settings.general': 'General',
     'settings.folderName': 'Folder Name',
-    'settings.folderNameDesc': 'Folder to store ledger files (relative to vault root)',
+    'settings.folderNameDesc': 'Folder to store penny-wallet files (relative to vault root)',
     'settings.defaultWallet': 'Default Wallet',
     'settings.defaultWalletDesc': 'Default wallet selected when adding a transaction',
     'settings.activeWallets': 'Active Wallets',

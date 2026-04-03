@@ -2,14 +2,10 @@ import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { t, translateCategory } from '../i18n'
-import { WalletBalance, WalletType } from '../types'
+import { WalletBalance } from '../types'
 
 export const DASHBOARD_VIEW_TYPE = 'penny-wallet-dashboard'
 
-// Design-system colours (match pennywallet-ui.html)
-const C_INCOME  = '#1D9E75'
-const C_EXPENSE = '#D85A30'
-const C_NET     = '#7F77DD'
 const PIE_COLORS = ['#D85A30','#378ADD','#7F77DD','#1D9E75','#EF9F27','#888780','#5DC8C8','#E8A0BF']
 
 export class DashboardView extends ItemView {
