@@ -2,8 +2,6 @@
 
 A personal finance tracker plugin for [Obsidian](https://obsidian.md). Log expenses, income, transfers, and credit card repayments — all stored as plain Markdown tables in your vault.
 
-![Finance Overview](images/finance-overview.png)
-
 ## Features
 
 - **Finance Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
