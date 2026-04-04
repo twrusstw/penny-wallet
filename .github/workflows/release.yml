@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build_and_release:
@@ -37,8 +36,8 @@ jobs:
         run: |
           TAG_VERSION=${{ github.ref_name }}
           MANIFEST_VERSION=$(jq -r '.version' manifest.json)
-          if [ "${TAG_VERSION#v}" != "$MANIFEST_VERSION" ]; then
-            echo "❌ Version Mismatch: Tag ($TAG_VERSION) != Manifest ($MANIFEST_VERSION)"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "❌ Version mismatch: tag=$TAG_VERSION manifest=$MANIFEST_VERSION"
             exit 1
           fi
 
