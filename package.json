@@ -14,7 +14,7 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix && tsc --noEmit --pretty"
   },
   "keywords": [],
-  "author": "",
+  "author": "twrusstw",
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.24.0",

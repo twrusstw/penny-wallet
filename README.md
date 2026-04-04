@@ -1,69 +1,98 @@
 # PennyWallet
 
-A personal finance tracker for Obsidian. Log expenses, income, transfers, and credit card repayments — all stored as plain Markdown tables in your vault.
+A personal finance tracker plugin for [Obsidian](https://obsidian.md). Log expenses, income, transfers, and credit card repayments — all stored as plain Markdown tables in your vault.
 
-<!-- screenshot: dashboard overview -->
+![Finance Overview](images/finance-overview.png)
 
 ## Features
 
 - **Finance Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
 - **Transactions** — filterable transaction list with inline edit and delete
 - **Asset Statistics** — 3 / 6 / 12-month bar and line charts
-- **Multiple accounts** — cash, bank account, credit card
-- **iOS Shortcuts** — add transactions via URI without opening Obsidian
+- **Multiple account types** — cash, bank account, credit card (with debt tracking)
+- **Custom categories** — add your own expense and income categories
+- **iOS Shortcuts support** — add transactions via URI without opening Obsidian
 - **Bilingual** — English and Traditional Chinese (follows Obsidian language setting)
 
 ## Installation
 
-### Community Plugin Store (recommended)
-Search **PennyWallet** in Obsidian → Community Plugins.
-
 ### Manual
+
 1. Download `main.js`, `manifest.json`, `styles.css` from the [latest release](https://github.com/twrusstw/penny-wallet/releases/latest)
 2. Copy them to `<vault>/.obsidian/plugins/penny-wallet/`
-3. Enable the plugin in Obsidian Settings → Community Plugins
+3. Enable the plugin in **Settings → Community Plugins**
+
+### Community Plugin Store
+
+Search **PennyWallet** in **Settings → Community Plugins → Browse**.
 
 ## Getting Started
 
 1. Enable PennyWallet — a balloon icon appears in the left ribbon
-2. Go to **Settings → PennyWallet** to add your accounts (cash, bank, credit card) with initial balances
-3. Click the ribbon icon or run **Add Transaction** from the Command Palette to log your first transaction
+2. Open **Settings → PennyWallet** and add your accounts with their current balances
+3. Click the ribbon icon or run **Add Transaction** from the Command Palette to log your first entry
 
-<!-- screenshot: settings accounts -->
+## Transaction Types
 
-<!-- screenshot: transaction modal -->
+| Type | Description |
+|------|-------------|
+| **Expense** | Money out from cash / bank / credit card |
+| **Income** | Money received into an account |
+| **Transfer** | Move money between two accounts |
+| **Repayment** | Pay off a credit card balance from a bank / cash account |
+
+Credit card accounts track outstanding debt. Expenses increase the debt; repayments reduce it. Net asset calculation automatically subtracts credit card debt.
+
+## Views
+
+### Finance Overview
+
+Monthly summary with income, expense, balance, account balances, net asset, and pie charts by category.
+
+![Finance Overview](images/finance-overview.png)
+
+### Transactions
+
+Full transaction list with type and category filters, inline edit and delete, and monthly subtotals.
+
+![Transactions](images/transactions-view.png)
+
+### Asset Statistics
+
+Bar chart of monthly income vs expense, line chart of net asset trend, with 3 / 6 / 12-month range selector.
+
+![Asset Statistics](images/asset-statistics-view.png)
+
+### Settings
+
+Add, edit, or archive accounts. Manage custom expense and income categories.
+
+![Settings](images/settings-accounts.png)
+
+## Transaction Modal
+
+![Transaction Modal](images/transaction-modal.png)
 
 ## URI Handler
 
-PennyWallet registers the `obsidian://penny-wallet` URI scheme, allowing external apps — including iOS Shortcuts, Android automation tools, or any app that can open URLs — to interact with the plugin without manual input.
-
-Two actions are supported:
-
-- **Open modal** (default) — open the transaction form with fields pre-filled
-- **Query lists** (`cmd=list`) — copy available accounts or categories to the clipboard
-
-See [docs/ios-shortcuts.md](docs/ios-shortcuts.md) for step-by-step iOS Shortcuts setup.
-
-<!-- screenshot: iOS shortcut example -->
+PennyWallet registers the `obsidian://penny-wallet` URI scheme, allowing external apps — including iOS Shortcuts — to open the transaction form with fields pre-filled.
 
 ## Data Format
 
-Transactions are stored as Markdown tables — one file per month:
+Transactions are stored as Markdown tables, one file per month:
 
 ```
 <vault>/
-├── .penny-wallet.json   ← config + available options (accounts, categories)
+├── .penny-wallet.json     ← config (accounts, categories, settings)
 └── PennyWallet/
     ├── 2026-04.md
     └── 2026-03.md
 ```
 
-Each month file has a frontmatter cache (`income`, `expense`, `netAsset`) for fast Overview loading, and a plain Markdown table of transactions. Compatible with Git sync and Dataview queries.
+![Raw Markdown](images/raw-markdown.png)
 
-<!-- screenshot: raw markdown file -->
+Each file has a frontmatter cache (`income`, `expense`, `netAsset`) for fast loading, and a plain Markdown table of transactions. The format is compatible with Git sync and Dataview queries.
 
-## Views
+## License
 
-<!-- screenshot: transactions view -->
-
-<!-- screenshot: asset statistics view -->
+[MIT](LICENSE)
