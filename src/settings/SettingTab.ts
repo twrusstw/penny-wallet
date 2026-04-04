@@ -171,6 +171,16 @@ export class PennyWalletSettingTab extends PluginSettingTab {
             this.walletFile.updateConfig({ wallets })
             await this.walletFile.saveConfig()
           }))
+        .addButton(btn => btn
+          .setButtonText(t('ui.unarchive'))
+          .onClick(async () => {
+            const wallets = config.wallets.map(w =>
+              w.name === wallet.name ? { ...w, status: 'active' as const } : w,
+            )
+            this.walletFile.updateConfig({ wallets })
+            await this.walletFile.saveConfig()
+            this.display()
+          }))
     }
   }
 

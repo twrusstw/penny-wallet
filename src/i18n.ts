@@ -155,6 +155,9 @@ const translations = {
     'err.creditNegativeBalanceShort': '信用卡未還金額請填正數',
     'err.categoryExists': '分類已存在',
     'err.categoryExistsInOtherList': '此分類名稱已存在於另一個清單中',
+    'err.invalidDate': '日期格式無效',
+
+    'ui.unarchive': '取消封存',
   },
   'en': {
     'type.expense': 'Expense',
@@ -293,6 +296,9 @@ const translations = {
     'err.creditNegativeBalanceShort': 'Enter positive amount for credit card debt',
     'err.categoryExists': 'Category already exists',
     'err.categoryExistsInOtherList': 'This category already exists in the other list',
+    'err.invalidDate': 'Invalid date',
+
+    'ui.unarchive': 'Unarchive',
   },
 } as const
 

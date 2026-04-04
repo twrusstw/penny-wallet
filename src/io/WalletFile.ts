@@ -2,21 +2,13 @@ import { App, TFile, normalizePath } from 'obsidian'
 import {
   Transaction,
   TransactionType,
-  WalletType,
   WalletBalance,
   MonthSummary,
   PennyWalletConfig,
   DEFAULT_CONFIG,
-  DEFAULT_EXPENSE_CATEGORIES,
-  DEFAULT_INCOME_CATEGORIES,
 } from '../types'
 
 const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
-const LEGACY_CONFIG_PATHS = [
-  normalizePath('config.json'),
-  normalizePath('ledgers/config.json'),
-  normalizePath('PennyWallet/config.json'),
-]
 const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Amount |
 |------|------|--------|------|----|----------|------|--------|`
 
@@ -128,34 +120,8 @@ export class WalletFile {
 
   // ── Config ──────────────────────────────────────────────────────────────────
 
-  private async resolveConfigPath(): Promise<string> {
-    const candidatePaths = [ROOT_CONFIG_PATH, ...LEGACY_CONFIG_PATHS]
-
-    for (const candidatePath of candidatePaths) {
-      if (this.app.vault.getAbstractFileByPath(candidatePath)) {
-        return candidatePath
-      }
-
-      if (await this.app.vault.adapter.exists(candidatePath)) {
-        return candidatePath
-      }
-    }
-
-    return ROOT_CONFIG_PATH
-  }
-
-  private isValidConfigShape(value: unknown): value is PennyWalletConfig {
-    if (!value || typeof value !== 'object') return false
-
-    const config = value as any
-    return Array.isArray(config.wallets)
-      && typeof config.defaultWallet === 'string'
-      && typeof config.folderName === 'string'
-      && (config.options !== undefined || Array.isArray(config.customExpenseCategories))
-  }
-
   async loadConfig(): Promise<PennyWalletConfig> {
-    const path = await this.resolveConfigPath()
+    const path = ROOT_CONFIG_PATH
     const file = this.app.vault.getAbstractFileByPath(path)
 
     if (!file) {
@@ -165,8 +131,6 @@ export class WalletFile {
         try {
           const raw = await this.app.vault.adapter.read(path)
           this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
-          this.migrateConfig()
-          await this.migrateConfigToRoot(path)
         } catch {
           this.config = { ...DEFAULT_CONFIG }
         }
@@ -189,54 +153,11 @@ export class WalletFile {
       try {
         const raw = await this.app.vault.read(file)
         this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
-        this.migrateConfig()
-        await this.migrateConfigToRoot(path)
       } catch {
         this.config = { ...DEFAULT_CONFIG }
       }
     }
     return this.config
-  }
-
-  private migrateConfig(): void {
-    // Backward compat: rename old wallet type 'credit' → 'creditCard'
-    if (this.config.wallets) {
-      this.config.wallets = this.config.wallets.map(w =>
-        (w.type as string) === 'credit' ? { ...w, type: 'creditCard' as WalletType } : w,
-      )
-    }
-
-    // Migrate flat customExpenseCategories / customIncomeCategories → options
-    const raw = this.config as any
-    if (!this.config.options) {
-      const expenseCustom: string[] = raw.customExpenseCategories ?? []
-      const incomeCustom: string[] = raw.customIncomeCategories ?? []
-      this.config.options = {
-        ...DEFAULT_CONFIG.options,
-        categories: {
-          expense: { default: [...DEFAULT_EXPENSE_CATEGORIES], custom: expenseCustom },
-          income:  { default: [...DEFAULT_INCOME_CATEGORIES],  custom: incomeCustom  },
-        },
-      }
-    }
-    // Remove legacy fields
-    delete (this.config as any).customExpenseCategories
-    delete (this.config as any).customIncomeCategories
-    delete (this.config as any).uriHandlerData
-  }
-
-  private async migrateConfigToRoot(loadedPath: string): Promise<void> {
-    if (loadedPath === ROOT_CONFIG_PATH) return
-
-    await this.saveConfig()
-
-    try {
-      if (await this.app.vault.adapter.exists(loadedPath)) {
-        await this.app.vault.adapter.remove(loadedPath)
-      }
-    } catch {
-      // Keep the legacy file if cleanup fails; root config is already saved.
-    }
   }
 
   updateCustomCategories(type: 'expense' | 'income', custom: string[]): void {

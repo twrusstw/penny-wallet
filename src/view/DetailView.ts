@@ -69,8 +69,10 @@ export class DetailView extends ItemView {
     const addBtn = navRow.createEl('button', { text: '+ ' + t('ui.addTransaction'), cls: 'pw-action-btn' })
     addBtn.addClass('pw-ml-auto')
     addBtn.addEventListener('click', () => {
+      addBtn.disabled = true
       new TransactionModal(this.app, this.walletFile, {}, null, null,
-        () => (this.app.workspace as any).trigger('penny-wallet:refresh')
+        () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
+        () => { addBtn.disabled = false },
       ).open()
     })
 
@@ -185,6 +187,7 @@ export class DetailView extends ItemView {
     editBtn.setAttribute('aria-label', t('ui.edit'))
     editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
     editBtn.addEventListener('click', () => {
+      editBtn.disabled = true
       new TransactionModal(
         this.app,
         this.walletFile,
@@ -192,6 +195,7 @@ export class DetailView extends ItemView {
         tx,
         this.currentYearMonth,
         () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
+        () => { editBtn.disabled = false },
       ).open()
     })
 

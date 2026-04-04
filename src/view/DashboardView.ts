@@ -74,8 +74,10 @@ export class DashboardView extends ItemView {
       await this.openOrRevealView(TREND_VIEW_TYPE)
     })
     addBtn.addEventListener('click', () => {
+      addBtn.disabled = true
       new TransactionModal(this.app, this.walletFile, {}, null, null,
-        () => (this.app.workspace as any).trigger('penny-wallet:refresh')
+        () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
+        () => { addBtn.disabled = false },
       ).open()
     })
 

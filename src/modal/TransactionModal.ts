@@ -9,6 +9,7 @@ export class TransactionModal extends Modal {
   private editingTx: Transaction | null
   private editingYearMonth: string | null
   private onSuccess: (() => void) | null
+  private onDismiss: (() => void) | null
 
   // Form state
   private type: TransactionType = 'expense'
@@ -32,6 +33,7 @@ export class TransactionModal extends Modal {
     editingTx: Transaction | null = null,
     editingYearMonth: string | null = null,
     onSuccess: (() => void) | null = null,
+    onDismiss: (() => void) | null = null,
   ) {
     super(app)
     this.walletFile = walletFile
@@ -39,6 +41,7 @@ export class TransactionModal extends Modal {
     this.editingTx = editingTx
     this.editingYearMonth = editingYearMonth
     this.onSuccess = onSuccess
+    this.onDismiss = onDismiss
   }
 
   onOpen() {
@@ -251,6 +254,7 @@ export class TransactionModal extends Modal {
 
   private validate(): boolean {
     this.clearError()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(this.date)) { this.showError(t('err.invalidDate')); return false }
     const dp = this.walletFile.getConfig().decimalPlaces ?? 0
     const amount = parseFloat(this.amount)
     if (!this.amount || isNaN(amount)) { this.showError(t('err.amountRequired')); return false }
@@ -314,6 +318,7 @@ export class TransactionModal extends Modal {
 
   onClose() {
     this.contentEl.empty()
+    this.onDismiss?.()
   }
 }
 
