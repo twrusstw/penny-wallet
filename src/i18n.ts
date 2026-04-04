@@ -40,7 +40,7 @@ const translations = {
     'ui.add': '新增',
 
     // Dashboard
-    'dashboard.title': '總覽',
+    'dashboard.title': '帳本總覽',
     'dash.income': '收入',
     'dash.expense': '支出',
     'dash.balance': '結餘',
@@ -51,7 +51,7 @@ const translations = {
     'dash.noData': '本月無資料',
 
     // Detail view
-    'detail.title': '明細',
+    'detail.title': '收支明細',
     'detail.filterAll': '全部',
     'detail.filterExpense': '支出',
     'detail.filterIncome': '收入',
@@ -63,7 +63,7 @@ const translations = {
     'detail.noTransactions': '無符合條件的交易',
 
     // Trend view
-    'trend.title': '統計',
+    'trend.title': '資產統計',
     'trend.3m': '3 個月',
     'trend.6m': '6 個月',
     'trend.12m': '12 個月',
@@ -72,6 +72,11 @@ const translations = {
     'trend.avgIncome': '平均月收入',
     'trend.avgExpense': '平均月支出',
     'trend.netAssetChange': '淨資產變化',
+
+    // Date formatting
+    'date.yearMonthNumeric': '{year} 年 {month} 月',
+    'date.yearMonthShort': '{year} 年 {month} 月',
+    'date.monthLabel': '{month}月',
 
     // Transaction modal
     'modal.addTitle': '新增交易',
@@ -174,8 +179,8 @@ const translations = {
     'cat.side_income': 'Side Income',
 
     'ui.addTransaction': 'Add Transaction',
-    'ui.trend': 'Statistics',
-    'ui.detail': 'Records',
+    'ui.trend': 'Asset Statistics',
+    'ui.detail': 'Transactions',
     'ui.confirm': 'Confirm',
     'ui.cancel': 'Cancel',
     'ui.delete': 'Delete',
@@ -184,7 +189,7 @@ const translations = {
     'ui.save': 'Save',
     'ui.add': 'Add',
 
-    'dashboard.title': 'Overview',
+    'dashboard.title': 'Finance Overview',
     'dash.income': 'Income',
     'dash.expense': 'Expense',
     'dash.balance': 'Balance',
@@ -205,7 +210,7 @@ const translations = {
     'detail.subtotalExpense': 'Expense Subtotal',
     'detail.noTransactions': 'No matching transactions',
 
-    'trend.title': 'Statistics',
+    'trend.title': 'Asset Statistics',
     'trend.3m': '3 Months',
     'trend.6m': '6 Months',
     'trend.12m': '12 Months',
@@ -214,6 +219,10 @@ const translations = {
     'trend.avgIncome': 'Avg Monthly Income',
     'trend.avgExpense': 'Avg Monthly Expense',
     'trend.netAssetChange': 'Net Asset Change',
+
+    'date.yearMonthNumeric': '{month}/{year}',
+    'date.yearMonthShort': '{monthName} {year}',
+    'date.monthLabel': '{monthName}',
 
     'modal.addTitle': 'Add Transaction',
     'modal.editTitle': 'Edit Transaction',
@@ -291,6 +300,11 @@ type TranslationKey = keyof typeof translations['en']
 
 let currentLocale: Locale = 'zh-TW'
 
+const LOCALE_TAGS: Record<Locale, string> = {
+  'zh-TW': 'zh-TW',
+  en: 'en-US',
+}
+
 export function detectLocale(): Locale {
   try {
     // Obsidian exposes moment with locale set
@@ -318,6 +332,54 @@ export function tn(key: TranslationKey, vars: Record<string, string>): string {
     str = str.replace(`{${k}}`, v)
   }
   return str
+}
+
+function parseYearMonth(yearMonth: string): { year: string; month: string; monthPadded: string; date: Date } | null {
+  const match = yearMonth.match(/^(\d{4})-(\d{2})$/)
+  if (!match) return null
+
+  const [, year, monthPadded] = match
+  const monthNumber = Number(monthPadded)
+  if (monthNumber < 1 || monthNumber > 12) return null
+
+  return {
+    year,
+    month: String(monthNumber),
+    monthPadded,
+    date: new Date(Number(year), monthNumber - 1, 1),
+  }
+}
+
+function getShortMonthName(date: Date): string {
+  return new Intl.DateTimeFormat(LOCALE_TAGS[currentLocale], { month: 'short' }).format(date)
+}
+
+export function formatYearMonth(yearMonth: string, style: 'numeric' | 'short' = 'numeric'): string {
+  const parsed = parseYearMonth(yearMonth)
+  if (!parsed) return yearMonth
+
+  const vars = {
+    year: parsed.year,
+    month: parsed.month,
+    monthPadded: parsed.monthPadded,
+    monthName: getShortMonthName(parsed.date),
+  }
+
+  return style === 'short'
+    ? tn('date.yearMonthShort', vars)
+    : tn('date.yearMonthNumeric', vars)
+}
+
+export function formatMonthLabel(yearMonth: string): string {
+  const parsed = parseYearMonth(yearMonth)
+  if (!parsed) return yearMonth
+
+  return tn('date.monthLabel', {
+    year: parsed.year,
+    month: parsed.month,
+    monthPadded: parsed.monthPadded,
+    monthName: getShortMonthName(parsed.date),
+  })
 }
 
 /** Translate a category value from markdown (key or raw string) to display label */

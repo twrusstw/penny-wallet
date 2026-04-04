@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, Notice } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { ConfirmModal } from '../modal/ConfirmModal'
-import { t, translateCategory } from '../i18n'
+import { t, translateCategory, formatYearMonth } from '../i18n'
 import { Transaction, TransactionType } from '../types'
 import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
 
@@ -56,7 +56,7 @@ export class DetailView extends ItemView {
       this.currentYearMonth = stepMonth(this.currentYearMonth, -1)
       await this.render()
     })
-    navRow.createEl('span', { text: this.currentYearMonth, cls: 'pw-month-label' })
+    navRow.createEl('span', { text: formatYearMonth(this.currentYearMonth), cls: 'pw-month-label' })
     const nextBtn = navRow.createEl('button', { text: '→', cls: 'pw-nav-btn' })
     nextBtn.disabled = isAfterCurrentMonth(stepMonth(this.currentYearMonth, 1))
     nextBtn.addEventListener('click', async () => {

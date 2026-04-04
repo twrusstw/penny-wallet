@@ -6,9 +6,9 @@ A personal finance tracker for Obsidian. Log expenses, income, transfers, and cr
 
 ## Features
 
-- **Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
-- **Records** — filterable transaction list with inline edit and delete
-- **Statistics** — 3 / 6 / 12-month bar and line charts
+- **Finance Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
+- **Transactions** — filterable transaction list with inline edit and delete
+- **Asset Statistics** — 3 / 6 / 12-month bar and line charts
 - **Multiple accounts** — cash, bank account, credit card
 - **iOS Shortcuts** — add transactions via URI without opening Obsidian
 - **Bilingual** — English and Traditional Chinese (follows Obsidian language setting)
@@ -64,6 +64,6 @@ Each month file has a frontmatter cache (`income`, `expense`, `netAsset`) for fa
 
 ## Views
 
-<!-- screenshot: records view -->
+<!-- screenshot: transactions view -->
 
-<!-- screenshot: statistics view -->
+<!-- screenshot: asset statistics view -->

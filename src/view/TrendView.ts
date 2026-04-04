@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
-import { t } from '../i18n'
+import { t, formatMonthLabel, formatYearMonth } from '../i18n'
 
 export const TREND_VIEW_TYPE = 'penny-wallet-trend'
 
@@ -9,7 +9,8 @@ const C_EXPENSE = '#D85A30'
 const C_NET     = '#7F77DD'
 
 interface MonthData {
-  month: string      // "MM" slice of yyyy-mm
+  monthLabel: string
+  tooltipLabel: string
   income: number
   expense: number
   net: number | null
@@ -62,7 +63,8 @@ export class TrendView extends ItemView {
 
     // ── Build data array ─────────────────────────────────────────────────────
     const data: MonthData[] = months.map(ym => ({
-      month: ym.slice(5),
+      monthLabel: formatMonthLabel(ym),
+      tooltipLabel: formatYearMonth(ym, 'short'),
       income: summaries.get(ym)?.income ?? 0,
       expense: summaries.get(ym)?.expense ?? 0,
       net: netTimeline.get(ym) ?? null,
@@ -83,8 +85,8 @@ export class TrendView extends ItemView {
     // ── Net asset line chart ─────────────────────────────────────────────────
     const netCard = contentEl.createDiv('pw-card')
     netCard.createEl('div', { text: t('trend.netAssetTrend'), cls: 'pw-card-title' })
-    const legRow2 = netCard.createDiv('pw-leg-row')
-    addDotLegend(legRow2, C_NET, t('dash.netAsset'))
+    // const legRow2 = netCard.createDiv('pw-leg-row')
+    // addDotLegend(legRow2, C_NET, t('dash.netAsset'))
     const chartWrap2 = netCard.createDiv('pw-chart-wrap')
     const tooltip2 = chartWrap2.createDiv('pw-tooltip')
     requestAnimationFrame(() => drawNetChart(chartWrap2, tooltip2, data, dp))
@@ -140,13 +142,13 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
 
   ctx.clearRect(0, 0, width, totalH)
 
-  // Alternating column tint
-  data.forEach((_, i) => {
-    if (i % 2 === 0) {
-      ctx.fillStyle = dark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)'
-      ctx.fillRect(leftPad + colW * i, 0, colW, totalH)
-    }
-  })
+//   // Alternating column tint
+//   data.forEach((_, i) => {
+//     if (i % 2 === 0) {
+//       ctx.fillStyle = dark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)'
+//       ctx.fillRect(leftPad + colW * i, 0, colW, totalH)
+//     }
+//   })
 
   // Baseline
   ctx.beginPath()
@@ -207,7 +209,7 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
 
     // Month label (X-axis at bottom)
     ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
-    ctx.fillText(d.month, cx, totalH - 8)
+    ctx.fillText(d.monthLabel, cx, totalH - 8)
 
     hitAreas.push({ cx, d })
   })
@@ -220,7 +222,7 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
     if (col >= 0 && col < hitAreas.length) {
       const { cx, d } = hitAreas[col]
       tooltip.innerHTML = `
-        <div class="pw-tt-month">${d.month}</div>
+        <div class="pw-tt-month">${d.tooltipLabel}</div>
         <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_INCOME}"></div>${t('dash.income')}: ${d.income.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>
         <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_EXPENSE}"></div>${t('dash.expense')}: ${d.expense.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
       tooltip.style.display = 'block'
@@ -295,7 +297,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
   // Dots + month labels
   data.forEach((d, i) => {
     ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
-    ctx.fillText(d.month, xOf(i), height - 5)
+    ctx.fillText(d.monthLabel, xOf(i), height - 5)
     if (d.net !== null) {
       ctx.beginPath(); ctx.arc(xOf(i), yOf(d.net), 3, 0, Math.PI * 2)
       ctx.fillStyle = C_NET; ctx.fill()
@@ -314,7 +316,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
     })
     if (minDist < 28 && data[closest].net !== null) {
       tooltip.innerHTML = `
-        <div class="pw-tt-month">${data[closest].month}</div>
+        <div class="pw-tt-month">${data[closest].tooltipLabel}</div>
         <div class="pw-tt-row"><div style="width:7px;height:7px;border-radius:50%;background:${C_NET}"></div>${t('dash.netAsset')}: ${data[closest].net!.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
       tooltip.style.display = 'block'
       tooltip.style.left = Math.min(xOf(closest) + 8, width - 130) + 'px'

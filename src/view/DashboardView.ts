@@ -1,8 +1,10 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
-import { t, translateCategory } from '../i18n'
+import { t, translateCategory, formatYearMonth } from '../i18n'
 import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
+import { DETAIL_VIEW_TYPE } from './DetailView'
+import { TREND_VIEW_TYPE } from './TrendView'
 
 export const DASHBOARD_VIEW_TYPE = 'penny-wallet-dashboard'
 
@@ -44,7 +46,7 @@ export class DashboardView extends ItemView {
 
     const monthNav = header.createDiv('pw-month-nav')
     const prevBtn = monthNav.createEl('button', { text: '‹', cls: 'pw-nav-btn' })
-    monthNav.createEl('span', { text: this.currentYearMonth, cls: 'pw-month-label' })
+    monthNav.createEl('span', { text: formatYearMonth(this.currentYearMonth), cls: 'pw-month-label' })
     const nextBtn = monthNav.createEl('button', { text: '›', cls: 'pw-nav-btn' })
 
     const isNextFuture = isAfterCurrentMonth(stepMonth(this.currentYearMonth, 1))
@@ -63,14 +65,13 @@ export class DashboardView extends ItemView {
     const trendBtn  = headerActions.createEl('button', { text: t('ui.trend'),  cls: 'pw-action-btn' })
     const addBtn    = headerActions.createEl('button', { text: '+ ' + t('ui.addTransaction'), cls: 'pw-action-btn' })
 
-    detailBtn.addEventListener('click', () => {
-      this.app.workspace.getLeaf('tab').setViewState({
-        type: 'penny-wallet-detail', active: true,
+    detailBtn.addEventListener('click', async () => {
+      await this.openOrRevealView(DETAIL_VIEW_TYPE, {
         state: { yearMonth: this.currentYearMonth },
       })
     })
-    trendBtn.addEventListener('click', () => {
-      this.app.workspace.getLeaf('tab').setViewState({ type: 'penny-wallet-trend', active: true })
+    trendBtn.addEventListener('click', async () => {
+      await this.openOrRevealView(TREND_VIEW_TYPE)
     })
     addBtn.addEventListener('click', () => {
       new TransactionModal(this.app, this.walletFile, {}, null, null,
@@ -137,6 +138,19 @@ export class DashboardView extends ItemView {
     incCard.createEl('div', { text: t('dash.incomeByCategory'), cls: 'pw-card-title' })
     if (incomeMap.size > 0) drawPie(incCard, incomeMap)
     else incCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
+  }
+
+  private async openOrRevealView(type: string, options?: { state?: Record<string, unknown> }) {
+    const existing = this.app.workspace.getLeavesOfType(type)
+    const leaf = existing[0] ?? this.app.workspace.getLeaf('tab')
+
+    await leaf.setViewState({
+      type,
+      active: true,
+      state: options?.state,
+    })
+
+    this.app.workspace.revealLeaf(leaf)
   }
 }
 

@@ -31,9 +31,9 @@ export default class PennyWalletPlugin extends Plugin {
 
     this.addRibbonIcon('pw-icon', 'PennyWallet', () => this.openDashboard())
 
-    this.addCommand({ id: 'open-dashboard', name: 'Open Overview', callback: () => this.openDashboard() })
+    this.addCommand({ id: 'open-dashboard', name: 'Open Finance Overview', callback: () => this.openDashboard() })
     this.addCommand({ id: 'add-transaction', name: 'Add Transaction', callback: () => this.openTransactionModal() })
-    this.addCommand({ id: 'open-detail', name: 'Open Records', callback: () => this.openDetailView() })
+    this.addCommand({ id: 'open-detail', name: 'Open Transactions', callback: () => this.openDetailView() })
 
     this.addSettingTab(new PennyWalletSettingTab(this.app, this, this.walletFile))
 
@@ -66,24 +66,15 @@ export default class PennyWalletPlugin extends Plugin {
   // ── Open Views ──────────────────────────────────────────────────────────────
 
   async openDashboard() {
-    const existing = this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE)
-    if (existing.length > 0) {
-      this.app.workspace.revealLeaf(existing[0])
-      return
-    }
-    const leaf = this.app.workspace.getLeaf('tab')
-    await leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: true })
-    this.app.workspace.revealLeaf(leaf)
+    await this.openOrRevealView(DASHBOARD_VIEW_TYPE)
   }
 
   async openDetailView(yearMonth?: string) {
-    const leaf = this.app.workspace.getLeaf('tab')
-    await leaf.setViewState({
-      type: DETAIL_VIEW_TYPE,
-      active: true,
-      state: yearMonth ? { yearMonth } : undefined,
-    })
-    this.app.workspace.revealLeaf(leaf)
+    await this.openOrRevealView(DETAIL_VIEW_TYPE, yearMonth ? { yearMonth } : undefined)
+  }
+
+  async openTrendView() {
+    await this.openOrRevealView(TREND_VIEW_TYPE)
   }
 
   openTransactionModal(params: TransactionModalParams = {}) {
@@ -124,5 +115,18 @@ export default class PennyWalletPlugin extends Plugin {
     this.app.workspace.getLeavesOfType(DETAIL_VIEW_TYPE).forEach((leaf: WorkspaceLeaf) => {
       (leaf.view as DetailView).render()
     })
+  }
+
+  private async openOrRevealView(type: string, state?: Record<string, unknown>) {
+    const existing = this.app.workspace.getLeavesOfType(type)
+    const leaf = existing[0] ?? this.app.workspace.getLeaf('tab')
+
+    await leaf.setViewState({
+      type,
+      active: true,
+      state,
+    })
+
+    this.app.workspace.revealLeaf(leaf)
   }
 }
