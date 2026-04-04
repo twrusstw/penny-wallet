@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
-import { t, translateCategory, formatYearMonth } from '../i18n'
+import { t, translateCategory } from '../i18n'
 import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
 import { DETAIL_VIEW_TYPE } from './DetailView'
 import { TREND_VIEW_TYPE } from './TrendView'
@@ -46,7 +46,7 @@ export class DashboardView extends ItemView {
 
     const monthNav = header.createDiv('pw-month-nav')
     const prevBtn = monthNav.createEl('button', { text: '‹', cls: 'pw-nav-btn' })
-    monthNav.createEl('span', { text: formatYearMonth(this.currentYearMonth), cls: 'pw-month-label' })
+    monthNav.createEl('span', { text: this.currentYearMonth, cls: 'pw-month-label' })
     const nextBtn = monthNav.createEl('button', { text: '›', cls: 'pw-nav-btn' })
 
     const isNextFuture = isAfterCurrentMonth(stepMonth(this.currentYearMonth, 1))

@@ -367,9 +367,9 @@ function addRectLegend(container: HTMLElement, color: string, label: string) {
   item.createEl('span', { text: label })
 }
 
-function addDotLegend(container: HTMLElement, color: string, label: string) {
-  const item = container.createDiv('pw-leg')
-  const dot = item.createEl('span', { cls: 'pw-leg-dot' })
-  dot.style.backgroundColor = color
-  item.createEl('span', { text: label })
-}
+// function addDotLegend(container: HTMLElement, color: string, label: string) {
+//   const item = container.createDiv('pw-leg')
+//   const dot = item.createEl('span', { cls: 'pw-leg-dot' })
+//   dot.style.backgroundColor = color
+//   item.createEl('span', { text: label })
+// }
