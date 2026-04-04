@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { t, translateCategory } from '../i18n'
+import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
 
 export const DASHBOARD_VIEW_TYPE = 'penny-wallet-dashboard'
 
@@ -109,7 +110,7 @@ export class DashboardView extends ItemView {
 
       const displayBalance = wallet.type === 'creditCard' ? -balance : balance
       row.createEl('span', {
-        text: formatAmount(displayBalance, dp),
+        text: formatAmount(Math.abs(displayBalance), dp),
         cls: 'pw-wallet-balance' + (displayBalance < 0 ? ' is-negative' : ''),
       })
     }
@@ -117,7 +118,7 @@ export class DashboardView extends ItemView {
     const netRow = walletCard.createDiv('pw-wallet-row pw-net-asset-row')
     netRow.createEl('span', { text: t('dash.netAsset'), cls: 'pw-net-label' })
     netRow.createEl('span', {
-      text: formatAmount(netAsset, dp),
+      text: formatAmount(Math.abs(netAsset), dp),
       cls: 'pw-net-value' + (netAsset < 0 ? ' is-negative' : ''),
     })
 
@@ -216,23 +217,4 @@ function createMetric(container: HTMLElement, label: string, value: number, cls:
     text: prefix + formatAmount(Math.abs(value), dp),
     cls: `pw-metric-value ${cls}`,
   })
-}
-
-function currentYearMonth(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function stepMonth(ym: string, delta: number): string {
-  const [y, m] = ym.split('-').map(Number)
-  const d = new Date(y, m - 1 + delta, 1)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function isAfterCurrentMonth(ym: string): boolean {
-  return ym > currentYearMonth()
-}
-
-function formatAmount(n: number, dp: 0 | 2 = 0): string {
-  return Math.abs(n).toLocaleString('zh-TW', { minimumFractionDigits: dp, maximumFractionDigits: dp })
 }

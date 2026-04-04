@@ -141,20 +141,6 @@ export class WalletFile {
       }
     }
 
-    for (const file of this.app.vault.getFiles()) {
-      if (file.path !== ROOT_CONFIG_PATH && !LEGACY_CONFIG_PATHS.includes(file.path)) continue
-
-      try {
-        const raw = await this.app.vault.read(file)
-        const parsed = JSON.parse(raw)
-        if (this.isValidConfigShape(parsed)) {
-          return file.path
-        }
-      } catch {
-        // Ignore unrelated or malformed config files.
-      }
-    }
-
     return ROOT_CONFIG_PATH
   }
 
@@ -439,7 +425,7 @@ export class WalletFile {
 
     const files = this.app.vault.getMarkdownFiles().filter((f: TFile) =>
       f.path.startsWith(this.config.folderName + '/') &&
-      /\d{4}-\d{2}\.md$/.test(f.basename + '.md'),
+      /^\d{4}-\d{2}$/.test(f.basename),
     )
 
     for (const file of files) {
@@ -469,13 +455,24 @@ export class WalletFile {
    * Compute the current balance of every wallet across all available months.
    */
   async calculateAllWalletBalances(): Promise<WalletBalance[]> {
+    const { balances } = await this.calculateWalletData()
+    return balances
+  }
+
+  async calculateWalletData(): Promise<{ balances: WalletBalance[]; walletsWithTransactions: Set<string> }> {
     const allMonths = await this.getAllYearMonths()
+    const monthTransactions = await Promise.all(allMonths.map(ym => this.readMonth(ym)))
     const allTransactions: Transaction[] = []
-    for (const ym of allMonths) {
-      const txs = await this.readMonth(ym)
-      allTransactions.push(...txs)
+    for (const txs of monthTransactions) allTransactions.push(...txs)
+
+    const walletsWithTransactions = new Set<string>()
+    for (const tx of allTransactions) {
+      if (tx.wallet)      walletsWithTransactions.add(tx.wallet)
+      if (tx.fromWallet)  walletsWithTransactions.add(tx.fromWallet)
+      if (tx.toWallet)    walletsWithTransactions.add(tx.toWallet)
     }
-    return this.computeWalletBalances(allTransactions)
+
+    return { balances: this.computeWalletBalances(allTransactions), walletsWithTransactions }
   }
 
   computeWalletBalances(transactions: Transaction[]): WalletBalance[] {
@@ -611,28 +608,70 @@ export class WalletFile {
     return result
   }
 
-  /**
-   * Compute cumulative net asset at each target month by replaying all transactions
-   * from inception up to each month. Used by TrendView.
-   */
   async getNetAssetTimeline(targetMonths: string[]): Promise<Map<string, number>> {
     const allAvailableMonths = await this.getAllYearMonths()
     const lastTarget = targetMonths[targetMonths.length - 1]
     const relevantMonths = allAvailableMonths.filter(m => m <= lastTarget).sort()
 
-    const accumulated: Transaction[] = []
+    const monthTransactions = await Promise.all(relevantMonths.map(ym => this.readMonth(ym)))
+
+    // Seed the balance map from each wallet's initialBalance
+    const balanceMap = new Map<string, number>()
+    for (const w of this.config.wallets) {
+      balanceMap.set(w.name, w.initialBalance)
+    }
+
     const result = new Map<string, number>()
 
-    for (const ym of relevantMonths) {
-      const txs = await this.readMonth(ym)
-      accumulated.push(...txs)
-      if (targetMonths.includes(ym)) {
-        const balances = this.computeWalletBalances(accumulated)
-        result.set(ym, this.computeNetAsset(balances))
+    for (let i = 0; i < relevantMonths.length; i++) {
+      for (const tx of monthTransactions[i]) {
+        this.applyTxToBalanceMap(tx, balanceMap)
+      }
+      if (targetMonths.includes(relevantMonths[i])) {
+        result.set(relevantMonths[i], this.computeNetAssetFromMap(balanceMap))
       }
     }
 
     return result
+  }
+
+  private applyTxToBalanceMap(tx: Transaction, map: Map<string, number>): void {
+    const walletType = (name: string) => this.config.wallets.find(w => w.name === name)?.type
+    switch (tx.type) {
+      case 'expense':
+        if (tx.wallet && map.has(tx.wallet)) {
+          const delta = walletType(tx.wallet) === 'creditCard' ? tx.amount : -tx.amount
+          map.set(tx.wallet, (map.get(tx.wallet) ?? 0) + delta)
+        }
+        break
+      case 'income':
+        if (tx.wallet && map.has(tx.wallet)) {
+          map.set(tx.wallet, (map.get(tx.wallet) ?? 0) + tx.amount)
+        }
+        break
+      case 'transfer':
+        if (tx.fromWallet && map.has(tx.fromWallet))
+          map.set(tx.fromWallet, (map.get(tx.fromWallet) ?? 0) - tx.amount)
+        if (tx.toWallet && map.has(tx.toWallet))
+          map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) + tx.amount)
+        break
+      case 'repayment':
+        if (tx.fromWallet && map.has(tx.fromWallet))
+          map.set(tx.fromWallet, (map.get(tx.fromWallet) ?? 0) - tx.amount)
+        if (tx.toWallet && map.has(tx.toWallet))
+          map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) - tx.amount)
+        break
+    }
+  }
+
+  private computeNetAssetFromMap(map: Map<string, number>): number {
+    let net = 0
+    for (const w of this.config.wallets) {
+      if (!w.includeInNetAsset) continue
+      const balance = map.get(w.name) ?? 0
+      net += w.type === 'creditCard' ? -balance : balance
+    }
+    return net
   }
 
   private getLocaleCashName(): string {

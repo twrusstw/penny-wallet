@@ -181,6 +181,8 @@
   background: var(--background-secondary);
 }
 
+.pw-ml-auto { margin-left: auto; }
+
 /* Legacy class names for compatibility */
 .pw-add-btn, .pw-trend-btn, .pw-detail-btn {
   background: none;
@@ -355,7 +357,7 @@
   color: var(--text-muted);
 }
 
-.pw-legend-name { flex: 1; }
+.pw-legend-name { min-width: 0; }
 
 .pw-legend-dot {
   width: 10px;

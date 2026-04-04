@@ -42,7 +42,7 @@ Two actions are supported:
 - **Open modal** (default) — open the transaction form with fields pre-filled
 - **Query lists** (`cmd=list`) — copy available accounts or categories to the clipboard
 
-See [docs/uri-handler.md](docs/uri-handler.md) for the full parameter reference, and [docs/ios-shortcuts.md](docs/ios-shortcuts.md) for step-by-step iOS Shortcuts setup.
+See [docs/ios-shortcuts.md](docs/ios-shortcuts.md) for step-by-step iOS Shortcuts setup.
 
 <!-- screenshot: iOS shortcut example -->
 

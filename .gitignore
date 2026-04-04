@@ -2,6 +2,7 @@ node_modules/
 *.local
 .DS_Store
 .claude/
+.vscode/
 main.js
 # only keep community-plugins.json
 demo-vault/.penny-wallet.json

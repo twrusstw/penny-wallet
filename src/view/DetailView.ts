@@ -1,8 +1,10 @@
-import { ItemView, Modal, WorkspaceLeaf, Notice } from 'obsidian'
+import { ItemView, WorkspaceLeaf, Notice } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
+import { ConfirmModal } from '../modal/ConfirmModal'
 import { t, translateCategory } from '../i18n'
 import { Transaction, TransactionType } from '../types'
+import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
 
 export const DETAIL_VIEW_TYPE = 'penny-wallet-detail'
 
@@ -65,7 +67,7 @@ export class DetailView extends ItemView {
     })
 
     const addBtn = navRow.createEl('button', { text: '+ ' + t('ui.addTransaction'), cls: 'pw-action-btn' })
-    addBtn.style.marginLeft = 'auto'
+    addBtn.addClass('pw-ml-auto')
     addBtn.addEventListener('click', () => {
       new TransactionModal(this.app, this.walletFile, {}, null, null,
         () => (this.app.workspace as any).trigger('penny-wallet:refresh')
@@ -215,48 +217,6 @@ export class DetailView extends ItemView {
   }
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────────
-
-class ConfirmModal extends Modal {
-  private message: string
-  private onConfirm: () => void
-
-  constructor(app: any, message: string, onConfirm: () => void) {
-    super(app)
-    this.message = message
-    this.onConfirm = onConfirm
-  }
-
-  onOpen() {
-    const { contentEl } = this
-    contentEl.createEl('p', { text: this.message })
-    const row = contentEl.createDiv('pw-btn-row')
-    row.createEl('button', { text: t('ui.confirm'), cls: 'mod-warning' })
-      .addEventListener('click', () => { this.close(); this.onConfirm() })
-    row.createEl('button', { text: t('ui.cancel') })
-      .addEventListener('click', () => this.close())
-  }
-
-  onClose() { this.contentEl.empty() }
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function currentYearMonth(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function stepMonth(ym: string, delta: number): string {
-  const [y, m] = ym.split('-').map(Number)
-  const d = new Date(y, m - 1 + delta, 1)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function isAfterCurrentMonth(ym: string): boolean {
-  return ym > currentYearMonth()
-}
-
-function formatAmount(n: number, dp: 0 | 2 = 0): string {
-  return n.toLocaleString('zh-TW', { minimumFractionDigits: dp, maximumFractionDigits: dp })
-}
+// currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount → src/utils.ts
+// ConfirmModal → src/modals.ts

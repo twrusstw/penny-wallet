@@ -64,7 +64,10 @@ export class TransactionModal extends Modal {
     } else {
       this.type = (this.params.type as TransactionType) ?? 'expense'
       this.date = this.params.date ?? todayString()
-      this.wallet = this.params.wallet ?? config.defaultWallet ?? ''
+      const activeWallets = config.wallets.filter(w => w.status === 'active')
+      const defaultWallet = activeWallets.find(w => w.name === config.defaultWallet)
+        ?? activeWallets[0]
+      this.wallet = this.params.wallet ?? defaultWallet?.name ?? ''
       this.fromWallet = this.params.fromWallet ?? ''
       this.toWallet = this.params.toWallet ?? ''
       this.category = this.params.category ?? ''
@@ -95,7 +98,7 @@ export class TransactionModal extends Modal {
     const confirmBtn = btnRow.createEl('button', { text: t('ui.confirm'), cls: 'mod-cta' })
     const cancelBtn = btnRow.createEl('button', { text: t('ui.cancel') })
 
-    confirmBtn.addEventListener('click', () => this.handleConfirm(config))
+    confirmBtn.addEventListener('click', () => this.handleConfirm())
     cancelBtn.addEventListener('click', () => this.close())
   }
 
@@ -210,7 +213,7 @@ export class TransactionModal extends Modal {
       input.setAttribute('enterkeyhint', 'done')
       input.addEventListener('input', () => { this.amount = input.value })
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur() })
-      setTimeout(() => input.focus(), 50)
+      setTimeout(() => input.focus(), 50) // wait for modal open animation to complete
       return input
     })
   }
@@ -275,7 +278,7 @@ export class TransactionModal extends Modal {
     return true
   }
 
-  private async handleConfirm(_config: PennyWalletConfig) {
+  private async handleConfirm() {
     if (!this.validate()) return
 
     const newTx: Transaction = {

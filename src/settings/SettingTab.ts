@@ -1,12 +1,13 @@
-import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian'
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
+import { ConfirmModal } from '../modal/ConfirmModal'
 import { Wallet, WalletBalance, WalletType } from '../types'
 import { t, tn } from '../i18n'
 
 export class PennyWalletSettingTab extends PluginSettingTab {
   private walletFile: WalletFile
 
-  constructor(app: App, plugin: any, walletFile: WalletFile) {
+  constructor(app: App, plugin: Plugin, walletFile: WalletFile) {
     super(app, plugin)
     this.walletFile = walletFile
   }
@@ -17,12 +18,15 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     containerEl.createEl('h2', { text: t('settings.title') })
 
     let walletBalances: WalletBalance[] = []
+    let walletsWithTransactions = new Set<string>()
     try {
-      walletBalances = await this.walletFile.calculateAllWalletBalances()
+      const data = await this.walletFile.calculateWalletData()
+      walletBalances = data.balances
+      walletsWithTransactions = data.walletsWithTransactions
     } catch { /* show initial balance only if calculation fails */ }
 
     this.renderGeneral()
-    this.renderActiveWallets(walletBalances)
+    this.renderActiveWallets(walletBalances, walletsWithTransactions)
     this.renderArchivedWallets()
     this.renderAddWallet()
     this.renderCategories()
@@ -74,7 +78,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       })
   }
 
-  private renderActiveWallets(walletBalances: WalletBalance[]) {
+  private renderActiveWallets(walletBalances: WalletBalance[], walletsWithTransactions: Set<string>) {
     const config = this.walletFile.getConfig()
     const { containerEl } = this
 
@@ -112,9 +116,8 @@ export class PennyWalletSettingTab extends PluginSettingTab {
               this.display()
             }).open()
           }))
-        .addButton(async btn => {
-          const hasHistory = await this.walletFile.walletHasTransactions(wallet.name)
-          if (hasHistory) {
+        .addButton(btn => {
+          if (walletsWithTransactions.has(wallet.name)) {
             btn.setButtonText(t('ui.archive'))
               .setWarning()
               .onClick(() => {
@@ -295,6 +298,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       t('settings.expenseCategories'),
       config.options.categories.expense.custom,
       config.options.categories.income.custom,
+      config.options.categories.expense.default,
       async (updated) => {
         const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
         const scrollTop = scrollEl?.scrollTop ?? 0
@@ -313,6 +317,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       t('settings.incomeCategories'),
       config.options.categories.income.custom,
       config.options.categories.expense.custom,
+      config.options.categories.income.default,
       async (updated) => {
         const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
         const scrollTop = scrollEl?.scrollTop ?? 0
@@ -330,6 +335,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     title: string,
     categories: string[],
     otherCategories: string[],
+    defaultKeys: readonly string[],
     onChange: (updated: string[]) => void,
   ) {
     container.createEl('div', { text: title, cls: 'pw-setting-input-subtitle' })
@@ -354,7 +360,8 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     addBtn.addEventListener('click', () => {
       const val = input.value.trim()
       if (!val) return
-      if (categories.includes(val)) { new Notice(t('err.categoryExists')); return }
+      if (defaultKeys.includes(val))     { new Notice(t('err.categoryExists')); return }
+      if (categories.includes(val))      { new Notice(t('err.categoryExists')); return }
       if (otherCategories.includes(val)) { new Notice(t('err.categoryExistsInOtherList')); return }
       onChange([...categories, val])
     })
@@ -424,27 +431,4 @@ class WalletEditModal extends Modal {
   onClose() { this.contentEl.empty() }
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────────
-
-class ConfirmModal extends Modal {
-  private message: string
-  private onConfirm: () => void
-
-  constructor(app: App, message: string, onConfirm: () => void) {
-    super(app)
-    this.message = message
-    this.onConfirm = onConfirm
-  }
-
-  onOpen() {
-    const { contentEl } = this
-    contentEl.createEl('p', { text: this.message })
-    const row = contentEl.createDiv('pw-btn-row')
-    row.createEl('button', { text: t('ui.confirm'), cls: 'mod-warning' })
-      .addEventListener('click', () => { this.close(); this.onConfirm() })
-    row.createEl('button', { text: t('ui.cancel') })
-      .addEventListener('click', () => this.close())
-  }
-
-  onClose() { this.contentEl.empty() }
-}
+// ConfirmModal → src/modals.ts

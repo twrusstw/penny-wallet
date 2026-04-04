@@ -58,10 +58,16 @@ const wallets = [
 
 const config = {
   wallets,
-  customExpenseCategories: [],
-  customIncomeCategories: [],
   defaultWallet: CASH_WALLET,
   folderName: 'ledgers',
+  decimalPlaces: 0,
+  options: {
+    types: { default: ['expense', 'income', 'transfer', 'repayment'], custom: [] },
+    categories: {
+      expense: { default: ['food', 'transport', 'shopping', 'entertainment', 'medical', 'housing', 'other'], custom: [] },
+      income:  { default: ['salary', 'bonus', 'side_income', 'other'], custom: [] },
+    },
+  },
 }
 
 const configPath = path.join(vaultRoot, '.penny-wallet.json')
