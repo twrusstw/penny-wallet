@@ -6,10 +6,10 @@ A personal finance tracker for Obsidian. Log expenses, income, transfers, and cr
 
 ## Features
 
-- **Dashboard** — monthly income / expense summary, wallet balances, net asset, and category pie charts
-- **Detail view** — filterable transaction list with inline edit and delete
-- **Trend view** — 3 / 6 / 12-month bar and line charts
-- **Multiple wallets** — cash, bank account, credit card
+- **Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
+- **Records** — filterable transaction list with inline edit and delete
+- **Statistics** — 3 / 6 / 12-month bar and line charts
+- **Multiple accounts** — cash, bank account, credit card
 - **iOS Shortcuts** — add transactions via URI without opening Obsidian
 - **Bilingual** — English and Traditional Chinese (follows Obsidian language setting)
 
@@ -25,23 +25,24 @@ Search **PennyWallet** in Obsidian → Community Plugins.
 
 ## Getting Started
 
-1. Enable PennyWallet — a wallet icon appears in the left ribbon
-2. Go to **Settings → PennyWallet** to add your wallets (cash, bank, credit card) with initial balances
+1. Enable PennyWallet — a balloon icon appears in the left ribbon
+2. Go to **Settings → PennyWallet** to add your accounts (cash, bank, credit card) with initial balances
 3. Click the ribbon icon or run **Add Transaction** from the Command Palette to log your first transaction
 
-<!-- screenshot: settings wallets -->
+<!-- screenshot: settings accounts -->
 
 <!-- screenshot: transaction modal -->
 
-## iOS Shortcuts
+## URI Handler
 
-Trigger the transaction modal pre-filled from an iOS Shortcut:
+PennyWallet registers the `obsidian://penny-wallet` URI scheme, allowing external apps — including iOS Shortcuts, Android automation tools, or any app that can open URLs — to interact with the plugin without manual input.
 
-```
-obsidian://penny-wallet?type=expense&amount=250&note=Lunch&category=food&wallet=Cash&date=2026-04-03
-```
+Two actions are supported:
 
-All parameters except `amount` are optional. Omitted fields use defaults (today's date, default wallet, expense type).
+- **Open modal** (default) — open the transaction form with fields pre-filled
+- **Query lists** (`cmd=list`) — copy available accounts or categories to the clipboard
+
+See [docs/uri-handler.md](docs/uri-handler.md) for the full parameter reference, and [docs/ios-shortcuts.md](docs/ios-shortcuts.md) for step-by-step iOS Shortcuts setup.
 
 <!-- screenshot: iOS shortcut example -->
 
@@ -50,18 +51,19 @@ All parameters except `amount` are optional. Omitted fields use defaults (today'
 Transactions are stored as Markdown tables — one file per month:
 
 ```
-ledgers/
-├── 2026-04.md
-├── 2026-03.md
-└── .penny-wallet.json
+<vault>/
+├── .penny-wallet.json   ← config + available options (accounts, categories)
+└── PennyWallet/
+    ├── 2026-04.md
+    └── 2026-03.md
 ```
 
-Each file has a frontmatter cache (`income`, `expense`, `netAsset`) for fast Dashboard loading, and a plain Markdown table of transactions. Compatible with Git sync and Dataview queries.
+Each month file has a frontmatter cache (`income`, `expense`, `netAsset`) for fast Overview loading, and a plain Markdown table of transactions. Compatible with Git sync and Dataview queries.
 
 <!-- screenshot: raw markdown file -->
 
 ## Views
 
-<!-- screenshot: detail view -->
+<!-- screenshot: records view -->
 
-<!-- screenshot: trend view -->
+<!-- screenshot: statistics view -->
