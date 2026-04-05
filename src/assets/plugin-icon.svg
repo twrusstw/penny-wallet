@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Source: tabler-icons wallet.svg (MIT), scaled to 100x100 canvas -->
+  <g transform="translate(0 0) scale(4.1666667)" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 8V5A1 1 0 0 0 16 4H6A2 2 0 0 0 6 8H18A1 1 0 0 1 19 9V12M19 16V19A1 1 0 0 1 18 20H6A2 2 0 0 1 4 18V6" />
+    <path d="M20 12V16H16A2 2 0 0 1 16 12H20" />
+  </g>
+</svg>

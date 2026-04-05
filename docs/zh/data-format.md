@@ -56,7 +56,7 @@ netAsset: 0
 
 ### Frontmatter 快取
 
-頂部的 `income`、`expense`、`netAsset` 欄位是快取，用於財務總覽和資產統計檢視的快速載入。每次新增、編輯或刪除交易時會自動重新計算。
+頂部的 `income`、`expense`、`netAsset` 欄位是快取，用於帳本總覽和資產統計檢視的快速載入。每次新增、編輯或刪除交易時會自動重新計算。
 
 > 請勿手動編輯 frontmatter — 下次寫入交易時會被覆蓋。
 

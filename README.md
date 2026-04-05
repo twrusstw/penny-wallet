@@ -2,6 +2,8 @@
 
 A personal finance tracker plugin for [Obsidian](https://obsidian.md). Log expenses, income, transfers, and credit card repayments — all stored as plain Markdown tables in your vault.
 
+**Documentation:** [English](https://twrusstw.github.io/penny-wallet/) · [繁體中文](https://twrusstw.github.io/penny-wallet/zh/)
+
 ## Features
 
 - **Finance Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
@@ -27,7 +29,7 @@ Search **PennyWallet** in **Settings → Community Plugins → Browse**.
 ## Getting Started
 
 1. Enable PennyWallet — a balloon icon appears in the left ribbon
-2. Open **Settings → PennyWallet** and add your accounts with their current balances
+2. Open **Settings → PennyWallet** and add your accounts with their current balances ([Settings guide](https://twrusstw.github.io/penny-wallet/settings) · [中文說明](https://twrusstw.github.io/penny-wallet/zh/settings))
 3. Click the ribbon icon or run **Add Transaction** from the Command Palette to log your first entry
 
 ## Transaction Types
@@ -74,6 +76,14 @@ Add, edit, or archive accounts. Manage custom expense and income categories.
 ## URI Handler
 
 PennyWallet registers the `obsidian://penny-wallet` URI scheme, allowing external apps — including iOS Shortcuts — to open the transaction form with fields pre-filled.
+
+```
+obsidian://penny-wallet?type=expense&amount=280&category=food&note=Lunch
+```
+
+Supported parameters: `type`, `amount`, `note`, `category`, `wallet`, `fromWallet`, `toWallet`, `date`.
+
+→ [Full URI Handler & iOS Shortcuts guide](https://twrusstw.github.io/penny-wallet/uri-handler)
 
 ## Data Format
 

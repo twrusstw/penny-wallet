@@ -7,6 +7,7 @@ import { TrendView, TREND_VIEW_TYPE } from './view/TrendView'
 import { PennyWalletSettingTab } from './settings/SettingTab'
 import { TransactionModalParams } from './types'
 import { initI18n, t } from './i18n'
+import pluginIcon from './assets/plugin-icon.svg'
 
 export default class PennyWalletPlugin extends Plugin {
   walletFile!: WalletFile
@@ -14,13 +15,7 @@ export default class PennyWalletPlugin extends Plugin {
   async onload() {
     initI18n()
 
-    addIcon('pw-icon', `
-      <ellipse cx="50" cy="40" rx="28" ry="32" fill="none" stroke="currentColor" stroke-width="6"/>
-      <path d="M 44,71 L 50,77 L 56,71" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M 50,77 Q 60,87 44,96" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-      <path d="M 62,33 A 14,14 0 1 0 62,47" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
-      <line x1="50" y1="24" x2="50" y2="56" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
-    `)
+    addIcon('pw-icon', pluginIcon.replace(/^<svg[^>]*>|<\/svg>\s*$/g, ''))
 
     this.walletFile = new WalletFile(this.app)
 

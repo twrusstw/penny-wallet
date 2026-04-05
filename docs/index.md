@@ -5,6 +5,9 @@ hero:
   name: PennyWallet
   text: Personal Finance Tracker for Obsidian
   tagline: Log expenses, income, transfers, and credit card repayments as plain Markdown files in your vault.
+  image:
+    src: /finance-overview.png
+    alt: PennyWallet dashboard screenshot
   actions:
     - theme: brand
       text: Get Started

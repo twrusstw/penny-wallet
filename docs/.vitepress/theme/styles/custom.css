@@ -1,0 +1,107 @@
+:root {
+  --vp-c-brand-1: #0f8a5f;
+  --vp-c-brand-2: #12a06d;
+  --vp-c-brand-3: #0c6e4b;
+
+  --vp-button-brand-bg: #0f8a5f;
+  --vp-button-brand-hover-bg: #12a06d;
+  --vp-button-brand-active-bg: #0c6e4b;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-active-border: transparent;
+  --vp-button-brand-text: #ffffff;
+
+  --vp-home-hero-name-color: #0f8a5f;
+  --vp-home-hero-name-background: linear-gradient(120deg, #0f8a5f 35%, #d9a441 100%);
+  --vp-home-hero-image-background-image: radial-gradient(circle at 30% 30%, rgba(15, 138, 95, 0.22), rgba(217, 164, 65, 0.18));
+  --vp-home-hero-image-filter: blur(42px);
+
+  --vp-c-tip-1: #0f8a5f;
+  --vp-c-tip-2: #12a06d;
+  --vp-c-tip-3: #0c6e4b;
+}
+
+.dark {
+  --vp-c-brand-1: #27c084;
+  --vp-c-brand-2: #33d693;
+  --vp-c-brand-3: #1ea36f;
+
+  --vp-button-brand-bg: #27c084;
+  --vp-button-brand-hover-bg: #33d693;
+  --vp-button-brand-active-bg: #1ea36f;
+
+  --vp-home-hero-name-color: #8fe9c4;
+  --vp-home-hero-name-background: linear-gradient(120deg, #8fe9c4 30%, #f0c46a 100%);
+  --vp-home-hero-image-background-image: radial-gradient(circle at 30% 30%, rgba(39, 192, 132, 0.28), rgba(240, 196, 106, 0.2));
+}
+
+/* Desktop hero image sizing and card-like visual treatment. */
+.VPHero.has-image .image {
+  flex: 0 0 min(64%, 900px);
+}
+
+.VPHero.has-image .image-container {
+  width: 100%;
+  max-width: 900px;
+}
+
+.VPHero.has-image .image-bg,
+.VPHero.has-image .image-src {
+  border-radius: 18px;
+}
+
+.VPHero.has-image .image-src {
+  display: block;
+  width: 100%;
+  height: auto;
+  box-shadow: 0 20px 56px rgba(12, 110, 75, 0.22);
+}
+
+/* Mobile hero tuning: keep text-first flow, reduce gap, and make image larger without distortion. */
+@media (max-width: 960px) {
+  .VPHero.has-image .container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .VPHero.has-image .main {
+    order: 1;
+    margin-bottom: 0;
+  }
+
+  .VPHero.has-image .actions {
+    margin-bottom: 6px;
+  }
+
+  .VPHero.has-image .image {
+    order: 2;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .VPHero.has-image .image-container {
+    width: min(calc(100vw - 24px), 760px);
+    max-width: 100%;
+    margin: 0 auto;
+    height: auto;
+  }
+
+  .VPHero.has-image .image-bg,
+  .VPHero.has-image .image-src {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 14px;
+  }
+
+  .VPHero.has-image .image-src {
+    position: static;
+    transform: none;
+    max-width: none;
+    max-height: none;
+  }
+}

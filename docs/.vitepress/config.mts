@@ -2,6 +2,11 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   base: '/penny-wallet/',
+  head: [
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/penny-wallet/favicon-32.png?v=2' }],
+    ['link', { rel: 'shortcut icon', href: '/penny-wallet/favicon-32.png?v=2' }],
+    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/penny-wallet/apple-touch-icon.png?v=2' }],
+  ],
 
   locales: {
     root: {
