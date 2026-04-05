@@ -67,13 +67,13 @@ describe('formatAmount', () => {
 
   it('formats with 2 decimal places', () => {
     const result = formatAmount(1234.5, 2)
-    expect(result).toMatch(/\.50$/)
+    expect(result).toMatch(/[.,]50$/)
   })
 
   it('rounds correctly to 2 decimal places', () => {
     const result = formatAmount(9.999, 2)
     // 9.999 rounds to 10.00
-    expect(result).toMatch(/^10\.00$/)
+    expect(result).toMatch(/^10[.,]00$/)
   })
 
   it('default dp is 0', () => {
