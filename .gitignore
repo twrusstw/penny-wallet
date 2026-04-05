@@ -5,6 +5,7 @@ docs/.vitepress/cache
 .DS_Store
 .claude/
 .vscode/
+coverage/
 main.js
 # Ignore generated demo-vault data; keep only the checked-in plugin list.
 demo-vault/*

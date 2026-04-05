@@ -347,9 +347,12 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
   const netValues = data.map(d => d.net).filter(d => d !== null) as number[]
   if (netValues.length === 0) return
 
-  const minVal = Math.min(...netValues) * 0.88
-  const maxVal = Math.max(...netValues) * 1.08
-  const range  = maxVal - minVal || 1
+  const rawMin  = Math.min(...netValues)
+  const rawMax  = Math.max(...netValues)
+  const padding = (rawMax - rawMin) * 0.1 || Math.abs(rawMax) * 0.1 || 10
+  const minVal  = rawMin - padding
+  const maxVal  = rawMax + padding
+  const range   = maxVal - minVal
 
   const dark      = document.body.classList.contains('theme-dark')
   const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
@@ -540,9 +543,12 @@ function drawWalletTrendChart(
 
   const walletNames = [...walletTrend.keys()]
   const allValues   = walletNames.flatMap(name => months.map(ym => walletTrend.get(name)!.get(ym) ?? 0))
-  const minVal      = Math.min(...allValues) * 0.9
-  const maxVal      = Math.max(...allValues) * 1.08
-  const range       = maxVal - minVal || 1
+  const rawMin  = Math.min(...allValues)
+  const rawMax  = Math.max(...allValues)
+  const padding = (rawMax - rawMin) * 0.1 || Math.abs(rawMax) * 0.1 || 10
+  const minVal  = rawMin - padding
+  const maxVal  = rawMax + padding
+  const range   = maxVal - minVal
 
   const dark       = document.body.classList.contains('theme-dark')
   const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
@@ -603,7 +609,7 @@ function drawWalletTrendChart(
       const rows = walletNames.map((name, wi) => {
         const val = walletTrend.get(name)!.get(ym) ?? 0
         const color = colors[wi % colors.length]
-        return `<div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${color}"></div>${name}: ${val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
+        return `<div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${color}"></div>${escapeHtml(name)}: ${val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
       }).join('')
       tooltip.innerHTML = `<div class="pw-tt-month">${data[closest].tooltipLabel}</div>${rows}`
       tooltip.style.display = 'block'
@@ -617,6 +623,10 @@ function drawWalletTrendChart(
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
 
 function getMonthRange(count: number): string[] {
   const result: string[] = []

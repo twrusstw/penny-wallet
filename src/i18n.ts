@@ -29,7 +29,7 @@ const translations = {
 
     // UI labels
     'ui.addTransaction': '新增交易',
-    'ui.trend': '統計',
+    'ui.trend': '趨勢',
     'ui.detail': '明細',
     'ui.confirm': '確認',
     'ui.cancel': '取消',

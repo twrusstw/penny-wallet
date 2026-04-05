@@ -161,13 +161,6 @@ export class DetailView extends ItemView {
         const catPanel = catDropdown.createDiv('pw-cat-panel')
         if (!this.catPanelOpen) catPanel.style.display = 'none'
 
-        catToggleBtn.addEventListener('click', (e) => {
-          e.stopPropagation()
-          this.catPanelOpen = !this.catPanelOpen
-          catPanel.style.display = this.catPanelOpen ? '' : 'none'
-          updateToggleLabel()
-        })
-
         // Close on outside click
         const onOutsideClick = (e: MouseEvent) => {
           if (!catDropdown.contains(e.target as Node)) {
@@ -177,8 +170,24 @@ export class DetailView extends ItemView {
             document.removeEventListener('click', onOutsideClick)
           }
         }
-        document.addEventListener('click', onOutsideClick)
         this.register(() => document.removeEventListener('click', onOutsideClick))
+
+        // Re-register if panel was open before render (e.g. type pill clicked while dropdown open)
+        if (this.catPanelOpen) {
+          document.addEventListener('click', onOutsideClick)
+        }
+
+        catToggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          this.catPanelOpen = !this.catPanelOpen
+          catPanel.style.display = this.catPanelOpen ? '' : 'none'
+          updateToggleLabel()
+          if (this.catPanelOpen) {
+            document.addEventListener('click', onOutsideClick)
+          } else {
+            document.removeEventListener('click', onOutsideClick)
+          }
+        })
 
         // 全部 item
         const allItem = catPanel.createDiv('pw-cat-item')

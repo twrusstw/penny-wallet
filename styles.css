@@ -702,8 +702,13 @@
   flex-shrink: 0;
   padding: 8px 16px;
   border-top: 1px solid var(--background-modifier-border);
-  border-top: 1px solid var(--background-modifier-border);
   font-size: 13px;
+}
+
+@media (pointer: coarse) {
+  .pw-subtotal-row {
+    padding-bottom: calc(8px + var(--mobile-toolbar-height, 48px) + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .pw-subtotal-income  { color: #5DCAA5; font-weight: 600; }
