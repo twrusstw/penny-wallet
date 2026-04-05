@@ -27,10 +27,11 @@
     overflow-y: auto;
   }
 
-  /* Wallet edit modal: JS-class fallback for older iOS without :has() support */
+  /* Wallet edit modal: JS-class fallback for older iOS without :has() support.
+     Use padding-bottom instead of align-items:flex-start so the small modal
+     stays centered in the upper portion of the screen rather than jumping to the top. */
   .pw-wallet-edit-modal-container.pw-wallet-edit-keyboard-open {
-    align-items: flex-start;
-    padding-top: 16px;
+    padding-bottom: 40vh;
   }
 }
 
