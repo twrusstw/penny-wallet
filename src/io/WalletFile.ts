@@ -109,6 +109,7 @@ export function dateToMonthDay(date: string): string {
 export class WalletFile {
   private app: App
   private config: PennyWalletConfig = { ...DEFAULT_CONFIG }
+  private createdDefaultConfigOnLastLoad = false
 
   constructor(app: App) {
     this.app = app
@@ -121,6 +122,8 @@ export class WalletFile {
   // ── Config ──────────────────────────────────────────────────────────────────
 
   async loadConfig(): Promise<PennyWalletConfig> {
+    this.createdDefaultConfigOnLastLoad = false
+
     const path = ROOT_CONFIG_PATH
     const file = this.app.vault.getFileByPath(path)
 
@@ -146,6 +149,7 @@ export class WalletFile {
         defaultWallet: cashName,
       }
       await this.saveConfig()
+      this.createdDefaultConfigOnLastLoad = true
       return this.config
     }
 
@@ -156,6 +160,10 @@ export class WalletFile {
       this.config = { ...DEFAULT_CONFIG }
     }
     return this.config
+  }
+
+  didCreateDefaultConfigOnLastLoad(): boolean {
+    return this.createdDefaultConfigOnLastLoad
   }
 
   updateCustomCategories(type: 'expense' | 'income', custom: string[]): void {

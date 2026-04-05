@@ -398,23 +398,37 @@ class WalletEditModal extends Modal {
   }
 
   onOpen() {
-    const { contentEl } = this
+    const { contentEl, containerEl } = this
+    containerEl.addClass('pw-wallet-edit-modal-container')
+    contentEl.addClass('pw-modal')
     contentEl.createEl('h2', { text: t('ui.edit') })
 
     const formEl = contentEl.createDiv('pw-wallet-edit-form')
+    const syncKeyboardState = () => {
+      const activeEl = document.activeElement
+      const isEditingFieldFocused = !!activeEl && formEl.contains(activeEl)
+      containerEl.toggleClass('pw-wallet-edit-keyboard-open', isEditingFieldFocused)
+    }
+
+    formEl.addEventListener('focusin', syncKeyboardState)
+    formEl.addEventListener('focusout', () => window.requestAnimationFrame(syncKeyboardState))
 
     const nameRow = formEl.createDiv('pw-wallet-edit-field')
     nameRow.createEl('label', { text: t('settings.walletName'), cls: 'pw-wallet-edit-label' })
     const nameInput = nameRow.createEl('input', { type: 'text', cls: 'pw-field-input' })
     nameInput.value = this.name
+    nameInput.setAttribute('enterkeyhint', 'done')
     nameInput.addEventListener('input', () => { this.name = nameInput.value.trim() })
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') nameInput.blur() })
 
     const balanceRow = formEl.createDiv('pw-wallet-edit-field')
     balanceRow.createEl('label', { text: t('settings.initialBalance'), cls: 'pw-wallet-edit-label' })
     const balInput = balanceRow.createEl('input', { type: 'number', cls: 'pw-field-input' })
     balInput.value = String(this.balance)
     balInput.setAttribute('min', '0')
+    balInput.setAttribute('enterkeyhint', 'done')
     balInput.addEventListener('input', () => { this.balance = parseFloat(balInput.value) || 0 })
+    balInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') balInput.blur() })
 
     formEl.createEl('p', {
       text: this.wallet.type === 'creditCard'
@@ -438,7 +452,10 @@ class WalletEditModal extends Modal {
     btnRow.createEl('button', { text: t('ui.cancel') }).addEventListener('click', () => this.close())
   }
 
-  onClose() { this.contentEl.empty() }
+  onClose() {
+    this.containerEl.removeClass('pw-wallet-edit-modal-container', 'pw-wallet-edit-keyboard-open')
+    this.contentEl.empty()
+  }
 }
 
 // ConfirmModal → src/modals.ts

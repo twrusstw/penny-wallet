@@ -18,6 +18,7 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 | `amount` | 否 | 金額 | `250` |
 | `note` | 否 | 備註 | `午餐` |
 | `category` | 否 | 分類 key（預設分類）或自訂名稱 | `food` / `transport` / `我的分類` |
+| `vault` | 否 | 目標 vault 名稱。若多個 vault 都安裝 PennyWallet，建議一定要帶 | `我的記帳庫` |
 | `wallet` | 否 | 帳戶名稱（支出 / 收入用） | `玉山銀行` |
 | `fromWallet` | 否 | 來源帳戶（轉帳 / 還款用） | `玉山銀行` |
 | `toWallet` | 否 | 目標帳戶（轉帳 / 還款用） | `玉山信用卡` |
@@ -50,6 +51,11 @@ obsidian://penny-wallet?type=expense
 **預填金額與分類：**
 ```
 obsidian://penny-wallet?type=expense&amount=280&category=food&note=午餐
+```
+
+**指定某一個 vault：**
+```
+obsidian://penny-wallet?vault=我的記帳庫&type=expense&amount=280&category=food&note=午餐
 ```
 
 **指定帳戶：**
@@ -100,6 +106,16 @@ obsidian://penny-wallet?type=repayment&amount=5000&fromWallet=玉山銀行&toWal
    - 其中 `[amount]`、`[note]`、`[category]` 替換為對應的**捷徑變數**
 6. 點右上角完成，為捷徑命名（例如：`記帳`）
 
+### 多個 Vault 的情況
+
+如果你有不只一個 vault 都安裝了 PennyWallet，建議在 URI 加上 `vault` 參數，讓 Obsidian 先切到正確的 vault，再交給 PennyWallet 處理。
+
+```
+obsidian://penny-wallet?vault=我的記帳庫&type=expense&amount=[amount]&note=[note]&category=[category]
+```
+
+你也可以改用 Obsidian 的 vault ID。對自動化來說，vault ID 通常比顯示名稱更穩定。
+
 ---
 
 ## 進階範例
@@ -137,5 +153,6 @@ obsidian://penny-wallet?type=repayment&amount=[amount]&fromWallet=玉山銀行&t
 ## 注意事項
 
 - URI 中的帳戶名稱必須與 PennyWallet 設定中的完全相符（區分大小寫）
+- 若多個 vault 都有安裝 PennyWallet，建議一定要帶 `vault` 參數，避免開到錯的 vault
 - 表單一定會開啟讓使用者確認 — URI 無法靜默送出交易
 - 若帳戶或分類名稱含有空格或非 ASCII 字元，請進行 URL 編碼（iOS 捷徑會自動處理）

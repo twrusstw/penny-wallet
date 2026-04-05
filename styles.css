@@ -26,6 +26,12 @@
     max-height: 55vh;
     overflow-y: auto;
   }
+
+  /* Wallet edit modal: JS-class fallback for older iOS without :has() support */
+  .pw-wallet-edit-modal-container.pw-wallet-edit-keyboard-open {
+    align-items: flex-start;
+    padding-top: 16px;
+  }
 }
 
 .pw-modal h2 {

@@ -18,6 +18,7 @@ obsidian://penny-wallet?param1=value1&param2=value2
 | `amount` | No | Amount | `250` |
 | `note` | No | Note / description | `Lunch` |
 | `category` | No | Category key (default) or custom name | `food` / `transport` / `My Category` |
+| `vault` | No | Target vault name. Recommended when multiple vaults have PennyWallet installed | `My Finance Vault` |
 | `wallet` | No | Account name (for expense / income) | `HSBC Savings` |
 | `fromWallet` | No | Source account (for transfer / repayment) | `HSBC Savings` |
 | `toWallet` | No | Destination account (for transfer / repayment) | `Visa Platinum` |
@@ -50,6 +51,11 @@ obsidian://penny-wallet?type=expense
 **Pre-fill amount and category:**
 ```
 obsidian://penny-wallet?type=expense&amount=280&category=food&note=Lunch
+```
+
+**Target a specific vault:**
+```
+obsidian://penny-wallet?vault=My%20Finance%20Vault&type=expense&amount=280&category=food&note=Lunch
 ```
 
 **Specify account:**
@@ -94,6 +100,16 @@ obsidian://penny-wallet?type=repayment&amount=5000&fromWallet=HSBC Savings&toWal
      Replace `[amount]`, `[note]`, `[category]` with the corresponding **Shortcut variables**
 6. Tap **Done**, name the shortcut (e.g. `Log Expense`)
 
+### Multiple Vaults
+
+If you have more than one vault with PennyWallet installed, add the `vault` parameter so Obsidian opens the correct vault before the plugin handles the URI.
+
+```
+obsidian://penny-wallet?vault=My%20Finance%20Vault&type=expense&amount=[amount]&note=[note]&category=[category]
+```
+
+You can also use the Obsidian vault ID instead of the vault name. Vault IDs are more stable for automation because they don't depend on the display name.
+
 ### Add to Home Screen
 
 1. In the shortcut editor, tap **⋯** next to the shortcut name
@@ -107,5 +123,6 @@ One tap from the home screen opens the transaction form directly.
 ## Notes
 
 - Account names in the URI must match exactly (case-sensitive) as configured in PennyWallet Settings
+- When multiple vaults use PennyWallet, always include `vault` to avoid the URI opening in the wrong vault
 - The form always opens for user confirmation — the URI cannot submit transactions silently
 - URL-encode special characters if your account/category names contain spaces or non-ASCII characters (iOS Shortcuts handles this automatically)

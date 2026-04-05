@@ -41,9 +41,8 @@ export default class PennyWalletPlugin extends Plugin {
       await this.walletFile.loadConfig()
       await this.walletFile.bootstrapFrontmatter()
 
-      // First-launch onboarding: only one default wallet
-      const config = this.walletFile.getConfig()
-      if (config.wallets.length === 1 && config.wallets[0].type === 'cash') {
+      // First-launch onboarding: only when config is created in this load
+      if (this.walletFile.didCreateDefaultConfigOnLastLoad()) {
         new Notice(t('onboard.welcome'), 8000)
       }
     } catch (e) {
@@ -86,10 +85,15 @@ export default class PennyWalletPlugin extends Plugin {
   // ── URI Handler ─────────────────────────────────────────────────────────────
 
   private handleURI(data: ObsidianProtocolData) {
+    if (!this.isTargetVault(data['vault'])) return
+
     const params: TransactionModalParams = {}
 
     if (data['type']) params.type = data['type'] as any
-    if (data['amount']) params.amount = parseFloat(data['amount'])
+    if (data['amount']) {
+      const amount = parseFloat(data['amount'])
+      if (!Number.isNaN(amount)) params.amount = amount
+    }
     if (data['note']) params.note = data['note']
     if (data['category']) params.category = data['category']
     if (data['wallet']) params.wallet = data['wallet']
@@ -98,6 +102,11 @@ export default class PennyWalletPlugin extends Plugin {
     if (data['date']) params.date = data['date']
 
     this.openTransactionModal(params)
+  }
+
+  private isTargetVault(targetVault?: string) {
+    if (!targetVault) return true
+    return targetVault === this.app.vault.getName()
   }
 
   // ── Refresh ─────────────────────────────────────────────────────────────────
