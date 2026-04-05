@@ -1,10 +1,6 @@
-# iOS Shortcuts 設定教學
+# URI Handler 與 iOS 捷徑
 
-## 前置條件
-
-- iPhone 已安裝 Obsidian App
-- Obsidian 已開啟 PennyWallet 所在的 vault
-- 已在 PennyWallet 設定中建立錢包
+PennyWallet 註冊了 `obsidian://penny-wallet` URI scheme。任何可以開啟 URL 的 App — 包括 iOS 捷徑、Android 自動化工具或瀏覽器書籤 — 都可以預填欄位開啟交易表單。
 
 ---
 
@@ -19,13 +15,13 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 | 參數 | 必填 | 說明 | 範例 |
 |------|------|------|------|
 | `type` | 否 | 交易類型，預設 `expense` | `expense` / `income` / `transfer` / `repayment` |
-| `amount` | 是 | 金額 | `250` |
+| `amount` | 否 | 金額 | `250` |
 | `note` | 否 | 備註 | `午餐` |
-| `category` | 否 | 分類，預設分類用 key | `food` / `transport` / `shopping` |
-| `wallet` | 否 | 錢包名稱（expense / income） | `玉山信用卡` |
-| `fromWallet` | 否 | 來源錢包（transfer / repayment） | `玉山銀行` |
-| `toWallet` | 否 | 目標錢包（transfer / repayment） | `玉山信用卡` |
-| `date` | 否 | 日期，預設今天 | `2026-04-04` |
+| `category` | 否 | 分類 key（預設分類）或自訂名稱 | `food` / `transport` / `我的分類` |
+| `wallet` | 否 | 帳戶名稱（支出 / 收入用） | `玉山銀行` |
+| `fromWallet` | 否 | 來源帳戶（轉帳 / 還款用） | `玉山銀行` |
+| `toWallet` | 否 | 目標帳戶（轉帳 / 還款用） | `玉山信用卡` |
+| `date` | 否 | 日期，格式 `yyyy-mm-dd`，預設今天 | `2026-04-05` |
 
 ### 分類 key 對照
 
@@ -36,15 +32,50 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 | `shopping` | 購物 | Shopping |
 | `entertainment` | 娛樂 | Entertainment |
 | `medical` | 醫療 | Medical |
-| `housing` | 住宿 | Housing |
-| `salary` | 薪水 | Salary |
+| `housing` | 居家 | Home |
+| `other` | 其他 | Other |
+| `salary` | 薪資 | Salary |
 | `bonus` | 獎金 | Bonus |
 | `side_income` | 副業 | Side Income |
-| `other` | 其他 | Other |
 
 ---
 
-## 捷徑設定步驟
+## 範例 URI
+
+**快速支出（僅預設類型）：**
+```
+obsidian://penny-wallet?type=expense
+```
+
+**預填金額與分類：**
+```
+obsidian://penny-wallet?type=expense&amount=280&category=food&note=午餐
+```
+
+**指定帳戶：**
+```
+obsidian://penny-wallet?type=expense&amount=1200&category=shopping&wallet=玉山信用卡
+```
+
+**收入：**
+```
+obsidian://penny-wallet?type=income&amount=72000&category=salary&wallet=玉山銀行
+```
+
+**信用卡還款：**
+```
+obsidian://penny-wallet?type=repayment&amount=5000&fromWallet=玉山銀行&toWallet=玉山信用卡
+```
+
+---
+
+## iOS 捷徑設定
+
+### 前置條件
+
+- iPhone 已安裝 Obsidian App
+- Obsidian 已開啟 PennyWallet 所在的 vault
+- 已在 PennyWallet 設定中建立帳戶
 
 ### 範例：快速記支出
 
@@ -73,7 +104,7 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 
 ## 進階範例
 
-### 指定錢包 + 自動填今天日期
+### 指定帳戶 + 自動填今天日期
 
 ```
 obsidian://penny-wallet?type=expense&amount=[amount]&note=[note]&category=[category]&wallet=玉山信用卡
@@ -99,4 +130,12 @@ obsidian://penny-wallet?type=repayment&amount=[amount]&fromWallet=玉山銀行&t
 2. 選「**加入主畫面**」
 3. 設定圖示與名稱後加入
 
-之後點一下圖示即可快速開啟記帳 Modal。
+之後點一下圖示即可快速開啟記帳表單。
+
+---
+
+## 注意事項
+
+- URI 中的帳戶名稱必須與 PennyWallet 設定中的完全相符（區分大小寫）
+- 表單一定會開啟讓使用者確認 — URI 無法靜默送出交易
+- 若帳戶或分類名稱含有空格或非 ASCII 字元，請進行 URL 編碼（iOS 捷徑會自動處理）
