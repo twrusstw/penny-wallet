@@ -4,15 +4,8 @@ node_modules/
 .claude/
 .vscode/
 main.js
-# only keep community-plugins.json
-demo-vault/.penny-wallet.json
-demo-vault/ledgers/*
-demo-vault/.obsidian/plugins/penny-wallet/
-demo-vault/.obsidian/workspace.json
-demo-vault/.obsidian/workspace-mobile.json
-demo-vault/.obsidian/app.json
-demo-vault/.obsidian/appearance.json
-demo-vault/.obsidian/core-plugins.json
-demo-vault/.obsidian/graph.json
-demo-vault/.obsidian/.DS_Store
-demo-vault/.obsidian/plugins/.DS_Store
+# Ignore generated demo-vault data; keep only the checked-in plugin list.
+demo-vault/*
+!demo-vault/.obsidian/
+demo-vault/.obsidian/*
+!demo-vault/.obsidian/community-plugins.json

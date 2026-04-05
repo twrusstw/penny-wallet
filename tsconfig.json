@@ -10,5 +10,6 @@
     "strictNullChecks": true,
     "lib": ["ES2017", "DOM"]
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
 }

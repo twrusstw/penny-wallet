@@ -59,7 +59,7 @@ const wallets = [
 const config = {
   wallets,
   defaultWallet: CASH_WALLET,
-  folderName: 'ledgers',
+  folderName: 'PennyWallet',
   decimalPlaces: 0,
   options: {
     types: { default: ['expense', 'income', 'transfer', 'repayment'], custom: [] },
@@ -72,6 +72,9 @@ const config = {
 
 const configPath = path.join(vaultRoot, '.penny-wallet.json')
 const dataDir = path.join(vaultRoot, config.folderName)
+const legacyDataDirs = ['PennyWallet', 'ledgers']
+  .filter(dirName => dirName !== config.folderName)
+  .map(dirName => path.join(vaultRoot, dirName))
 
 const expenseWalletPool = [CASH_WALLET, PRIMARY_BANK, SECONDARY_BANK, PRIMARY_CARD, SECONDARY_CARD]
 const incomeWalletPool = [PRIMARY_BANK, SECONDARY_BANK, CASH_WALLET]
@@ -358,8 +361,15 @@ async function clearExistingMonthFiles() {
     .map(entry => fs.unlink(path.join(dataDir, entry.name))))
 }
 
+async function removeLegacyDataDirs() {
+  await Promise.all(legacyDataDirs.map(async (dirPath) => {
+    await fs.rm(dirPath, { recursive: true, force: true })
+  }))
+}
+
 async function main() {
   await fs.mkdir(dataDir, { recursive: true })
+  await removeLegacyDataDirs()
   await clearExistingMonthFiles()
   await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')
 
