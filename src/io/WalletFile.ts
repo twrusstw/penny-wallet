@@ -122,7 +122,7 @@ export class WalletFile {
 
   async loadConfig(): Promise<PennyWalletConfig> {
     const path = ROOT_CONFIG_PATH
-    const file = this.app.vault.getAbstractFileByPath(path)
+    const file = this.app.vault.getFileByPath(path)
 
     if (!file) {
       // Vault index may be stale at startup — check the filesystem directly
@@ -149,13 +149,11 @@ export class WalletFile {
       return this.config
     }
 
-    if (file instanceof TFile) {
-      try {
-        const raw = await this.app.vault.read(file)
-        this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
-      } catch {
-        this.config = { ...DEFAULT_CONFIG }
-      }
+    try {
+      const raw = await this.app.vault.read(file)
+      this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
+    } catch {
+      this.config = { ...DEFAULT_CONFIG }
     }
     return this.config
   }
@@ -177,8 +175,8 @@ export class WalletFile {
   async saveConfig(): Promise<void> {
     const path = ROOT_CONFIG_PATH
     const content = JSON.stringify(this.config, null, 2)
-    const file = this.app.vault.getAbstractFileByPath(path)
-    if (file instanceof TFile) {
+    const file = this.app.vault.getFileByPath(path)
+    if (file) {
       await this.app.vault.modify(file, content)
     } else {
       try {
@@ -207,7 +205,7 @@ export class WalletFile {
 
   private async ensureFolder(): Promise<void> {
     const folder = this.config.folderName
-    if (!this.app.vault.getAbstractFileByPath(folder)) {
+    if (!this.app.vault.getFolderByPath(folder)) {
       try {
         await this.app.vault.createFolder(folder)
       } catch (e: any) {
@@ -221,8 +219,8 @@ export class WalletFile {
 
   private async readMonthFile(yearMonth: string): Promise<string | null> {
     const path = this.monthFilePath(yearMonth)
-    const file = this.app.vault.getAbstractFileByPath(path)
-    if (file instanceof TFile) {
+    const file = this.app.vault.getFileByPath(path)
+    if (file) {
       return await this.app.vault.read(file)
     }
     return null
@@ -231,8 +229,8 @@ export class WalletFile {
   private async writeMonthFile(yearMonth: string, content: string): Promise<void> {
     await this.ensureFolder()
     const path = this.monthFilePath(yearMonth)
-    const file = this.app.vault.getAbstractFileByPath(path)
-    if (file instanceof TFile) {
+    const file = this.app.vault.getFileByPath(path)
+    if (file) {
       await this.app.vault.modify(file, content)
     } else {
       try {
@@ -243,8 +241,8 @@ export class WalletFile {
           throw e
         }
         // File was created by another process; try to modify it
-        const retryFile = this.app.vault.getAbstractFileByPath(path)
-        if (retryFile instanceof TFile) {
+        const retryFile = this.app.vault.getFileByPath(path)
+        if (retryFile) {
           await this.app.vault.modify(retryFile, content)
         }
       }
@@ -341,7 +339,7 @@ export class WalletFile {
    * On plugin load: only recalculate months that are missing frontmatter.
    */
   async bootstrapFrontmatter(): Promise<void> {
-    const folder = this.app.vault.getAbstractFileByPath(this.config.folderName)
+    const folder = this.app.vault.getFolderByPath(this.config.folderName)
     if (!folder) return
 
     const files = this.app.vault.getMarkdownFiles().filter((f: TFile) =>

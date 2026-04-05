@@ -17,6 +17,14 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
       if (store.has(path)) return makeTFile(path)
       return null
     },
+    getFileByPath: (path: string) => {
+      if (store.has(path)) return makeTFile(path)
+      return null
+    },
+    getFolderByPath: (path: string) => {
+      const hasChildren = [...store.keys()].some(p => p.startsWith(path + '/'))
+      return hasChildren ? { path } : null
+    },
     getMarkdownFiles: () =>
       [...store.keys()]
         .filter(p => p.endsWith('.md'))
