@@ -2,7 +2,7 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
-## [1.0.0] - 2025-04-05
+## [0.0.1] - 2026-04-06
 
 ### Added
 - Initial release
