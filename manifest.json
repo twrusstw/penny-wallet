@@ -3,7 +3,7 @@
   "name": "PennyWallet",
   "version": "0.0.1",
   "minAppVersion": "1.4.0",
-  "description": "Personal finance tracker — log expenses, income, transfers, and credit card repayments as Markdown tables in your vault.",
+  "description": "Track expenses, income, transfers, and credit card repayments as Markdown tables in your vault.",
   "author": "twrusstw",
   "authorUrl": "https://github.com/twrusstw/penny-wallet",
   "isDesktopOnly": false
