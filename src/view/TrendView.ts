@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
-import { t, formatMonthLabel, formatYearMonth } from '../i18n'
+import { t, formatMonthLabel, formatYearMonth, translateCategory } from '../i18n'
 
 export const TREND_VIEW_TYPE = 'penny-wallet-trend'
 
@@ -19,6 +19,12 @@ interface MonthData {
 export class TrendView extends ItemView {
   private walletFile: WalletFile
   private range: number = 6
+  private selectedCategory: string = ''
+  private catChartWrap: HTMLElement | null = null
+  private catTotalEl: HTMLElement | null = null
+  private catMonths: string[] = []
+  private catBaseData: MonthData[] = []
+  private catDp: 0 | 2 = 0
 
   constructor(leaf: WorkspaceLeaf, walletFile: WalletFile) {
     super(leaf)
@@ -82,14 +88,70 @@ export class TrendView extends ItemView {
     const tooltip1 = chartWrap1.createDiv('pw-tooltip')
     requestAnimationFrame(() => drawIncExpChart(chartWrap1, tooltip1, data, dp))
 
+    // ── Category trend ───────────────────────────────────────────────────────
+    const options = this.walletFile.getConfig().options
+    const expenseCats = [...options.categories.expense.default, ...options.categories.expense.custom]
+    const incomeCats  = [...options.categories.income.default,  ...options.categories.income.custom]
+
+    if (!this.selectedCategory) this.selectedCategory = expenseCats[0] ?? ''
+
+    const catCard = contentEl.createDiv('pw-card')
+    catCard.createEl('div', { text: t('trend.categoryTrend'), cls: 'pw-card-title' })
+
+    const catRow = catCard.createDiv('pw-cat-trend-row')
+    const catSel = catRow.createEl('select', { cls: 'pw-cat-trend-sel' })
+
+    const addOptGroup = (label: string, cats: string[]) => {
+      const grp = catSel.createEl('optgroup')
+      grp.label = label
+      for (const cat of cats) {
+        const opt = catSel.createEl('option', { text: translateCategory(cat), value: cat })
+        if (cat === this.selectedCategory) opt.selected = true
+      }
+    }
+    addOptGroup(t('detail.filterExpense'), expenseCats)
+    addOptGroup(t('detail.filterIncome'),  incomeCats)
+
+    this.catChartWrap = catCard.createDiv('pw-chart-wrap')
+    this.catMonths    = months
+    this.catBaseData  = data
+    this.catDp        = dp
+
+    const totalEl = catRow.createEl('span', { cls: 'pw-cat-trend-total' })
+    totalEl.style.marginLeft = 'auto'
+    this.catTotalEl = totalEl
+
+    await this.updateCatChart()
+
+    catSel.addEventListener('change', async () => {
+      this.selectedCategory = catSel.value
+      await this.updateCatChart()
+    })
+
     // ── Net asset line chart ─────────────────────────────────────────────────
     const netCard = contentEl.createDiv('pw-card')
     netCard.createEl('div', { text: t('trend.netAssetTrend'), cls: 'pw-card-title' })
-    // const legRow2 = netCard.createDiv('pw-leg-row')
-    // addDotLegend(legRow2, C_NET, t('dash.netAsset'))
     const chartWrap2 = netCard.createDiv('pw-chart-wrap')
     const tooltip2 = chartWrap2.createDiv('pw-tooltip')
     requestAnimationFrame(() => drawNetChart(chartWrap2, tooltip2, data, dp))
+
+    // ── Wallet balance trend ─────────────────────────────────────────────────
+    const walletTrend = await this.walletFile.getWalletBalanceTrend(months)
+    if (walletTrend.size >= 2) {
+      const walletCard = contentEl.createDiv('pw-card')
+      walletCard.createEl('div', { text: t('trend.walletBalanceTrend'), cls: 'pw-card-title' })
+
+      const walletLegRow = walletCard.createDiv('pw-leg-row')
+      const walletNames = [...walletTrend.keys()]
+      const walletColors = ['#378ADD', '#1D9E75', '#EF9F27', '#7F77DD', '#D85A30', '#5DC8C8']
+      walletNames.forEach((name, i) => addRectLegend(walletLegRow, walletColors[i % walletColors.length], name))
+
+      const walletChartWrap = walletCard.createDiv('pw-chart-wrap')
+      const walletTooltip = walletChartWrap.createDiv('pw-tooltip')
+      requestAnimationFrame(() =>
+        drawWalletTrendChart(walletChartWrap, walletTooltip, months, data, walletTrend, walletColors, dp)
+      )
+    }
 
     // ── Summary metrics ──────────────────────────────────────────────────────
     const activeData = data.filter(d => d.income > 0 || d.expense > 0)
@@ -102,6 +164,31 @@ export class TrendView extends ItemView {
     createMetric(metricsEl, t('trend.avgIncome'),     avgIncome,  'income',   2)
     createMetric(metricsEl, t('trend.avgExpense'),    avgExpense, 'expense',  2)
     createMetric(metricsEl, t('trend.netAssetChange'), netChange, netChange >= 0 ? 'positive' : 'negative', 2)
+  }
+
+  private async updateCatChart() {
+    if (!this.catChartWrap || !this.catTotalEl) return
+    const config      = this.walletFile.getConfig().options
+    const incomeCats  = [...config.categories.income.default, ...config.categories.income.custom]
+    const catTrend    = await this.walletFile.getCategoryTrend(this.catMonths, this.selectedCategory)
+    const catAmounts  = this.catMonths.map(ym => catTrend.get(ym) ?? 0)
+    const rangeTotal  = catAmounts.reduce((a, b) => a + b, 0)
+    const catColor    = incomeCats.includes(this.selectedCategory) ? C_INCOME : C_EXPENSE
+
+    this.catChartWrap.empty()
+    const catTooltip = this.catChartWrap.createDiv('pw-tooltip')
+    requestAnimationFrame(() =>
+      drawCatChart(
+        this.catChartWrap!,
+        catTooltip,
+        this.catBaseData.map((d, i) => ({ ...d, catAmount: catAmounts[i] })),
+        this.catDp,
+        catColor,
+      )
+    )
+    this.catTotalEl.setText(
+      `${t('trend.rangeTotal')}: ${rangeTotal.toLocaleString(undefined, { minimumFractionDigits: this.catDp, maximumFractionDigits: this.catDp })}`
+    )
   }
 }
 
@@ -321,6 +408,207 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
       tooltip.style.display = 'block'
       tooltip.style.left = Math.min(xOf(closest) + 8, width - 130) + 'px'
       tooltip.style.top  = yOf(data[closest].net!) - 42 + 'px'
+    } else {
+      tooltip.style.display = 'none'
+    }
+  })
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none' })
+}
+
+// ─── Category trend line chart ────────────────────────────────────────────────
+
+function drawCatChart(
+  container: HTMLElement,
+  tooltip: HTMLElement,
+  data: Array<MonthData & { catAmount: number }>,
+  dp: 0 | 2,
+  color: string,
+) {
+  const canvas = container.createEl('canvas')
+  canvas.style.display = 'block'
+
+  const width  = container.clientWidth || 480
+  const height = 150
+  const dpr    = window.devicePixelRatio || 1
+
+  canvas.width  = width  * dpr
+  canvas.height = height * dpr
+  canvas.style.width  = width  + 'px'
+  canvas.style.height = height + 'px'
+
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(dpr, dpr)
+
+  const pad = { t: 12, r: 14, b: 26, l: 46 }
+  const innerW = width  - pad.l - pad.r
+  const innerH = height - pad.t - pad.b
+
+  const amounts  = data.map(d => d.catAmount)
+  const maxVal   = Math.max(...amounts, 1) * 1.1
+  const minVal   = 0
+
+  const dark       = document.body.classList.contains('theme-dark')
+  const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
+  const colorGrid  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
+  const dotBorder  = dark ? '#141413' : '#f5f4f0'
+
+  const xOf = (i: number) => pad.l + (i / (data.length - 1 || 1)) * innerW
+  const yOf = (v: number) => pad.t + innerH - ((v - minVal) / (maxVal - minVal)) * innerH
+
+  ctx.clearRect(0, 0, width, height)
+
+  // Grid + Y labels
+  for (let row = 0; row <= 3; row++) {
+    const y   = pad.t + (innerH / 3) * row
+    const val = Math.round(maxVal - (maxVal / 3) * row)
+    ctx.beginPath(); ctx.strokeStyle = colorGrid; ctx.lineWidth = 0.5
+    ctx.moveTo(pad.l, y); ctx.lineTo(width - pad.r, y); ctx.stroke()
+    ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'
+    ctx.fillText(formatK(val, dp), pad.l - 5, y + 3)
+  }
+
+  // Line
+  ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2
+  data.forEach((d, i) => {
+    if (i === 0) ctx.moveTo(xOf(i), yOf(d.catAmount))
+    else ctx.lineTo(xOf(i), yOf(d.catAmount))
+  })
+  ctx.stroke()
+
+  // Dots + X labels
+  data.forEach((d, i) => {
+    ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
+    ctx.fillText(d.monthLabel, xOf(i), height - 5)
+    ctx.beginPath(); ctx.arc(xOf(i), yOf(d.catAmount), 3, 0, Math.PI * 2)
+    ctx.fillStyle = color; ctx.fill()
+    ctx.strokeStyle = dotBorder; ctx.lineWidth = 1.5; ctx.stroke()
+  })
+
+  // Tooltip
+  canvas.addEventListener('mousemove', (e) => {
+    const rect   = canvas.getBoundingClientRect()
+    const mouseX = (e.clientX - rect.left) * (width / rect.width)
+    let closest = 0, minDist = Infinity
+    data.forEach((_, i) => {
+      const dist = Math.abs(xOf(i) - mouseX)
+      if (dist < minDist) { minDist = dist; closest = i }
+    })
+    if (minDist < 28) {
+      const d = data[closest]
+      tooltip.innerHTML = `
+        <div class="pw-tt-month">${d.tooltipLabel}</div>
+        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${color}"></div>${d.catAmount.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
+      tooltip.style.display = 'block'
+      tooltip.style.left = Math.min(xOf(closest) + 8, width - 130) + 'px'
+      tooltip.style.top  = yOf(d.catAmount) - 42 + 'px'
+    } else {
+      tooltip.style.display = 'none'
+    }
+  })
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none' })
+}
+
+// ─── Wallet balance trend chart ───────────────────────────────────────────────
+
+function drawWalletTrendChart(
+  container: HTMLElement,
+  tooltip: HTMLElement,
+  months: string[],
+  data: MonthData[],
+  walletTrend: Map<string, Map<string, number>>,
+  colors: string[],
+  dp: 0 | 2,
+) {
+  const canvas = container.createEl('canvas')
+  canvas.style.display = 'block'
+
+  const width  = container.clientWidth || 480
+  const height = 160
+  const dpr    = window.devicePixelRatio || 1
+
+  canvas.width  = width  * dpr
+  canvas.height = height * dpr
+  canvas.style.width  = width  + 'px'
+  canvas.style.height = height + 'px'
+
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(dpr, dpr)
+
+  const pad = { t: 12, r: 14, b: 26, l: 52 }
+  const innerW = width  - pad.l - pad.r
+  const innerH = height - pad.t - pad.b
+
+  const walletNames = [...walletTrend.keys()]
+  const allValues   = walletNames.flatMap(name => months.map(ym => walletTrend.get(name)!.get(ym) ?? 0))
+  const minVal      = Math.min(...allValues) * 0.9
+  const maxVal      = Math.max(...allValues) * 1.08
+  const range       = maxVal - minVal || 1
+
+  const dark       = document.body.classList.contains('theme-dark')
+  const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
+  const colorGrid  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
+  const dotBorder  = dark ? '#141413' : '#f5f4f0'
+
+  const xOf = (i: number) => pad.l + (i / (months.length - 1 || 1)) * innerW
+  const yOf = (v: number) => pad.t + innerH - ((v - minVal) / range) * innerH
+
+  ctx.clearRect(0, 0, width, height)
+
+  // Grid + Y labels
+  for (let row = 0; row <= 3; row++) {
+    const y   = pad.t + (innerH / 3) * row
+    const val = Math.round(maxVal - (maxVal - minVal) / 3 * row)
+    ctx.beginPath(); ctx.strokeStyle = colorGrid; ctx.lineWidth = 0.5
+    ctx.moveTo(pad.l, y); ctx.lineTo(width - pad.r, y); ctx.stroke()
+    ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'
+    ctx.fillText(formatK(val, dp), pad.l - 5, y + 3)
+  }
+
+  // Lines + dots per wallet
+  walletNames.forEach((name, wi) => {
+    const color = colors[wi % colors.length]
+    const vals  = months.map(ym => walletTrend.get(name)!.get(ym) ?? 0)
+
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2
+    vals.forEach((v, i) => {
+      if (i === 0) ctx.moveTo(xOf(i), yOf(v))
+      else ctx.lineTo(xOf(i), yOf(v))
+    })
+    ctx.stroke()
+
+    vals.forEach((v, i) => {
+      ctx.beginPath(); ctx.arc(xOf(i), yOf(v), 3, 0, Math.PI * 2)
+      ctx.fillStyle = color; ctx.fill()
+      ctx.strokeStyle = dotBorder; ctx.lineWidth = 1.5; ctx.stroke()
+    })
+  })
+
+  // X labels
+  data.forEach((d, i) => {
+    ctx.fillStyle = colorMuted; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
+    ctx.fillText(d.monthLabel, xOf(i), height - 5)
+  })
+
+  // Tooltip
+  canvas.addEventListener('mousemove', (e) => {
+    const rect   = canvas.getBoundingClientRect()
+    const mouseX = (e.clientX - rect.left) * (width / rect.width)
+    let closest = 0, minDist = Infinity
+    months.forEach((_, i) => {
+      const dist = Math.abs(xOf(i) - mouseX)
+      if (dist < minDist) { minDist = dist; closest = i }
+    })
+    if (minDist < 28) {
+      const ym = months[closest]
+      const rows = walletNames.map((name, wi) => {
+        const val = walletTrend.get(name)!.get(ym) ?? 0
+        const color = colors[wi % colors.length]
+        return `<div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${color}"></div>${name}: ${val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
+      }).join('')
+      tooltip.innerHTML = `<div class="pw-tt-month">${data[closest].tooltipLabel}</div>${rows}`
+      tooltip.style.display = 'block'
+      tooltip.style.left = Math.min(xOf(closest) + 8, width - 160) + 'px'
+      tooltip.style.top  = '8px'
     } else {
       tooltip.style.display = 'none'
     }

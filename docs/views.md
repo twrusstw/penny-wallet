@@ -10,7 +10,7 @@ The main dashboard. Open it by clicking the **PennyWallet icon** in the left rib
 
 The header also contains two navigation buttons:
 - **Transactions** — switch to the Transactions list view
-- **Asset Statistics** — switch to the trend charts view
+- **Finance Trends** — switch to the trend charts view
 - **+ Add Transaction** — open the transaction form
 
 ### Month Navigation
@@ -33,13 +33,17 @@ Credit card balances are shown as negative values (outstanding debt).
 
 **Net Assets** at the bottom is the sum of all cash/bank balances minus all credit card debt.
 
+### Asset Allocation Pie
+
+Appears when you have two or more active cash/bank accounts with positive balances. Shows how your liquid assets are distributed across accounts. Each legend entry shows the account name, balance amount, and percentage.
+
 ### Category Pie Charts
 
 Two pie charts appear if there is data:
 - **Expense by Category** — breakdown of this month's spending
 - **Income by Category** — breakdown of this month's income
 
-Hover over a slice or legend item to highlight it.
+Each legend entry shows the category name, amount, and percentage. Hover over a slice or legend item to highlight it.
 
 ---
 
@@ -49,8 +53,9 @@ A full list of all transactions for the selected month, with filters and subtota
 
 ### Filters
 
-- **Type pills** — filter by All / Expense / Income / Transfer / Repayment
-- **Category dropdown** — appears when the filtered list contains categorised transactions
+- **Type pills** — multi-select: All / Expense / Income / Transfer / Repayment (tap multiple to combine)
+- **Category dropdown** — checklist of categories present in the filtered results; select any combination to narrow further
+- **Keyword search** — filters transactions whose note contains the search text
 
 ### Transaction Rows
 
@@ -60,15 +65,15 @@ Click **✏** to edit or **🗑** to delete. A confirmation dialog appears befor
 
 ### Subtotals
 
-The bottom of the list shows **Income Subtotal** and **Expense Subtotal** for the currently filtered transactions.
+A fixed bar at the bottom always shows **Expense Subtotal** and **Income Subtotal** for the currently filtered transactions. The list scrolls independently without affecting the header or subtotals.
 
 ---
 
-## Asset Statistics
+## Finance Trends
 
-A longer-term view of your financial trends. To open it, click the **Asset Statistics** button in the top-right corner of the Finance Overview header.
+A longer-term view of your financial trends. To open it, click the **Finance Trends** button in the top-right corner of the Finance Overview header.
 
-> There is no dedicated Command Palette command for Asset Statistics — open Finance Overview first (`PennyWallet: Open Finance Overview`), then click **Asset Statistics**.
+> There is no dedicated Command Palette command for Finance Trends — open Finance Overview first (`PennyWallet: Open Finance Overview`), then click **Finance Trends**.
 
 ### Range Selector
 
@@ -78,9 +83,17 @@ Choose **3 months**, **6 months**, or **12 months**.
 
 A bar chart showing income (green, upward) and expense (orange, downward) for each month side by side. Hover a column to see exact figures in a tooltip.
 
+### Category Trend Chart
+
+A line chart showing monthly totals for a single category. Use the dropdown to switch categories — the chart updates without resetting the page. The total for the selected range is shown below the chart.
+
 ### Net Asset Trend Chart
 
 A line chart showing your net asset at the end of each month. Hover near a data point to see the value. Missing months (no data) create a gap in the line.
+
+### Account Balance Trend Chart
+
+A multi-line chart showing the running balance of each active cash/bank account over the selected range. Hover to see per-account values in a tooltip. Only appears when you have two or more such accounts.
 
 ### Summary Metrics
 

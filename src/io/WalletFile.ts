@@ -492,6 +492,47 @@ export class WalletFile {
     return map
   }
 
+  /** Per-wallet balance at each target month end — cash + bank only */
+  async getWalletBalanceTrend(targetMonths: string[]): Promise<Map<string, Map<string, number>>> {
+    const trackedWallets = this.config.wallets.filter(
+      w => w.status === 'active' && (w.type === 'cash' || w.type === 'bank')
+    )
+    const allAvailableMonths = await this.getAllYearMonths()
+    const lastTarget = targetMonths[targetMonths.length - 1]
+    const relevantMonths = allAvailableMonths.filter(m => m <= lastTarget).sort()
+    const monthTransactions = await Promise.all(relevantMonths.map(ym => this.readMonth(ym)))
+
+    const balanceMap = new Map<string, number>()
+    for (const w of this.config.wallets) balanceMap.set(w.name, w.initialBalance)
+
+    // result: walletName → (yearMonth → balance)
+    const result = new Map<string, Map<string, number>>()
+    for (const w of trackedWallets) result.set(w.name, new Map())
+
+    for (let i = 0; i < relevantMonths.length; i++) {
+      for (const tx of monthTransactions[i]) this.applyTxToBalanceMap(tx, balanceMap)
+      if (targetMonths.includes(relevantMonths[i])) {
+        for (const w of trackedWallets) {
+          result.get(w.name)!.set(relevantMonths[i], balanceMap.get(w.name) ?? 0)
+        }
+      }
+    }
+
+    return result
+  }
+
+  async getCategoryTrend(yearMonths: string[], category: string): Promise<Map<string, number>> {
+    const result = new Map<string, number>()
+    for (const ym of yearMonths) {
+      const txs = await this.readMonth(ym)
+      const total = txs
+        .filter(tx => tx.category === category)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      result.set(ym, total)
+    }
+    return result
+  }
+
   // ── Utility ──────────────────────────────────────────────────────────────────
 
   /** Check if a wallet name is used in any transaction */

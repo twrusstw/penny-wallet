@@ -125,6 +125,19 @@ export class DashboardView extends ItemView {
       cls: 'pw-net-value' + (netAsset < 0 ? ' is-negative' : ''),
     })
 
+    // ── Asset allocation pie ─────────────────────────────────────────────────
+    const assetMap = new Map<string, number>()
+    for (const { wallet, balance } of walletBalances) {
+      if (wallet.status === 'archived') continue
+      if (wallet.type === 'creditCard') continue
+      if (balance > 0) assetMap.set(wallet.name, balance)
+    }
+    if (assetMap.size >= 2) {
+      const assetCard = contentEl.createDiv('pw-card')
+      assetCard.createEl('div', { text: t('dash.assetAllocation'), cls: 'pw-card-title' })
+      drawPie(assetCard, assetMap, dp)
+    }
+
     // ── Pie charts (2 cards side by side) ────────────────────────────────────
     const chartsRow = contentEl.createDiv('pw-charts-row')
 
@@ -133,12 +146,12 @@ export class DashboardView extends ItemView {
 
     const expCard = chartsRow.createDiv('pw-card')
     expCard.createEl('div', { text: t('dash.expenseByCategory'), cls: 'pw-card-title' })
-    if (expenseMap.size > 0) drawPie(expCard, expenseMap)
+    if (expenseMap.size > 0) drawPie(expCard, expenseMap, dp)
     else expCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
 
     const incCard = chartsRow.createDiv('pw-card')
     incCard.createEl('div', { text: t('dash.incomeByCategory'), cls: 'pw-card-title' })
-    if (incomeMap.size > 0) drawPie(incCard, incomeMap)
+    if (incomeMap.size > 0) drawPie(incCard, incomeMap, dp)
     else incCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
   }
 
@@ -158,7 +171,7 @@ export class DashboardView extends ItemView {
 
 // ─── Pie chart ────────────────────────────────────────────────────────────────
 
-function drawPie(container: HTMLElement, data: Map<string, number>) {
+function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 0) {
   const total = [...data.values()].reduce((a, b) => a + b, 0)
 
   const segments: { label: string; value: number; color: string; start: number; end: number }[] = []
@@ -215,6 +228,7 @@ function drawPie(container: HTMLElement, data: Map<string, number>) {
     const dot = item.createEl('span', { cls: 'pw-legend-dot' })
     dot.style.backgroundColor = seg.color
     item.createEl('span', { text: seg.label, cls: 'pw-legend-name' })
+    item.createEl('span', { text: formatAmount(seg.value, dp), cls: 'pw-legend-amt' })
     const pct = Math.round((seg.value / total) * 100)
     item.createEl('span', { text: `${pct}%`, cls: 'pw-legend-pct' })
 

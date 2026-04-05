@@ -46,6 +46,7 @@ const translations = {
     'dash.balance': '結餘',
     'dash.netAsset': '淨資產',
     'dash.walletBalances': '帳戶餘額',
+    'dash.assetAllocation': '資金占比',
     'dash.expenseByCategory': '支出分類',
     'dash.incomeByCategory': '收入分類',
     'dash.noData': '本月無資料',
@@ -61,9 +62,11 @@ const translations = {
     'detail.subtotalIncome': '收入小計',
     'detail.subtotalExpense': '支出小計',
     'detail.noTransactions': '無符合條件的交易',
+    'detail.searchPlaceholder': '搜尋備註...',
+    'detail.filterCategory': '分類',
 
     // Trend view
-    'trend.title': '資產統計',
+    'trend.title': '財務趨勢',
     'trend.3m': '3 個月',
     'trend.6m': '6 個月',
     'trend.12m': '12 個月',
@@ -72,6 +75,10 @@ const translations = {
     'trend.avgIncome': '平均月收入',
     'trend.avgExpense': '平均月支出',
     'trend.netAssetChange': '淨資產變化',
+    'trend.categoryTrend': '分類趨勢',
+    'trend.walletBalanceTrend': '帳戶餘額趨勢',
+    'trend.selectCategory': '選擇分類',
+    'trend.rangeTotal': '區間合計',
 
     // Date formatting
     'date.yearMonthNumeric': '{year} 年 {month} 月',
@@ -182,7 +189,7 @@ const translations = {
     'cat.side_income': 'Side Income',
 
     'ui.addTransaction': 'Add Transaction',
-    'ui.trend': 'Asset Statistics',
+    'ui.trend': 'Finance Trends',
     'ui.detail': 'Transactions',
     'ui.confirm': 'Confirm',
     'ui.cancel': 'Cancel',
@@ -198,6 +205,7 @@ const translations = {
     'dash.balance': 'Balance',
     'dash.netAsset': 'Net Assets',
     'dash.walletBalances': 'Account Balances',
+    'dash.assetAllocation': 'Asset Allocation',
     'dash.expenseByCategory': 'Expense by Category',
     'dash.incomeByCategory': 'Income by Category',
     'dash.noData': 'No data this month',
@@ -212,8 +220,10 @@ const translations = {
     'detail.subtotalIncome': 'Income Subtotal',
     'detail.subtotalExpense': 'Expense Subtotal',
     'detail.noTransactions': 'No matching transactions',
+    'detail.searchPlaceholder': 'Search notes...',
+    'detail.filterCategory': 'Category',
 
-    'trend.title': 'Asset Statistics',
+    'trend.title': 'Finance Trends',
     'trend.3m': '3 Months',
     'trend.6m': '6 Months',
     'trend.12m': '12 Months',
@@ -222,6 +232,10 @@ const translations = {
     'trend.avgIncome': 'Avg Monthly Income',
     'trend.avgExpense': 'Avg Monthly Expense',
     'trend.netAssetChange': 'Net Asset Change',
+    'trend.categoryTrend': 'Category Trend',
+    'trend.walletBalanceTrend': 'Account Balance Trend',
+    'trend.selectCategory': 'Select Category',
+    'trend.rangeTotal': 'Range Total',
 
     'date.yearMonthNumeric': '{month}/{year}',
     'date.yearMonthShort': '{monthName} {year}',

@@ -11,8 +11,16 @@ export const DETAIL_VIEW_TYPE = 'penny-wallet-detail'
 export class DetailView extends ItemView {
   private walletFile: WalletFile
   private currentYearMonth: string
-  private filterType: TransactionType | 'all' = 'all'
-  private filterCategory: string = 'all'
+  private filterTypes: Set<TransactionType> = new Set()   // empty = all
+  private filterCategories: Set<string> = new Set()       // empty = all
+  private filterSearch: string = ''
+  private catPanelOpen: boolean = false
+
+  // Refs for lightweight list updates (search)
+  private cachedTransactions: Transaction[] = []
+  private cachedDp: 0 | 2 = 0
+  private listEl: HTMLElement | null = null
+  private subtotalEl: HTMLElement | null = null
 
   constructor(leaf: WorkspaceLeaf, walletFile: WalletFile) {
     super(leaf)
@@ -46,14 +54,19 @@ export class DetailView extends ItemView {
     contentEl.empty()
     contentEl.addClass('pw-detail')
 
-    const transactions = (await this.walletFile.readMonth(this.currentYearMonth))
+    this.cachedTransactions = (await this.walletFile.readMonth(this.currentYearMonth))
       .sort((a, b) => b.date.localeCompare(a.date))
-    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
+    this.cachedDp = this.walletFile.getConfig().decimalPlaces ?? 0
 
-    // ── Block 1: Month nav ────────────────────────────────────────────────────
-    const navRow = contentEl.createDiv('pw-nav-row')
+    // ── Header (fixed) ────────────────────────────────────────────────────────
+    const header = contentEl.createDiv('pw-detail-header')
+
+    // Month nav
+    const navRow = header.createDiv('pw-nav-row')
     navRow.createEl('button', { text: '←', cls: 'pw-nav-btn' }).addEventListener('click', async () => {
       this.currentYearMonth = stepMonth(this.currentYearMonth, -1)
+      this.filterCategories.clear()
+      this.filterSearch = ''
       await this.render()
     })
     navRow.createEl('span', { text: this.currentYearMonth, cls: 'pw-month-label' })
@@ -62,6 +75,8 @@ export class DetailView extends ItemView {
     nextBtn.addEventListener('click', async () => {
       if (!nextBtn.disabled) {
         this.currentYearMonth = stepMonth(this.currentYearMonth, 1)
+        this.filterCategories.clear()
+        this.filterSearch = ''
         await this.render()
       }
     })
@@ -76,81 +91,193 @@ export class DetailView extends ItemView {
       ).open()
     })
 
-    // ── Block 2: Filters ──────────────────────────────────────────────────────
-    const filterRow = contentEl.createDiv('pw-filter-row')
+    // Type pills (multi-select) + category dropdown in the same row
+    const typePills = header.createDiv('pw-type-pills')
+    const allTypePill = typePills.createEl('button', {
+      text: t('detail.filterAll'),
+      cls: 'pw-pill' + (this.filterTypes.size === 0 ? ' is-active' : ''),
+    })
+    allTypePill.addEventListener('click', async () => {
+      this.filterTypes.clear()
+      this.filterCategories.clear()
+      await this.render()
+    })
 
-    const typePills = filterRow.createDiv('pw-type-pills')
-    const typeOptions: { value: TransactionType | 'all'; label: string }[] = [
-      { value: 'all',        label: t('detail.filterAll') },
-      { value: 'expense',    label: t('detail.filterExpense') },
-      { value: 'income',     label: t('detail.filterIncome') },
-      { value: 'transfer',   label: t('detail.filterTransfer') },
-      { value: 'repayment',  label: t('detail.filterRepayment') },
+    const typeOptions: { value: TransactionType; label: string }[] = [
+      { value: 'expense',   label: t('detail.filterExpense') },
+      { value: 'income',    label: t('detail.filterIncome') },
+      { value: 'transfer',  label: t('detail.filterTransfer') },
+      { value: 'repayment', label: t('detail.filterRepayment') },
     ]
     for (const opt of typeOptions) {
       const pill = typePills.createEl('button', {
         text: opt.label,
-        cls: 'pw-pill' + (this.filterType === opt.value ? ' is-active' : ''),
+        cls: 'pw-pill' + (this.filterTypes.has(opt.value) ? ' is-active' : ''),
       })
       pill.addEventListener('click', async () => {
-        this.filterType = opt.value
+        if (this.filterTypes.has(opt.value)) {
+          this.filterTypes.delete(opt.value)
+        } else {
+          this.filterTypes.add(opt.value)
+        }
+        this.filterCategories.clear()
         await this.render()
       })
     }
 
-    const catSource = (this.filterType === 'all' || this.filterType === 'transfer' || this.filterType === 'repayment')
-      ? transactions
-      : transactions.filter(tx => tx.type === this.filterType)
-    const allCategories = new Set<string>()
-    catSource.forEach(tx => { if (tx.category) allCategories.add(tx.category) })
-    if (this.filterCategory !== 'all' && !allCategories.has(this.filterCategory)) {
-      this.filterCategory = 'all'
-    }
-    if (allCategories.size > 0) {
-      const catSel = filterRow.createEl('select', { cls: 'pw-cat-filter' })
-      catSel.createEl('option', { text: t('detail.allCategories'), value: 'all' })
-      for (const cat of allCategories) {
-        const opt = catSel.createEl('option', { text: translateCategory(cat), value: cat })
-        if (cat === this.filterCategory) opt.selected = true
+    // Category dropdown (same row, right side)
+    const showCategories = this.filterTypes.size === 0 ||
+      this.filterTypes.has('expense') ||
+      this.filterTypes.has('income')
+
+    if (showCategories) {
+      const catSource = this.cachedTransactions.filter(tx => {
+        if (this.filterTypes.size === 0) return tx.type === 'expense' || tx.type === 'income'
+        return this.filterTypes.has(tx.type as TransactionType)
+      })
+      const expenseCats = new Set<string>()
+      const incomeCats = new Set<string>()
+      catSource.forEach(tx => {
+        if (!tx.category) return
+        if (tx.type === 'expense') expenseCats.add(tx.category)
+        else if (tx.type === 'income') incomeCats.add(tx.category)
+      })
+      const allCategories = new Set<string>([...expenseCats, ...incomeCats])
+
+      for (const cat of this.filterCategories) {
+        if (!allCategories.has(cat)) this.filterCategories.delete(cat)
       }
-      if (this.filterCategory === 'all') catSel.value = 'all'
-      catSel.addEventListener('change', async () => {
-        this.filterCategory = catSel.value
-        await this.render()
-      })
+
+      if (allCategories.size > 0) {
+        const catDropdown = typePills.createDiv('pw-cat-dropdown')
+
+        const catToggleBtn = catDropdown.createEl('button', { cls: 'pw-cat-toggle' })
+        const updateToggleLabel = () => {
+          const badge = this.filterCategories.size > 0 ? ` · ${this.filterCategories.size}` : ''
+          catToggleBtn.setText(`${t('detail.filterCategory')}${badge} ${this.catPanelOpen ? '▴' : '▾'}`)
+        }
+        updateToggleLabel()
+
+        const catPanel = catDropdown.createDiv('pw-cat-panel')
+        if (!this.catPanelOpen) catPanel.style.display = 'none'
+
+        catToggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          this.catPanelOpen = !this.catPanelOpen
+          catPanel.style.display = this.catPanelOpen ? '' : 'none'
+          updateToggleLabel()
+        })
+
+        // Close on outside click
+        const onOutsideClick = (e: MouseEvent) => {
+          if (!catDropdown.contains(e.target as Node)) {
+            this.catPanelOpen = false
+            catPanel.style.display = 'none'
+            updateToggleLabel()
+            document.removeEventListener('click', onOutsideClick)
+          }
+        }
+        document.addEventListener('click', onOutsideClick)
+        this.register(() => document.removeEventListener('click', onOutsideClick))
+
+        // 全部 item
+        const allItem = catPanel.createDiv('pw-cat-item')
+        const allCheck = allItem.createEl('span', { cls: 'pw-cat-check' + (this.filterCategories.size === 0 ? ' is-checked' : '') })
+        if (this.filterCategories.size === 0) allCheck.setText('✓')
+        allItem.createEl('span', { text: t('detail.filterAll') })
+        allItem.addEventListener('click', () => {
+          this.filterCategories.clear()
+          catPanel.querySelectorAll('.pw-cat-check').forEach((el, i) => {
+            if (i === 0) { el.addClass('is-checked'); el.setText('✓') }
+            else { el.removeClass('is-checked'); el.setText('') }
+          })
+          updateToggleLabel()
+          this.applyFilters()
+        })
+
+        for (const cat of allCategories) {
+          const item = catPanel.createDiv('pw-cat-item')
+          const isChecked = this.filterCategories.has(cat)
+          const check = item.createEl('span', { cls: 'pw-cat-check' + (isChecked ? ' is-checked' : '') })
+          if (isChecked) check.setText('✓')
+          item.createEl('span', { text: translateCategory(cat) })
+          item.addEventListener('click', () => {
+            if (this.filterCategories.has(cat)) {
+              this.filterCategories.delete(cat)
+              check.removeClass('is-checked')
+              check.setText('')
+            } else {
+              this.filterCategories.add(cat)
+              check.addClass('is-checked')
+              check.setText('✓')
+            }
+            // Sync 全部 state
+            const allCheckEl = catPanel.querySelector('.pw-cat-item:first-child .pw-cat-check')
+            if (allCheckEl) {
+              if (this.filterCategories.size === 0) { allCheckEl.addClass('is-checked'); allCheckEl.textContent = '✓' }
+              else { allCheckEl.removeClass('is-checked'); allCheckEl.textContent = '' }
+            }
+            updateToggleLabel()
+            this.applyFilters()
+          })
+        }
+      }
     }
 
-    // ── Block 3: Transaction list ─────────────────────────────────────────────
-    const filtered = transactions.filter(tx => {
-      if (this.filterType !== 'all' && tx.type !== this.filterType) return false
-      if (this.filterCategory !== 'all' && tx.category !== this.filterCategory) return false
+    // Search input
+    const searchInput = header.createEl('input', {
+      cls: 'pw-search-input',
+      placeholder: t('detail.searchPlaceholder'),
+    }) as HTMLInputElement
+    searchInput.type = 'text'
+    searchInput.value = this.filterSearch
+    searchInput.addEventListener('input', () => {
+      this.filterSearch = searchInput.value
+      this.applyFilters()
+    })
+
+    // ── Scrollable list area ──────────────────────────────────────────────────
+    const listWrap = contentEl.createDiv('pw-detail-list-wrap')
+    this.listEl = listWrap.createDiv('pw-tx-list')
+
+    // ── Subtotals (fixed bottom) ──────────────────────────────────────────────
+    this.subtotalEl = contentEl.createDiv('pw-subtotal-row')
+
+    this.applyFilters()
+  }
+
+  private applyFilters() {
+    if (!this.listEl || !this.subtotalEl) return
+
+    const filtered = this.cachedTransactions.filter(tx => {
+      if (this.filterTypes.size > 0 && !this.filterTypes.has(tx.type as TransactionType)) return false
+      if (this.filterCategories.size > 0 && !this.filterCategories.has(tx.category ?? '')) return false
+      if (this.filterSearch && !tx.note?.toLowerCase().includes(this.filterSearch.toLowerCase())) return false
       return true
     })
 
-    const listCard = contentEl.createDiv('pw-card')
-    const listEl = listCard.createDiv('pw-tx-list')
+    this.listEl.empty()
     if (filtered.length === 0) {
-      listEl.createEl('p', { text: t('detail.noTransactions'), cls: 'pw-no-data' })
+      this.listEl.createEl('p', { text: t('detail.noTransactions'), cls: 'pw-no-data' })
     } else {
       for (const tx of filtered) {
-        this.renderTxRow(listEl, tx, dp)
+        this.renderTxRow(this.listEl, tx, this.cachedDp)
       }
     }
 
-    // ── Block 4: Subtotals ────────────────────────────────────────────────────
     let subIncome = 0, subExpense = 0
     for (const tx of filtered) {
       if (tx.type === 'income') subIncome += tx.amount
       if (tx.type === 'expense') subExpense += tx.amount
     }
-    const subtotalEl = contentEl.createDiv('pw-subtotal-row')
-    subtotalEl.createEl('span', {
-      text: `${t('detail.subtotalIncome')}: ${formatAmount(subIncome, dp)}`,
-      cls: 'pw-subtotal-income',
-    })
-    subtotalEl.createEl('span', {
-      text: `${t('detail.subtotalExpense')}: ${formatAmount(subExpense, dp)}`,
+    this.subtotalEl.empty()
+    this.subtotalEl.createEl('span', {
+      text: `${t('detail.subtotalExpense')}: ${formatAmount(subExpense, this.cachedDp)}`,
       cls: 'pw-subtotal-expense',
+    })
+    this.subtotalEl.createEl('span', {
+      text: `${t('detail.subtotalIncome')}: ${formatAmount(subIncome, this.cachedDp)}`,
+      cls: 'pw-subtotal-income',
     })
   }
 

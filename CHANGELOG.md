@@ -6,9 +6,9 @@ All notable changes to PennyWallet will be documented in this file.
 
 ### Added
 - Initial release
-- Finance Overview with monthly income / expense summary, account balances, net asset, and category pie charts
-- Transactions view with type and category filters, inline edit and delete
-- Asset Statistics view with 3 / 6 / 12-month bar and line charts
+- Finance Overview with monthly income / expense summary, account balances, net asset, asset allocation pie chart, and category pie charts (legends show name, amount, and percentage)
+- Transactions view with multi-select type filter, category checklist dropdown, keyword search on notes, sticky subtotals, inline edit and delete
+- Finance Trends view with 3 / 6 / 12-month income/expense bar chart, category trend line chart, net asset line chart, and per-account balance trend
 - Multiple account types: cash, bank, credit card (with debt tracking)
 - Custom expense and income categories
 - Credit card repayment workflow with automatic debt calculation

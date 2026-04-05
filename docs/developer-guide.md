@@ -29,7 +29,7 @@ penny-wallet/
 │   ├── view/
 │   │   ├── DashboardView.ts     ← Finance Overview
 │   │   ├── DetailView.ts        ← Transactions list
-│   │   └── TrendView.ts         ← Asset Statistics charts
+│   │   └── TrendView.ts         ← Finance Trends charts
 │   └── settings/
 │       └── SettingTab.ts        ← plugin settings UI
 ├── scripts/
@@ -184,7 +184,7 @@ Before opening a PR, verify the following:
 - [ ] Category dropdown appears and filters correctly
 - [ ] Subtotals match filtered transactions
 
-**Asset Statistics**
+**Finance Trends**
 - [ ] 3 / 6 / 12-month range selector switches data
 - [ ] Bar chart and line chart render without errors
 - [ ] Tooltip shows on hover

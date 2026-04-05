@@ -29,7 +29,7 @@ penny-wallet/
 │   ├── view/
 │   │   ├── DashboardView.ts     ← 帳本總覽
 │   │   ├── DetailView.ts        ← 交易記錄清單
-│   │   └── TrendView.ts         ← 資產統計圖表
+│   │   └── TrendView.ts         ← 財務趨勢圖表
 │   └── settings/
 │       └── SettingTab.ts        ← 外掛設定 UI
 ├── scripts/
@@ -184,7 +184,7 @@ npm test
 - [ ] 分類下拉選單出現並正確篩選
 - [ ] 小計符合篩選後的交易
 
-**資產統計**
+**財務趨勢**
 - [ ] 3 / 6 / 12 個月範圍選擇器切換資料
 - [ ] 長條圖和折線圖無誤渲染
 - [ ] 懸停時顯示提示框

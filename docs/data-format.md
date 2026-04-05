@@ -56,7 +56,7 @@ netAsset: 0
 
 ### Frontmatter Cache
 
-The `income`, `expense`, and `netAsset` fields at the top are a cache used for fast loading in the Finance Overview and Asset Statistics views. They are recomputed automatically whenever a transaction is added, edited, or deleted.
+The `income`, `expense`, and `netAsset` fields at the top are a cache used for fast loading in the Finance Overview and Finance Trends views. They are recomputed automatically whenever a transaction is added, edited, or deleted.
 
 > Do not edit the frontmatter manually — it will be overwritten on the next transaction write.
 

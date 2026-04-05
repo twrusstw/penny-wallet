@@ -6,9 +6,9 @@ A personal finance tracker plugin for [Obsidian](https://obsidian.md). Log expen
 
 ## Features
 
-- **Finance Overview** — monthly income / expense summary, account balances, net asset, and category pie charts
-- **Transactions** — filterable transaction list with inline edit and delete
-- **Asset Statistics** — 3 / 6 / 12-month bar and line charts
+- **Finance Overview** — monthly income / expense summary, account balances, net asset, asset allocation, and category pie charts
+- **Transactions** — multi-select type filter, category checklist, keyword search, inline edit and delete, with sticky subtotals
+- **Finance Trends** — 3 / 6 / 12-month income/expense bar chart, category trend, net asset line chart, and per-account balance trend
 - **Multiple account types** — cash, bank account, credit card (with debt tracking)
 - **Custom categories** — add your own expense and income categories
 - **iOS Shortcuts support** — add transactions via URI without opening Obsidian
@@ -47,21 +47,21 @@ Credit card accounts track outstanding debt. Expenses increase the debt; repayme
 
 ### Finance Overview
 
-Monthly summary with income, expense, balance, account balances, net asset, and pie charts by category.
+Monthly summary with income, expense, balance, account balances, net asset, asset allocation pie (cash/bank), and expense/income category pie charts. Each pie legend shows name, amount, and percentage.
 
 ![Finance Overview](images/finance-overview.png)
 
 ### Transactions
 
-Full transaction list with type and category filters, inline edit and delete, and monthly subtotals.
+Full transaction list with multi-select type filter, category checklist dropdown, keyword search, inline edit and delete. Header and subtotals stay fixed while the list scrolls.
 
 ![Transactions](images/transactions-view.png)
 
-### Asset Statistics
+### Finance Trends
 
-Bar chart of monthly income vs expense, line chart of net asset trend, with 3 / 6 / 12-month range selector.
+Income/expense bar chart, category spending trend (select any category), net asset line chart, and per-account balance trend — all with a 3 / 6 / 12-month range selector.
 
-![Asset Statistics](images/asset-statistics-view.png)
+![Finance Trends](images/asset-statistics-view.png)
 
 ### Settings
 
