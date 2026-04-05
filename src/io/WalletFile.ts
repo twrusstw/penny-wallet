@@ -14,7 +14,7 @@ const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Amo
 
 // ─── Markdown Table Parsing ───────────────────────────────────────────────────
 
-function parseRow(line: string): Transaction | null {
+export function parseRow(line: string): Transaction | null {
   const cols = line.split('|').map(c => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1)
   if (cols.length !== 8) return null
   const [date, type, wallet, fromWallet, toWallet, category, note, amountStr] = cols
@@ -50,7 +50,7 @@ function formatRow(tx: Transaction): string {
   return `| ${d} | ${type} | ${wallet} | ${from} | ${to} | ${cat} | ${note} | ${amount} |`
 }
 
-function parseMonthFile(content: string): Transaction[] {
+export function parseMonthFile(content: string): Transaction[] {
   const lines = content.split('\n')
   const transactions: Transaction[] = []
   let inTable = false
@@ -58,7 +58,7 @@ function parseMonthFile(content: string): Transaction[] {
   for (const line of lines) {
     const trimmed = line.trim()
     // Match both English and Chinese table headers
-    if (trimmed.startsWith('| Date') || trimmed.startsWith('| 日期')) {
+    if (!inTable && (trimmed.startsWith('| Date') || trimmed.startsWith('| 日期'))) {
       inTable = true
       continue
     }
@@ -67,14 +67,14 @@ function parseMonthFile(content: string): Transaction[] {
       const tx = parseRow(trimmed)
       if (tx) transactions.push(tx)
     } else if (inTable && trimmed === '') {
-      // empty line ends the table
-      inTable = false
+      // empty line ends the table; stop parsing entirely
+      break
     }
   }
   return transactions
 }
 
-function parseFrontmatter(content: string): Partial<MonthSummary> {
+export function parseFrontmatter(content: string): Partial<MonthSummary> {
   const match = content.match(/^---\n([\s\S]*?)\n---/)
   if (!match) return {}
   const fm: Record<string, number> = {}
@@ -85,7 +85,7 @@ function parseFrontmatter(content: string): Partial<MonthSummary> {
   return { income: fm['income'], expense: fm['expense'], netAsset: fm['netAsset'] }
 }
 
-function buildMonthContent(yearMonth: string, transactions: Transaction[], summary: MonthSummary): string {
+export function buildMonthContent(yearMonth: string, transactions: Transaction[], summary: MonthSummary): string {
   const frontmatter = `---\nincome: ${summary.income}\nexpense: ${summary.expense}\nnetAsset: ${summary.netAsset}\n---\n`
   const heading = `\n## ${yearMonth}\n\n`
   const rows = transactions.map(formatRow).join('\n')
