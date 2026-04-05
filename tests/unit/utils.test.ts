@@ -54,31 +54,46 @@ describe('isAfterCurrentMonth', () => {
 
 // ── formatAmount ──────────────────────────────────────────────────────────────
 
+const normalizeFormattedNumber = (value: string): string => {
+  const trimmed = value.trim()
+  const lastDot = trimmed.lastIndexOf('.')
+  const lastComma = trimmed.lastIndexOf(',')
+  const decimalIndex = Math.max(lastDot, lastComma)
+
+  if (decimalIndex === -1) {
+    return trimmed.replace(/[^\d-]/g, '')
+  }
+
+  const integerPart = trimmed.slice(0, decimalIndex).replace(/[^\d-]/g, '')
+  const fractionalPart = trimmed.slice(decimalIndex + 1).replace(/\D/g, '')
+
+  return `${integerPart}.${fractionalPart}`
+}
+
 describe('formatAmount', () => {
   it('formats an integer with no decimals', () => {
     const result = formatAmount(1234, 0)
-    // Locale may or may not add thousands separator; core digits must be present
-    expect(result.replace(/[,\s.]/g, '')).toBe('1234')
+    expect(normalizeFormattedNumber(result)).toBe('1234')
   })
 
   it('formats zero', () => {
-    expect(formatAmount(0, 0)).toBe('0')
+    expect(normalizeFormattedNumber(formatAmount(0, 0))).toBe('0')
   })
 
   it('formats with 2 decimal places', () => {
     const result = formatAmount(1234.5, 2)
-    expect(result).toMatch(/[.,]50$/)
+    expect(normalizeFormattedNumber(result)).toBe('1234.50')
   })
 
   it('rounds correctly to 2 decimal places', () => {
     const result = formatAmount(9.999, 2)
     // 9.999 rounds to 10.00
-    expect(result).toMatch(/^10[.,]00$/)
+    expect(normalizeFormattedNumber(result)).toBe('10.00')
   })
 
   it('default dp is 0', () => {
     const result = formatAmount(500)
-    expect(result.replace(/[,\s]/g, '')).toBe('500')
+    expect(normalizeFormattedNumber(result)).toBe('500')
   })
 })
 
