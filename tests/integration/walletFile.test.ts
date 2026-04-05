@@ -118,10 +118,11 @@ describe('updateTransaction', () => {
 
   it('moves transaction cross-month (deletes from old, inserts in new)', async () => {
     const { wf, store } = await makeWalletFile()
-    await wf.writeTransaction(EXPENSE, '2026-03')
+    const marchTx: Transaction = { ...EXPENSE, date: '03/15' }
+    await wf.writeTransaction(marchTx, '2026-03')
 
-    const updated: Transaction = { ...EXPENSE, date: '04/15' }
-    await wf.updateTransaction(EXPENSE, '2026-03', updated, '2026-04')
+    const updated: Transaction = { ...marchTx, date: '04/15' }
+    await wf.updateTransaction(marchTx, '2026-03', updated, '2026-04')
 
     // Old month should have empty table body
     const oldTxs = parseMonthFile(store.get('Ledgers/2026-03.md')!)
