@@ -3,11 +3,11 @@ import { vi } from 'vitest'
 // ── Obsidian API stubs ────────────────────────────────────────────────────────
 
 class TFile {
-  path: string
-  basename: string
-  constructor(path: string) {
+  path: string = ''
+  basename: string = ''
+  constructor(path: string = '') {
     this.path = path
-    this.basename = path.split('/').pop()!.replace(/\.md$/, '')
+    this.basename = path ? path.split('/').pop()!.replace(/\.md$/, '') : ''
   }
 }
 
@@ -22,7 +22,7 @@ vi.mock('obsidian', () => ({
     open() {}
     close() {}
   },
-  Notice: class Notice { constructor(_msg: string) {} },
+  Notice: class Notice { constructor(_: string) {} },
   Plugin: class Plugin {},
 }))
 

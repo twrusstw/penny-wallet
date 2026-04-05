@@ -11,7 +11,10 @@
     "build": "node esbuild.config.mjs production",
     "build:dev": "node esbuild.config.mjs development",
     "lint": "eslint \"src/**/*.ts\" && tsc --noEmit --pretty",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix && tsc --noEmit --pretty"
+    "lint:fix": "eslint \"src/**/*.ts\" --fix && tsc --noEmit --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "twrusstw",
