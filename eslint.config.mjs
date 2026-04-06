@@ -1,26 +1,26 @@
-import js from '@eslint/js'
-import globals from 'globals'
+import tsparser from '@typescript-eslint/parser'
 import tseslint from 'typescript-eslint'
+import { defineConfig } from 'eslint/config'
+import obsidianmd from 'eslint-plugin-obsidianmd'
 
-export default tseslint.config(
+export default defineConfig([
   {
     ignores: ['main.js', 'node_modules/**'],
   },
-  js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...obsidianmd.configs.recommended,
   {
     files: ['src/**/*.ts'],
     languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
+      parser: tsparser,
       parserOptions: {
-        project: true,
-        tsconfigRootDir: import.meta.dirname,
+        project: './tsconfig.json',
       },
     },
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
     rules: {
+      'no-undef': 'off',           // TypeScript handles this via tsc
       'no-console': 'off',
       'no-irregular-whitespace': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
@@ -31,17 +31,6 @@ export default tseslint.config(
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "AssignmentExpression[left.type='MemberExpression'][left.object.type='MemberExpression'][left.object.property.name='style']",
-          message: "Avoid direct style assignment. Use element.setCssProps(), .show(), or .hide() instead.",
-        },
-        {
-          selector: "AssignmentExpression[left.property.name='innerHTML']",
-          message: "Avoid innerHTML. Use DOM creation methods (createEl, createDiv, setText) instead.",
-        },
-      ],
     },
   },
-)
+])
