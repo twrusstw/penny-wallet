@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { WalletFile, parseMonthFile, parseFrontmatter } from '../../src/io/WalletFile'
 import { DEFAULT_CONFIG } from '../../src/types'
 import { createMockApp } from '../helpers/mockApp'
@@ -208,5 +208,166 @@ describe('calculateWalletData', () => {
     const { walletsWithTransactions } = await wf.calculateWalletData()
     expect(walletsWithTransactions.has('Bank')).toBe(true)
     expect(walletsWithTransactions.has('Cash')).toBe(true)
+  })
+})
+
+// ── getWalletBalanceTrend ─────────────────────────────────────────────────────
+
+describe('getWalletBalanceTrend', () => {
+  it('tracks cash and bank wallet balances across months', async () => {
+    const config = {
+      ...DEFAULT_CONFIG,
+      folderName: 'Ledgers',
+      wallets: [
+        { name: 'Cash', type: 'cash' as const, initialBalance: 1000, status: 'active' as const, includeInNetAsset: true },
+        { name: 'Bank', type: 'bank' as const, initialBalance: 500, status: 'active' as const, includeInNetAsset: true },
+      ],
+    }
+    const { app } = createMockApp({ '.penny-wallet.json': JSON.stringify(config) })
+    const wf = new WalletFile(app)
+    await wf.loadConfig()
+
+    await wf.writeTransaction({ date: '01/10', type: 'expense', wallet: 'Cash', category: 'food', note: '', amount: 200 }, '2026-01')
+    await wf.writeTransaction({ date: '02/10', type: 'income', wallet: 'Bank', category: 'salary', note: '', amount: 300 }, '2026-02')
+
+    const trend = await wf.getWalletBalanceTrend(['2026-01', '2026-02'])
+
+    expect(trend.get('Cash')?.get('2026-01')).toBe(800)   // 1000 - 200
+    expect(trend.get('Cash')?.get('2026-02')).toBe(800)   // unchanged
+    expect(trend.get('Bank')?.get('2026-01')).toBe(500)   // no change in Jan
+    expect(trend.get('Bank')?.get('2026-02')).toBe(800)   // 500 + 300
+  })
+
+  it('excludes credit card wallets', async () => {
+    const config = {
+      ...DEFAULT_CONFIG,
+      folderName: 'Ledgers',
+      wallets: [
+        { name: 'Cash', type: 'cash' as const, initialBalance: 0, status: 'active' as const, includeInNetAsset: true },
+        { name: 'Credit', type: 'creditCard' as const, initialBalance: 0, status: 'active' as const, includeInNetAsset: true },
+      ],
+    }
+    const { app } = createMockApp({ '.penny-wallet.json': JSON.stringify(config) })
+    const wf = new WalletFile(app)
+    await wf.loadConfig()
+
+    const trend = await wf.getWalletBalanceTrend(['2026-01'])
+    expect(trend.has('Cash')).toBe(true)
+    expect(trend.has('Credit')).toBe(false)
+  })
+
+  it('returns empty balance history when no month files exist', async () => {
+    const { wf } = await makeWalletFile()
+    const trend = await wf.getWalletBalanceTrend(['2026-01'])
+    // Wallet entry exists but has no month data (no files written)
+    expect(trend.get('Default Wallet')?.size).toBe(0)
+  })
+})
+
+// ── getCategoryTrend ──────────────────────────────────────────────────────────
+
+describe('getCategoryTrend', () => {
+  it('sums category spending per month', async () => {
+    const { wf } = await makeWalletFile()
+
+    await wf.writeTransaction({ date: '01/10', type: 'expense', wallet: 'Default Wallet', category: 'food', note: 'a', amount: 100 }, '2026-01')
+    await wf.writeTransaction({ date: '01/20', type: 'expense', wallet: 'Default Wallet', category: 'food', note: 'b', amount: 50 }, '2026-01')
+    await wf.writeTransaction({ date: '02/05', type: 'expense', wallet: 'Default Wallet', category: 'food', note: 'c', amount: 200 }, '2026-02')
+
+    const trend = await wf.getCategoryTrend(['2026-01', '2026-02'], 'food')
+
+    expect(trend.get('2026-01')).toBe(150)
+    expect(trend.get('2026-02')).toBe(200)
+  })
+
+  it('returns 0 for months with no matching category', async () => {
+    const { wf } = await makeWalletFile()
+    await wf.writeTransaction({ date: '01/10', type: 'expense', wallet: 'Default Wallet', category: 'transport', note: '', amount: 50 }, '2026-01')
+
+    const trend = await wf.getCategoryTrend(['2026-01'], 'food')
+    expect(trend.get('2026-01')).toBe(0)
+  })
+})
+
+// ── walletHasTransactions ─────────────────────────────────────────────────────
+
+describe('walletHasTransactions', () => {
+  it('returns true when wallet appears in expense', async () => {
+    const { wf } = await makeWalletFile()
+    await wf.writeTransaction(EXPENSE, '2026-04')
+    expect(await wf.walletHasTransactions('Default Wallet')).toBe(true)
+  })
+
+  it('returns true when wallet appears as fromWallet in transfer', async () => {
+    const { wf } = await makeWalletFile()
+    const transfer: Transaction = { date: '04/01', type: 'transfer', fromWallet: 'Bank', toWallet: 'Cash', note: '', amount: 500 }
+    await wf.writeTransaction(transfer, '2026-04')
+    expect(await wf.walletHasTransactions('Bank')).toBe(true)
+  })
+
+  it('returns true when wallet appears as toWallet in transfer', async () => {
+    const { wf } = await makeWalletFile()
+    const transfer: Transaction = { date: '04/01', type: 'transfer', fromWallet: 'Bank', toWallet: 'Cash', note: '', amount: 500 }
+    await wf.writeTransaction(transfer, '2026-04')
+    expect(await wf.walletHasTransactions('Cash')).toBe(true)
+  })
+
+  it('returns false when wallet has no transactions', async () => {
+    const { wf } = await makeWalletFile()
+    await wf.writeTransaction(EXPENSE, '2026-04')
+    expect(await wf.walletHasTransactions('Other Wallet')).toBe(false)
+  })
+
+  it('returns false when no month files exist', async () => {
+    const { wf } = await makeWalletFile()
+    expect(await wf.walletHasTransactions('Default Wallet')).toBe(false)
+  })
+})
+
+// ── getMonthSummaries ─────────────────────────────────────────────────────────
+
+describe('getMonthSummaries', () => {
+  it('returns summary for months that have files', async () => {
+    const { wf } = await makeWalletFile()
+    await wf.writeTransaction(EXPENSE, '2026-04')                                                               // expense: 150
+    const income: Transaction = { date: '03/01', type: 'income', wallet: 'Default Wallet', category: 'salary', note: '', amount: 5000 }
+    await wf.writeTransaction(income, '2026-03')
+
+    const summaries = await wf.getMonthSummaries(['2026-03', '2026-04'])
+
+    expect(summaries.get('2026-04')?.expense).toBe(150)
+    expect(summaries.get('2026-04')?.income).toBe(0)
+    expect(summaries.get('2026-03')?.income).toBe(5000)
+  })
+
+  it('skips months with no file', async () => {
+    const { wf } = await makeWalletFile()
+    await wf.writeTransaction(EXPENSE, '2026-04')
+
+    const summaries = await wf.getMonthSummaries(['2026-03', '2026-04'])
+    expect(summaries.has('2026-03')).toBe(false)
+    expect(summaries.has('2026-04')).toBe(true)
+  })
+})
+
+// ── getLocaleCashName (via loadConfig first-launch) ───────────────────────────
+
+describe('getLocaleCashName', () => {
+  beforeEach(() => {
+    // @ts-expect-error window.moment is set in test setup
+    window.moment = { locale: () => 'zh-TW' }
+  })
+  afterEach(() => {
+    // @ts-expect-error
+    window.moment = { locale: () => 'en' }
+  })
+
+  it('uses Chinese wallet name when locale is zh', async () => {
+    const { app } = createMockApp()   // no config file → first launch
+    const wf = new WalletFile(app)
+    await wf.loadConfig()
+    const config = wf.getConfig()
+    expect(config.wallets[0].name).toBe('預設錢包')
+    expect(config.defaultWallet).toBe('預設錢包')
   })
 })

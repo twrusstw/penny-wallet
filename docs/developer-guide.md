@@ -198,7 +198,6 @@ Before opening a PR, verify the following:
 **Mobile**
 - [ ] Transaction modal shifts up when keyboard opens (iOS)
 - [ ] Enter key on note/amount blurs the field (iOS)
-- [ ] All three views scroll and interact correctly
 
 ---
 

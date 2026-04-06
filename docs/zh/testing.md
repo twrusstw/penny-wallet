@@ -251,6 +251,11 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 | 無檔案的 `readMonth` | 回傳 `[]` |
 | `calculateWalletData` | `walletsWithTransactions` 包含已使用的帳戶名稱 |
 | `getNetAssetTimeline` 累積 | 每月淨資產等於手動計算值 |
+| `getWalletBalanceTrend` — 跨月追蹤 | 現金/銀行餘額累積正確；排除信用卡；無資料時 map 為空 |
+| `getCategoryTrend` | 每月分類加總；無匹配交易時回傳 0 |
+| `walletHasTransactions` | 匹配 wallet、fromWallet、toWallet；未使用時回傳 false |
+| `getMonthSummaries` | 回傳有檔案月份的 summary；無檔案月份跳過 |
+| `getLocaleCashName` | zh locale → 中文錢包名稱 |
 
 ---
 

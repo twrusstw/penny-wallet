@@ -269,6 +269,11 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 | `readMonth` with no file | returns `[]` |
 | `calculateWalletData` | `walletsWithTransactions` contains used wallet names |
 | `getNetAssetTimeline` incremental | net asset at each month equals manual calculation |
+| `getWalletBalanceTrend` — cross-month | cash/bank balances accumulate correctly; credit cards excluded; empty map when no data |
+| `getCategoryTrend` | per-month category sum; returns 0 when no matching transactions |
+| `walletHasTransactions` | matches wallet, fromWallet, toWallet; returns false when unused |
+| `getMonthSummaries` | returns summary for months with files; skips missing months |
+| `getLocaleCashName` | zh locale → Chinese wallet name |
 
 ---
 
