@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs development",
     "dev:watch": "node esbuild.config.mjs",
-    "dev:clean": "node scripts/dev-clean.mjs",
-    "demo:data": "node scripts/generate-demo-data.mjs",
+"demo:data": "node scripts/generate-demo-data.mjs",
     "build": "node esbuild.config.mjs production",
     "build:dev": "node esbuild.config.mjs development",
     "lint": "eslint \"src/**/*.ts\" && tsc --noEmit --pretty",
@@ -17,7 +16,9 @@
     "docs:preview": "vitepress preview docs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "node scripts/test-ui.mjs",
+    "demo:reset": "git clean -fdx demo-vault/ && git restore demo-vault/ && node esbuild.config.mjs development && node scripts/generate-demo-data.mjs"
   },
   "keywords": [],
   "author": "twrusstw",
@@ -26,7 +27,6 @@
     "@eslint/js": "^9.24.0",
     "@types/node": "^24.12.2",
     "@vitest/coverage-v8": "^4.1.2",
-    "builtin-modules": "^3.3.0",
     "esbuild": "^0.28.0",
     "eslint": "^9.24.0",
     "eslint-plugin-obsidianmd": "^0.1.9",

@@ -104,9 +104,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       new Setting(containerEl)
         .setName(`${wallet.name}（${t(`walletType.${wallet.type}`)}）`)
         .setDesc(desc)
-        .addButton(btn => btn
-          .setButtonText(t('ui.edit'))
-          .onClick(() => {
+        .addButton(btn => {
+          btn.setButtonText(t('ui.edit'))
+          btn.buttonEl.dataset['action'] = 'edit'
+          btn.onClick(() => {
             new WalletEditModal(this.app, wallet, async (updated) => {
               const wallets = config.wallets.map(w => w.name === wallet.name ? { ...w, ...updated } : w)
               if (updated.name && updated.name !== wallet.name && config.defaultWallet === wallet.name) {
@@ -117,12 +118,14 @@ export class PennyWalletSettingTab extends PluginSettingTab {
               await this.walletFile.saveConfig()
               void this.display()
             }).open()
-          }))
+          })
+        })
         .addButton(btn => {
           if (walletsWithTransactions.has(wallet.name)) {
             btn.setButtonText(t('ui.archive'))
               .setWarning()
-              .onClick(() => {
+            btn.buttonEl.dataset['action'] = 'archive'
+            btn.onClick(() => {
                 new ConfirmModal(this.app, t('confirm.archiveWallet'), async () => {
                   const wallets = config.wallets.map(w =>
                     w.name === wallet.name ? { ...w, status: 'archived' as const } : w,
@@ -135,7 +138,8 @@ export class PennyWalletSettingTab extends PluginSettingTab {
           } else {
             btn.setButtonText(t('ui.delete'))
               .setWarning()
-              .onClick(() => {
+            btn.buttonEl.dataset['action'] = 'delete'
+            btn.onClick(() => {
                 new ConfirmModal(this.app, t('confirm.deleteWallet'), async () => {
                   const wallets = config.wallets.filter(w => w.name !== wallet.name)
                   const defaultWallet = config.defaultWallet === wallet.name
@@ -173,9 +177,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
             this.walletFile.updateConfig({ wallets })
             void this.walletFile.saveConfig()
           }))
-        .addButton(btn => btn
-          .setButtonText(t('ui.unarchive'))
-          .onClick(() => {
+        .addButton(btn => {
+          btn.setButtonText(t('ui.unarchive'))
+          btn.buttonEl.dataset['action'] = 'unarchive'
+          btn.onClick(() => {
             void (async () => {
               const wallets = config.wallets.map(w =>
                 w.name === wallet.name ? { ...w, status: 'active' as const } : w,
@@ -184,7 +189,8 @@ export class PennyWalletSettingTab extends PluginSettingTab {
               await this.walletFile.saveConfig()
               void this.display()
             })()
-          }))
+          })
+        })
     }
   }
 
@@ -446,7 +452,9 @@ class WalletEditModal extends Modal {
     })
 
     const btnRow = contentEl.createDiv('pw-btn-row')
-    btnRow.createEl('button', { text: t('ui.save'), cls: 'mod-cta' }).addEventListener('click', () => {
+    const saveBtn = btnRow.createEl('button', { text: t('ui.save'), cls: 'mod-cta' })
+    saveBtn.dataset['action'] = 'save'
+    saveBtn.addEventListener('click', () => {
       if (!this.name) { new Notice(t('err.walletNameEmpty')); return }
       if ((this.wallet.type === 'cash' || this.wallet.type === 'bank') && this.balance < 0) {
         new Notice(t('err.cashBankNegativeBalance')); return
@@ -457,7 +465,9 @@ class WalletEditModal extends Modal {
       void this.onSave({ name: this.name, initialBalance: this.balance })
       this.close()
     })
-    btnRow.createEl('button', { text: t('ui.cancel') }).addEventListener('click', () => this.close())
+    const cancelBtn = btnRow.createEl('button', { text: t('ui.cancel') })
+    cancelBtn.dataset['action'] = 'cancel'
+    cancelBtn.addEventListener('click', () => this.close())
   }
 
   onClose() {

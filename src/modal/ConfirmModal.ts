@@ -17,10 +17,12 @@ export class ConfirmModal extends Modal {
     const { contentEl } = this
     contentEl.createEl('p', { text: this.message })
     const row = contentEl.createDiv('pw-btn-row')
-    row.createEl('button', { text: t('ui.confirm'), cls: 'mod-warning' })
-      .addEventListener('click', () => { this.close(); void this.onConfirm() })
-    row.createEl('button', { text: t('ui.cancel') })
-      .addEventListener('click', () => this.close())
+    const confirmBtn = row.createEl('button', { text: t('ui.confirm'), cls: 'mod-warning' })
+    confirmBtn.dataset['action'] = 'confirm'
+    confirmBtn.addEventListener('click', () => { this.close(); void this.onConfirm() })
+    const cancelBtn = row.createEl('button', { text: t('ui.cancel') })
+    cancelBtn.dataset['action'] = 'cancel'
+    cancelBtn.addEventListener('click', () => this.close())
   }
 
   onClose() { this.contentEl.empty() }

@@ -325,6 +325,7 @@ export class DetailView extends ItemView {
 
     const editBtn = actions.createEl('button', { cls: 'pw-txn-btn' })
     editBtn.setAttribute('aria-label', t('ui.edit'))
+    editBtn.dataset['action'] = 'edit'
     setIcon(editBtn, 'pencil')
     editBtn.addEventListener('click', () => {
       editBtn.disabled = true
@@ -342,6 +343,7 @@ export class DetailView extends ItemView {
 
     const deleteBtn = actions.createEl('button', { cls: 'pw-txn-btn pw-txn-btn-del' })
     deleteBtn.setAttribute('aria-label', t('ui.delete'))
+    deleteBtn.dataset['action'] = 'delete'
     setIcon(deleteBtn, 'trash')
     deleteBtn.addEventListener('click', () => {
       this.confirmDelete(tx)

@@ -99,7 +99,9 @@ export class TransactionModal extends Modal {
 
     const btnRow = contentEl.createDiv('pw-btn-row')
     const confirmBtn = btnRow.createEl('button', { text: t('ui.confirm'), cls: 'mod-cta' })
+    confirmBtn.dataset['action'] = 'confirm'
     const cancelBtn = btnRow.createEl('button', { text: t('ui.cancel') })
+    cancelBtn.dataset['action'] = 'cancel'
 
     // touchend fires before blur (keyboard dismissal), preventing the double-tap issue on iOS
     confirmBtn.addEventListener('touchend', (e) => { e.preventDefault(); void this.handleConfirm() })
@@ -133,6 +135,7 @@ export class TransactionModal extends Modal {
         text: t(`type.${tp}`),
         cls: 'pw-type-tab' + (this.type === tp ? ' is-active' : ''),
       })
+      tab.dataset['type'] = tp
     // Update active tab immediately on touch, rebuild after touch ends
       tab.addEventListener('touchend', (e) => {
         e.preventDefault()
