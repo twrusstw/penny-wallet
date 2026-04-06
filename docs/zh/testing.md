@@ -18,12 +18,12 @@ PennyWallet 使用 **[Vitest](https://vitest.dev/)** 作為測試執行器。選
 ## 測試金字塔
 
 ```
-         /  E2E  \           （未自動化 — 使用 demo vault 手動測試）
-        /  整合測試 \          Obsidian API 已模擬：檔案 I/O、設定 CRUD
-       /   單元測試  \         純函式：解析、商業邏輯、工具函式
+         /   UI 整合測試   \   Obsidian CLI 驅動真實 demo-vault（npm run test:ui）
+        /     整合測試      \  Obsidian API 已模擬：檔案 I/O、設定 CRUD
+       /      單元測試       \ 純函式：解析、商業邏輯、工具函式
 ```
 
-自動化覆蓋率的重點在 `WalletFile.ts`、`utils.ts` 和 `types.ts` 中的**純函式**，這些函式不需要任何模擬，可在幾毫秒內執行完畢。
+自動化覆蓋率的重點在 `WalletFile.ts`、`utils.ts` 和 `types.ts` 中的**純函式**，這些函式不需要任何模擬，可在幾毫秒內執行完畢。UI 行為（views、modals、設定）則由 `test:ui` 測試套件覆蓋，透過 CLI 驅動真實的 Obsidian 實例。
 
 ---
 
@@ -120,7 +120,9 @@ Object.defineProperty(global, 'window', {
 ```json
 "test":          "vitest run",
 "test:watch":    "vitest",
-"test:coverage": "vitest run --coverage"
+"test:coverage": "vitest run --coverage",
+"test:ui":       "node scripts/test-ui.mjs",
+"demo:reset":    "git clean -fdx demo-vault/ && git restore demo-vault/ && node esbuild.config.mjs development && node scripts/generate-demo-data.mjs"
 ```
 
 ---
@@ -221,12 +223,35 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
     basename: path.split('/').pop()!.replace(/\.md$/, ''),
   })
 
-  // ... vault 實作
+  const vault = {
+    getAbstractFileByPath: (path: string) => store.has(path) ? makeTFile(path) : null,
+    getFileByPath: (path: string) => store.has(path) ? makeTFile(path) : null,
+    getFolderByPath: (path: string) => {
+      const hasChildren = [...store.keys()].some(p => p.startsWith(path + '/'))
+      return hasChildren ? { path } : null
+    },
+    getMarkdownFiles: () => [...store.keys()].filter(p => p.endsWith('.md')).map(p => makeTFile(p)),
+    read: async (file: InstanceType<typeof TFile>) => store.get(file.path) ?? '',
+    modify: async (file: InstanceType<typeof TFile>, content: string) => { store.set(file.path, content) },
+    create: async (path: string, content: string) => {
+      if (store.has(path)) throw new Error(`File already exists: ${path}`)
+      store.set(path, content)
+      return makeTFile(path)
+    },
+    createFolder: async () => {},
+    adapter: {
+      exists: async (path: string) => store.has(path),
+      read: async (path: string) => store.get(path) ?? '',
+      write: async (path: string, content: string) => { store.set(path, content) },
+      remove: async (path: string) => { store.delete(path) },
+    },
+  }
+
   return { app: { vault } as any, store }
 }
 ```
 
-`store` 直接暴露給測試，方便驗證 vault 內容。
+`store` 直接暴露給測試，方便驗證 vault 內容。`Object.assign(new TFile(), {...})` 確保 `instanceof TFile` 在 production code 和 test helper 之間能正確運作。
 
 ### 設定 I/O（`tests/integration/config.test.ts`）
 
@@ -259,6 +284,66 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 
 ---
 
+## UI 整合測試（`npm run test:ui`）
+
+`scripts/test-ui.mjs` 透過 [Obsidian CLI](https://github.com/obsidianmd/obsidian-api)（`obsidian vault="demo-vault" ...`）驅動真實的 Obsidian 實例。這**不是**單元測試，需要 Obsidian 在背景執行並開啟 `demo-vault`。
+
+### 前置條件
+
+1. Obsidian **1.7.4 以上版本**（舊版不支援 CLI 指令）
+2. Obsidian 已開啟 `demo-vault`
+3. Plugin 已建置：`npm run dev`
+4. Demo 資料已產生：`npm run demo:data`（或完整重置：`npm run demo:reset`）
+
+### 涵蓋範圍（50 個檢查）
+
+| Section | 測試內容 |
+|---------|---------|
+| Plugin health | Plugin 重新載入不報錯 |
+| Finance Overview — layout | Month label、導覽按鈕、指標、帳戶清單 |
+| Finance Overview — navigation | 上/下月按鈕、disabled 狀態 |
+| Finance Overview — pie charts | 圓餅圖渲染、圖例項目 |
+| Add Transaction modal | Modal 開啟、type tabs 存在 |
+| Add expense transaction | 完整表單提交：選擇帳戶、填金額、modal 關閉 |
+| Finance Trends view | View 開啟、區間選擇器、canvas 渲染 |
+| Transactions (Detail) view | View 開啟、篩選 pills、rows 渲染、支出篩選 |
+| Edit transaction | 編輯 modal 開啟、預填資料、送出後關閉、row 數不變 |
+| Delete transaction — cancel | 確認對話框出現、取消後 row 數不變 |
+| Delete transaction — confirm | Row 數減少 1 |
+| Credit card balance direction | 信用卡 badge rows 存在 |
+| Settings tab | 分頁開啟、資料夾/小數點設定可見 |
+| Account — add new wallet | 新帳戶出現在清單 |
+| Account — edit wallet | 編輯 modal 開啟並顯示正確欄位 |
+| Account — delete wallet | 確認對話框、帳戶從 config 移除 |
+| Account — archive and restore | 封存設定 status、還原後恢復 |
+| URI handler | Modal 開啟並預填金額 |
+
+### Locale-agnostic selectors
+
+所有按鈕用 `data-action` 屬性選取（不依賴翻譯文字）：
+
+```js
+[data-action="confirm"]          // 任何 modal 的確認按鈕
+[data-action="cancel"]           // 取消按鈕
+[data-action="edit"]             // 編輯交易
+[data-action="delete"]           // 刪除交易 / 帳戶
+[data-action="archive"]          // 封存帳戶
+[data-action="unarchive"]        // 還原帳戶
+.pw-type-tab[data-type=expense]  // 交易類型 tab
+```
+
+### 重置 demo vault
+
+若測試後 vault 狀態不乾淨：
+
+```bash
+npm run demo:reset
+```
+
+這會移除所有產生的檔案（`git clean -fdx demo-vault/`）、重建 plugin、並重新產生 12 個月的 demo 資料。
+
+---
+
 ## 手動測試清單
 
 請參閱 [開發者指南 → 手動測試清單](./developer-guide#manual-test-checklist)，查看使用 demo vault 的完整發布前清單。
@@ -272,7 +357,7 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 | `src/io/WalletFile.ts`（純方法） | ≥ 90% |
 | `src/utils.ts` | 100% |
 | `src/types.ts`（遷移 helpers） | 100% |
-| 檢視 / Modal / 設定（UI） | 僅手動 |
+| 檢視 / Modal / 設定（UI） | `npm run test:ui`（50 個檢查，需要 Obsidian 執行中） |
 
 執行覆蓋率：
 

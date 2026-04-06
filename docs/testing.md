@@ -18,12 +18,12 @@ PennyWallet uses **[Vitest](https://vitest.dev/)** as its test runner. Vitest wa
 ## Test Pyramid
 
 ```
-         /  E2E  \           (not automated — use demo vault manually)
-        /  Integration \     Obsidian API mocked: file I/O paths, config CRUD
-       /   Unit Tests   \    Pure functions: parsing, business logic, helpers
+         /  UI Integration  \   Obsidian CLI drives live demo-vault (npm run test:ui)
+        /    Integration     \  Obsidian API mocked: file I/O paths, config CRUD
+       /      Unit Tests      \ Pure functions: parsing, business logic, helpers
 ```
 
-The bulk of automated coverage targets **pure functions** in `WalletFile.ts`, `utils.ts`, and `types.ts`. These require **zero mocking** and run in milliseconds.
+The bulk of automated coverage targets **pure functions** in `WalletFile.ts`, `utils.ts`, and `types.ts`. These require **zero mocking** and run in milliseconds. UI behaviour (views, modals, settings) is covered by the `test:ui` suite which drives a real Obsidian instance via CLI.
 
 ---
 
@@ -120,7 +120,9 @@ Object.defineProperty(global, 'window', {
 ```json
 "test":          "vitest run",
 "test:watch":    "vitest",
-"test:coverage": "vitest run --coverage"
+"test:coverage": "vitest run --coverage",
+"test:ui":       "node scripts/test-ui.mjs",
+"demo:reset":    "git clean -fdx demo-vault/ && git restore demo-vault/ && node esbuild.config.mjs development && node scripts/generate-demo-data.mjs"
 ```
 
 ---
@@ -223,6 +225,11 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 
   const vault = {
     getAbstractFileByPath: (path: string) => store.has(path) ? makeTFile(path) : null,
+    getFileByPath: (path: string) => store.has(path) ? makeTFile(path) : null,
+    getFolderByPath: (path: string) => {
+      const hasChildren = [...store.keys()].some(p => p.startsWith(path + '/'))
+      return hasChildren ? { path } : null
+    },
     getMarkdownFiles: () => [...store.keys()].filter(p => p.endsWith('.md')).map(p => makeTFile(p)),
     read: async (file: InstanceType<typeof TFile>) => store.get(file.path) ?? '',
     modify: async (file: InstanceType<typeof TFile>, content: string) => { store.set(file.path, content) },
@@ -277,6 +284,66 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 
 ---
 
+## UI Integration Tests (`npm run test:ui`)
+
+`scripts/test-ui.mjs` drives a live Obsidian instance using the [Obsidian CLI](https://github.com/obsidianmd/obsidian-api) (`obsidian vault="demo-vault" ...`). It is **not** a unit test — Obsidian must be running with `demo-vault` open.
+
+### Prerequisites
+
+1. Obsidian **1.7.4 or later** (the CLI is not available in older versions)
+2. Obsidian is open with `demo-vault`
+3. Plugin is built: `npm run dev`
+4. Demo data populated: `npm run demo:data` (or full reset: `npm run demo:reset`)
+
+### What it covers (50 checks)
+
+| Section | What's tested |
+|---------|--------------|
+| Plugin health | Plugin reloads without error |
+| Finance Overview — layout | Month label, nav buttons, metrics, wallet list |
+| Finance Overview — navigation | Prev/next month buttons, disabled state |
+| Finance Overview — pie charts | Chart renders, legend items |
+| Add Transaction modal | Modal opens, type tabs present |
+| Add expense transaction | Full form submit: wallet selected, amount filled, modal closes |
+| Finance Trends view | View opens, range selector, canvas renders |
+| Transactions (Detail) view | View opens, filter pills, rows rendered, expense filter |
+| Edit transaction | Edit modal opens, pre-fills data, submit closes modal, row count unchanged |
+| Delete transaction — cancel | Confirm dialog appears, cancel keeps row count |
+| Delete transaction — confirm | Row count decreases by 1 |
+| Credit card balance direction | Credit card badge rows present |
+| Settings tab | Tab opens, folder/decimal settings visible |
+| Account — add new wallet | New wallet appears in list |
+| Account — edit wallet | Edit modal opens with correct fields |
+| Account — delete wallet | Confirm dialog, wallet removed from config |
+| Account — archive and restore | Archive sets status, restore reverts it |
+| URI handler | Modal opens with pre-filled amount |
+
+### Locale-agnostic selectors
+
+All buttons are selected by `data-action` attribute (not translated text):
+
+```js
+[data-action="confirm"]     // confirm button in any modal
+[data-action="cancel"]      // cancel button
+[data-action="edit"]        // edit transaction
+[data-action="delete"]      // delete transaction / wallet
+[data-action="archive"]     // archive wallet
+[data-action="unarchive"]   // restore wallet
+.pw-type-tab[data-type=expense]  // transaction type tab
+```
+
+### Resetting the demo vault
+
+If tests leave the vault in a dirty state:
+
+```bash
+npm run demo:reset
+```
+
+This removes all generated files (`git clean -fdx demo-vault/`), rebuilds the plugin, and regenerates 12 months of demo data.
+
+---
+
 ## Manual Test Checklist
 
 See [Developer Guide → Manual Test Checklist](./developer-guide#manual-test-checklist) for the full pre-release checklist using the demo vault.
@@ -290,7 +357,7 @@ See [Developer Guide → Manual Test Checklist](./developer-guide#manual-test-ch
 | `src/io/WalletFile.ts` (pure methods) | ≥ 90% |
 | `src/utils.ts` | 100% |
 | `src/types.ts` (migration helpers) | 100% |
-| View / Modal / Settings (UI) | manual only |
+| View / Modal / Settings (UI) | `npm run test:ui` (50 checks, requires Obsidian running) |
 
 Run coverage:
 

@@ -24,8 +24,9 @@ penny-wallet/
 │   ├── io/
 │   │   └── WalletFile.ts        ← 所有檔案 I/O 與商業邏輯
 │   ├── modal/
-│   │   ├── TransactionModal.ts  ← 新增/編輯交易表單
-│   │   └── ConfirmModal.ts      ← 共用確認對話框
+│   │   ├── TransactionModal.ts        ← 新增/編輯交易表單（桌面版）
+│   │   ├── MobileTransactionModal.ts  ← 新增/編輯交易表單（手機版）
+│   │   └── ConfirmModal.ts            ← 共用確認對話框
 │   ├── view/
 │   │   ├── DashboardView.ts     ← 帳本總覽
 │   │   ├── DetailView.ts        ← 交易記錄清單
@@ -33,8 +34,8 @@ penny-wallet/
 │   └── settings/
 │       └── SettingTab.ts        ← 外掛設定 UI
 ├── scripts/
-│   ├── dev-clean.mjs            ← 重置 demo vault 外掛 + 重新啟動監看
-│   └── generate-demo-data.mjs  ← 以真實資料填充 demo vault
+│   ├── generate-demo-data.mjs  ← 以真實資料填充 demo vault
+│   └── test-ui.mjs             ← 自動化 UI 測試執行器（Obsidian CLI）
 ├── demo-vault/                  ← 開發用本地 Obsidian vault
 ├── esbuild.config.mjs           ← 建置設定
 ├── manifest.json                ← Obsidian 外掛 manifest
@@ -77,15 +78,15 @@ npm run dev:watch
 
 ### 3. 重置與重新填充
 
-若 demo vault 狀態變混亂：
+若 demo vault 狀態變混亂，執行完整重置：
 
 ```bash
-npm run dev:clean
+npm run demo:reset
 ```
 
-這會從 demo vault 中移除外掛資料夾，並從乾淨狀態重新啟動監看建置。
+這會移除 `demo-vault/` 中所有產生的檔案（`git clean -fdx`）、還原追蹤的 `community-plugins.json`、重建外掛，並一次完成 12 個月 demo 資料的重新產生。
 
-若要重新產生 demo 交易資料：
+若只需重新產生交易資料（不清除 vault 設定）：
 
 ```bash
 npm run demo:data
@@ -101,11 +102,13 @@ npm run demo:data
 |------|------|
 | `npm run dev:watch` | 監看模式 — 儲存時重建，同步至 demo vault |
 | `npm run dev` | 單次開發建置（含 inline sourcemap） |
-| `npm run dev:clean` | 清除 demo vault 外掛資料夾 + 重新啟動監看 |
 | `npm run build` | 正式建置（壓縮，無 sourcemap） |
 | `npm run demo:data` | 以 12 個月的虛擬資料填充 demo vault |
+| `npm run demo:reset` | 完整重置：清除 demo vault、重建外掛、重新填充資料 |
 | `npm run lint` | ESLint + TypeScript 型別檢查 |
 | `npm run lint:fix` | ESLint 自動修正 + 型別檢查 |
+| `npm run test` | 執行單元 + 整合測試（Vitest） |
+| `npm run test:ui` | 執行 UI 整合測試（需要 Obsidian 執行中） |
 
 ---
 
@@ -143,13 +146,19 @@ npm run lint:fix
 
 ## 測試
 
-執行自動化測試套件：
+執行單元與整合測試：
 
 ```bash
 npm test
 ```
 
-測試使用 [Vitest](https://vitest.dev/) 撰寫，位於 `tests/`。詳見 [測試](./testing) 頁面。
+執行 UI 整合測試（需要 Obsidian 開啟 `demo-vault`）：
+
+```bash
+npm run test:ui
+```
+
+測試使用 [Vitest](https://vitest.dev/) 撰寫，位於 `tests/`。UI 測試透過 Obsidian CLI 驅動真實實例。詳見 [測試](./testing) 頁面。
 
 ### 手動測試清單 {#manual-test-checklist}
 
@@ -195,10 +204,6 @@ npm test
 - [ ] 小數位數切換：新交易正確接受小數 / 整數
 - [ ] 自訂分類：新增、重複確認、移除
 
-**手機**
-- [ ] 鍵盤開啟時交易表單向上移動（iOS）
-- [ ] 備註/金額欄位的 Enter 鍵使欄位失去焦點（iOS）
-
 ---
 
 ## 程式碼慣例
@@ -233,9 +238,11 @@ npm test
    git checkout -b feat/your-feature-name
    ```
 2. 進行更改，並執行 [手動測試清單](#manual-test-checklist)
-3. 執行 lint 並確認無錯誤：
+3. 執行所有檢查：
    ```bash
    npm run lint
+   npm test
+   npm run test:ui   # 需要 Obsidian 開啟 demo-vault
    ```
 4. 推送分支並對 `dev` 分支開啟 PR
 5. 說明你更改了什麼以及原因 — 若 UI 有影響，請附上截圖
