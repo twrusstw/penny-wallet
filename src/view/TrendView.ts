@@ -88,9 +88,10 @@ export class TrendView extends ItemView {
     const legRow1 = incExpCard.createDiv('pw-leg-row')
     addRectLegend(legRow1, C_INCOME, t('dash.income'))
     addRectLegend(legRow1, C_EXPENSE, t('dash.expense'))
-    const chartWrap1 = incExpCard.createDiv('pw-chart-wrap')
-    const tooltip1 = chartWrap1.createDiv('pw-tooltip')
-    requestAnimationFrame(() => drawIncExpChart(chartWrap1, tooltip1, data, dp))
+    const incExpChartWrap = incExpCard.createDiv('pw-chart-wrap')
+    const incExpTooltip = incExpChartWrap.createDiv('pw-tooltip')
+    incExpTooltip.hide()
+    requestAnimationFrame(() => drawIncExpChart(incExpChartWrap, incExpTooltip, data, dp))
 
     // ── Category trend ───────────────────────────────────────────────────────
     const options = this.walletFile.getConfig().options
@@ -134,9 +135,10 @@ export class TrendView extends ItemView {
     // ── Net asset line chart ─────────────────────────────────────────────────
     const netCard = contentEl.createDiv('pw-card')
     netCard.createEl('div', { text: t('trend.netAssetTrend'), cls: 'pw-card-title' })
-    const chartWrap2 = netCard.createDiv('pw-chart-wrap')
-    const tooltip2 = chartWrap2.createDiv('pw-tooltip')
-    requestAnimationFrame(() => drawNetChart(chartWrap2, tooltip2, data, dp))
+    const netChartWrap = netCard.createDiv('pw-chart-wrap')
+    const netTooltip = netChartWrap.createDiv('pw-tooltip')
+    netTooltip.hide()
+    requestAnimationFrame(() => drawNetChart(netChartWrap, netTooltip, data, dp))
 
     // ── Wallet balance trend ─────────────────────────────────────────────────
     const walletTrend = await this.walletFile.getWalletBalanceTrend(months)
@@ -151,6 +153,7 @@ export class TrendView extends ItemView {
 
       const walletChartWrap = walletCard.createDiv('pw-chart-wrap')
       const walletTooltip = walletChartWrap.createDiv('pw-tooltip')
+      walletTooltip.hide()
       requestAnimationFrame(() =>
         drawWalletTrendChart(walletChartWrap, walletTooltip, months, data, walletTrend, walletColors, dp)
       )
@@ -180,6 +183,7 @@ export class TrendView extends ItemView {
 
     this.catChartWrap.empty()
     const catTooltip = this.catChartWrap.createDiv('pw-tooltip')
+    catTooltip.hide()
     requestAnimationFrame(() =>
       drawCatChart(
         this.catChartWrap!,
