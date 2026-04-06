@@ -28,7 +28,7 @@ Search **PennyWallet** in **Settings → Community Plugins → Browse**.
 
 ## Getting Started
 
-1. Enable PennyWallet — a balloon icon appears in the left ribbon
+1. Enable PennyWallet — a wallet icon appears in the left ribbon
 2. Open **Settings → PennyWallet** and add your accounts with their current balances ([Settings guide](https://twrusstw.github.io/penny-wallet/settings) · [中文說明](https://twrusstw.github.io/penny-wallet/zh/settings))
 3. Click the ribbon icon or run **Add Transaction** from the Command Palette to log your first entry
 
