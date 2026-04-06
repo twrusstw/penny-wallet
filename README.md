@@ -83,14 +83,6 @@ obsidian://penny-wallet?type=expense&amount=280&category=food&note=Lunch
 
 Supported parameters: `type`, `amount`, `note`, `category`, `wallet`, `fromWallet`, `toWallet`, `date`.
 
-If you use multiple vaults and more than one has PennyWallet installed, add `vault=<vault name>` to route the URI to the correct vault:
-
-```
-obsidian://penny-wallet?vault=My%20Finance%20Vault&type=expense&amount=280&category=food&note=Lunch
-```
-
-Using the vault ID is also supported by Obsidian and is more reliable than the vault name when automating shortcuts across devices.
-
 → [Full URI Handler & iOS Shortcuts guide](https://twrusstw.github.io/penny-wallet/uri-handler)
 
 ## Data Format
