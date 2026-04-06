@@ -1,6 +1,7 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { ItemView, Platform, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
+import { MobileTransactionModal } from '../modal/MobileTransactionModal'
 import { t, translateCategory } from '../i18n'
 import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
 import { DETAIL_VIEW_TYPE } from './DetailView'
@@ -75,7 +76,8 @@ export class DashboardView extends ItemView {
     })
     addBtn.addEventListener('click', () => {
       addBtn.disabled = true
-      new TransactionModal(this.app, this.walletFile, {}, null, null,
+      const ModalClass = Platform.isMobile ? MobileTransactionModal : TransactionModal
+      new ModalClass(this.app, this.walletFile, {}, null, null,
         () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
         () => { addBtn.disabled = false },
       ).open()

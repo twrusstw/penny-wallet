@@ -4,27 +4,27 @@ import { WalletFile, dateToMonthDay, dateToYearMonth } from '../io/WalletFile'
 import { t, translateCategory } from '../i18n'
 
 export class TransactionModal extends Modal {
-  private walletFile: WalletFile
+  protected walletFile: WalletFile
   private params: TransactionModalParams
-  private editingTx: Transaction | null
+  protected editingTx: Transaction | null
   private editingYearMonth: string | null
   private onSuccess: (() => void) | null
   private onDismiss: (() => void) | null
 
   // Form state
-  private type: TransactionType = 'expense'
-  private date: string = ''       // yyyy-mm-dd
-  private wallet: string = ''
-  private fromWallet: string = ''
-  private toWallet: string = ''
-  private category: string = ''
-  private note: string = ''
-  private amount: string = ''
+  protected type: TransactionType = 'expense'
+  protected date: string = ''       // yyyy-mm-dd
+  protected wallet: string = ''
+  protected fromWallet: string = ''
+  protected toWallet: string = ''
+  protected category: string = ''
+  protected note: string = ''
+  protected amount: string = ''
 
   // DOM refs
   private typeTabsEl!: HTMLElement
   private fieldsEl!: HTMLElement
-  private errorEl!: HTMLElement
+  protected errorEl!: HTMLElement
 
   constructor(
     app: App,
@@ -50,7 +50,7 @@ export class TransactionModal extends Modal {
     this.buildUI(config)
   }
 
-  private initState(config: PennyWalletConfig) {
+  protected initState(config: PennyWalletConfig) {
     if (this.editingTx) {
       const tx = this.editingTx
       this.type = tx.type
@@ -101,8 +101,28 @@ export class TransactionModal extends Modal {
     const confirmBtn = btnRow.createEl('button', { text: t('ui.confirm'), cls: 'mod-cta' })
     const cancelBtn = btnRow.createEl('button', { text: t('ui.cancel') })
 
+    // touchend fires before blur (keyboard dismissal), preventing the double-tap issue on iOS
+    confirmBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.handleConfirm() })
+    cancelBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.close() })
     confirmBtn.addEventListener('click', () => this.handleConfirm())
     cancelBtn.addEventListener('click', () => this.close())
+
+    // Also fix Obsidian's built-in X close button
+    const closeBtn = this.modalEl.querySelector('.modal-close-button') as HTMLElement | null
+    closeBtn?.addEventListener('touchend', (e) => { e.preventDefault(); this.close() })
+
+    // Sync modal position with keyboard visibility:
+    // - text/number input focused → keyboard opens → modal moves to top
+    // - select/date focused → keyboard closes → modal returns to center
+    this.contentEl.addEventListener('focusin', (e) => {
+      const target = e.target as HTMLElement
+      if (target instanceof HTMLInputElement && (target.type === 'text' || target.type === 'number')) {
+        this.containerEl.addClass('pw-modal-keyboard-open')
+      } else if (target instanceof HTMLSelectElement ||
+                 (target instanceof HTMLInputElement && target.type === 'date')) {
+        this.containerEl.removeClass('pw-modal-keyboard-open')
+      }
+    })
   }
 
   private renderTypeTabs() {
@@ -112,6 +132,25 @@ export class TransactionModal extends Modal {
       const tab = this.typeTabsEl.createEl('button', {
         text: t(`type.${tp}` as any),
         cls: 'pw-type-tab' + (this.type === tp ? ' is-active' : ''),
+      })
+    // Update active tab immediately on touch, rebuild after touch ends
+      tab.addEventListener('touchend', (e) => {
+        e.preventDefault()
+        this.containerEl.removeClass('pw-modal-keyboard-open')
+        this.type = tp
+        if (tp === 'expense' || tp === 'income') {
+          this.fromWallet = ''
+          this.toWallet = ''
+        } else {
+          this.wallet = ''
+          this.category = ''
+        }
+        Array.from(this.typeTabsEl.children).forEach((el, i) => {
+          el.classList.toggle('is-active', types[i] === tp)
+        })
+        this.renderFields(this.walletFile.getConfig(), false)
+        // Defer full tab rebuild until after touch sequence ends
+        setTimeout(() => this.renderTypeTabs(), 50)
       })
       tab.addEventListener('click', () => {
         this.type = tp
@@ -123,19 +162,27 @@ export class TransactionModal extends Modal {
           this.category = ''
         }
         this.renderTypeTabs()
-        this.renderFields(this.walletFile.getConfig())
+        this.renderFields(this.walletFile.getConfig(), false)
       })
     }
   }
 
-  private renderFields(config: PennyWalletConfig) {
+  private renderFields(config: PennyWalletConfig, autoFocus = true) {
     this.fieldsEl.empty()
+
+    // Remove keyboard-open class on touchstart so modal repositions BEFORE the native picker opens.
+    const onPickerTouch = (el: HTMLElement) => {
+      el.addEventListener('touchstart', () => {
+        this.containerEl.removeClass('pw-modal-keyboard-open')
+      }, { passive: true })
+    }
 
     // Date field (always shown)
     this.addField(this.fieldsEl, t('modal.date'), () => {
       const input = createEl('input', { type: 'date' })
       input.value = this.date
       input.addEventListener('change', () => { this.date = input.value })
+      onPickerTouch(input)
       return input
     })
 
@@ -150,6 +197,7 @@ export class TransactionModal extends Modal {
           if (w.name === this.wallet) opt.selected = true
         }
         sel.addEventListener('change', () => { this.wallet = sel.value })
+        onPickerTouch(sel)
         return sel
       })
 
@@ -162,6 +210,7 @@ export class TransactionModal extends Modal {
           if (key === this.category) opt.selected = true
         }
         sel.addEventListener('change', () => { this.category = sel.value })
+        onPickerTouch(sel)
         return sel
       })
     } else {
@@ -178,6 +227,7 @@ export class TransactionModal extends Modal {
           if (w.name === this.fromWallet) opt.selected = true
         }
         sel.addEventListener('change', () => { this.fromWallet = sel.value })
+        onPickerTouch(sel)
         return sel
       })
 
@@ -194,6 +244,7 @@ export class TransactionModal extends Modal {
           if (w.name === this.toWallet) opt.selected = true
         }
         sel.addEventListener('change', () => { this.toWallet = sel.value })
+        onPickerTouch(sel)
         return sel
       })
     }
@@ -216,7 +267,7 @@ export class TransactionModal extends Modal {
       input.setAttribute('enterkeyhint', 'done')
       input.addEventListener('input', () => { this.amount = input.value })
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur() })
-      setTimeout(() => input.focus(), 50) // wait for modal open animation to complete
+      if (autoFocus) setTimeout(() => input.focus(), 50) // wait for modal open animation to complete
       return input
     })
   }
@@ -229,7 +280,7 @@ export class TransactionModal extends Modal {
     row.appendChild(input)
   }
 
-  private getCategoryOptions(config: PennyWalletConfig): { key: string; label: string }[] {
+  protected getCategoryOptions(config: PennyWalletConfig): { key: string; label: string }[] {
     const catOptions = this.type === 'expense'
       ? config.options.categories.expense
       : config.options.categories.income
@@ -243,12 +294,12 @@ export class TransactionModal extends Modal {
     ]
   }
 
-  private showError(msg: string) {
+  protected showError(msg: string) {
     this.errorEl.textContent = msg
     this.errorEl.style.display = 'block'
   }
 
-  private clearError() {
+  protected clearError() {
     this.errorEl.style.display = 'none'
   }
 
@@ -282,7 +333,7 @@ export class TransactionModal extends Modal {
     return true
   }
 
-  private async handleConfirm() {
+  protected async handleConfirm() {
     if (!this.validate()) return
 
     const newTx: Transaction = {
@@ -317,12 +368,13 @@ export class TransactionModal extends Modal {
   }
 
   onClose() {
+    this.containerEl.removeClass('pw-modal-keyboard-open')
     this.contentEl.empty()
     this.onDismiss?.()
   }
 }
 
-function todayString(): string {
+export function todayString(): string {
   const d = new Date()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')

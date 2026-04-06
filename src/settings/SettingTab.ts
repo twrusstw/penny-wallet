@@ -407,7 +407,11 @@ class WalletEditModal extends Modal {
     const syncKeyboardState = () => {
       const activeEl = document.activeElement
       const isEditingFieldFocused = !!activeEl && formEl.contains(activeEl)
-      containerEl.toggleClass('pw-wallet-edit-keyboard-open', isEditingFieldFocused)
+      if (isEditingFieldFocused) {
+        containerEl.style.setProperty('padding-bottom', '40vh')
+      } else {
+        containerEl.style.removeProperty('padding-bottom')
+      }
     }
 
     formEl.addEventListener('focusin', syncKeyboardState)
@@ -453,7 +457,8 @@ class WalletEditModal extends Modal {
   }
 
   onClose() {
-    this.containerEl.removeClass('pw-wallet-edit-modal-container', 'pw-wallet-edit-keyboard-open')
+    this.containerEl.removeClass('pw-wallet-edit-modal-container')
+    this.containerEl.style.removeProperty('padding-bottom')
     this.contentEl.empty()
   }
 }

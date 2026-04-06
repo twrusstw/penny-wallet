@@ -1,6 +1,7 @@
-import { Notice, ObsidianProtocolData, Plugin, WorkspaceLeaf, addIcon } from 'obsidian'
+import { Notice, ObsidianProtocolData, Platform, Plugin, WorkspaceLeaf, addIcon } from 'obsidian'
 import { WalletFile } from './io/WalletFile'
 import { TransactionModal } from './modal/TransactionModal'
+import { MobileTransactionModal } from './modal/MobileTransactionModal'
 import { DashboardView, DASHBOARD_VIEW_TYPE } from './view/DashboardView'
 import { DetailView, DETAIL_VIEW_TYPE } from './view/DetailView'
 import { TrendView, TREND_VIEW_TYPE } from './view/TrendView'
@@ -72,7 +73,8 @@ export default class PennyWalletPlugin extends Plugin {
   }
 
   openTransactionModal(params: TransactionModalParams = {}) {
-    new TransactionModal(
+    const ModalClass = Platform.isMobile ? MobileTransactionModal : TransactionModal
+    new ModalClass(
       this.app,
       this.walletFile,
       params,
@@ -106,7 +108,9 @@ export default class PennyWalletPlugin extends Plugin {
 
   private isTargetVault(targetVault?: string) {
     if (!targetVault) return true
-    return targetVault === this.app.vault.getName()
+    const name  = this.app.vault.getName()
+    const appId = (this.app as any).appId as string | undefined
+    return targetVault === name || (appId !== undefined && targetVault === appId)
   }
 
   // ── Refresh ─────────────────────────────────────────────────────────────────

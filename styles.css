@@ -15,24 +15,301 @@
    Restricted to touch devices (pointer: coarse) so desktop focus doesn't trigger this.
    Uses :has() which is supported in WKWebView (iOS 15.4+). */
 @media (pointer: coarse) {
-  .modal-container:has(.pw-modal input:focus),
-  .modal-container:has(.pw-modal select:focus) {
+  /* TransactionModal: keep modal at top once user starts interacting.
+     Class added by JS on first focusin — stays until modal closes.
+     Avoids layout jumping when switching between keyboard/picker fields (select, date). */
+  .modal-container.pw-modal-keyboard-open {
     align-items: flex-start;
     padding-top: 20px;
   }
 
-  .modal-container:has(.pw-modal input:focus) .modal,
-  .modal-container:has(.pw-modal select:focus) .modal {
+  .modal-container.pw-modal-keyboard-open .modal {
     max-height: 55vh;
     overflow-y: auto;
   }
 
-  /* Wallet edit modal: JS-class fallback for older iOS without :has() support.
-     Use padding-bottom instead of align-items:flex-start so the small modal
-     stays centered in the upper portion of the screen rather than jumping to the top. */
-  .pw-wallet-edit-modal-container.pw-wallet-edit-keyboard-open {
-    padding-bottom: 40vh;
-  }
+}
+
+/* ── Mobile full-screen transaction modal ── */
+
+.pw-transaction-modal-container {
+  padding: 0 !important;
+  align-items: stretch !important;
+}
+
+.pw-transaction-modal-container .modal {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.pw-transaction-modal-container .modal-close-button {
+  display: none !important;
+}
+
+.pw-mobile-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Top bar — safe area handled via padding-top only; height is auto to avoid double-offset */
+.pw-mobile-top-bar {
+  display: flex;
+  align-items: center;
+  padding: env(safe-area-inset-top, 0px) 8px 8px;
+  min-height: 52px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Both side buttons are fixed width so the title stays centered */
+.pw-mobile-top-btn {
+  background: none;
+  border: none;
+  color: var(--text-normal);
+  font-size: 18px;
+  flex: 0 0 48px;
+  height: 48px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.pw-mobile-top-btn:active {
+  background: var(--background-modifier-hover);
+}
+
+.pw-mobile-top-confirm {
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.pw-mobile-top-title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+/* Type tabs */
+.pw-mobile-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Scope all tab rules under container to beat Obsidian's global button styles */
+.pw-transaction-modal-container .pw-mobile-tab {
+  flex: 1;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 14px 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pw-transaction-modal-container .pw-mobile-tab:hover,
+.pw-transaction-modal-container .pw-mobile-tab:active,
+.pw-transaction-modal-container .pw-mobile-tab:focus,
+.pw-transaction-modal-container .pw-mobile-tab:focus-visible {
+  background: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--text-muted);
+}
+
+.pw-transaction-modal-container .pw-mobile-tab.is-active,
+.pw-transaction-modal-container .pw-mobile-tab.is-active:hover,
+.pw-transaction-modal-container .pw-mobile-tab.is-active:active,
+.pw-transaction-modal-container .pw-mobile-tab.is-active:focus,
+.pw-transaction-modal-container .pw-mobile-tab.is-active:focus-visible {
+  background: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.pw-mobile-tab.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--interactive-accent);
+  border-radius: 1px;
+}
+
+/* Amount display */
+.pw-mobile-amount-area {
+  padding: 10px 20px 8px;
+  text-align: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.pw-mobile-amount-display {
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  min-height: 44px;
+  line-height: 1.2;
+}
+
+/* Error in mobile modal */
+.pw-mobile-error {
+  margin: 0;
+  border-radius: 0;
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 16px;
+}
+
+/* Field rows */
+.pw-mobile-rows {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pw-mobile-row {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 48px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  position: relative;
+}
+
+.pw-mobile-row-label {
+  font-size: 15px;
+  color: var(--text-muted);
+  flex: 0 0 64px;
+}
+
+.pw-mobile-row-value {
+  flex: 1;
+  font-size: 16px;
+  color: var(--text-normal);
+  text-align: right !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Invisible native picker overlay (date + select) */
+.pw-mobile-row-picker {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px; /* prevent iOS auto-zoom */
+}
+
+/* Note text input — scoped to beat Obsidian's input[type=text] defaults */
+.pw-transaction-modal-container .pw-mobile-note-input {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 16px;
+  color: var(--text-normal);
+  text-align: right;
+  outline: none !important;
+  padding: 0;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none !important;
+}
+
+.pw-mobile-note-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* Hide numpad when note field is focused (iOS keyboard replaces it) */
+.pw-mobile-rows:has(.pw-mobile-note-input:focus) ~ .pw-mobile-numpad {
+  display: none;
+}
+
+/* Custom numpad — gap:1px uses the grid background as hairline dividers between cells.
+   No border-top needed: the top hairline comes from the grid gap itself. */
+.pw-mobile-numpad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--background-modifier-border);
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pw-mobile-numpad-btn {
+  background: var(--background-primary);
+  border: none;
+  font-size: 22px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-normal);
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+/* Override Obsidian's global button styles */
+.pw-transaction-modal-container .pw-mobile-numpad-btn:hover {
+  background: var(--background-primary) !important;
+}
+
+.pw-transaction-modal-container .pw-mobile-numpad-btn:active {
+  background: var(--background-modifier-hover) !important;
+}
+
+.pw-transaction-modal-container .pw-mobile-numpad-btn:focus,
+.pw-transaction-modal-container .pw-mobile-numpad-btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.pw-mobile-numpad-control {
+  font-size: 20px;  /* ⌫ and C — was 16px, now larger */
+  color: var(--text-muted);
+  background: var(--background-secondary);
+}
+
+.pw-mobile-numpad-control:active {
+  background: var(--background-modifier-hover);
+}
+
+.pw-mobile-numpad-confirm {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.pw-mobile-numpad-confirm:active {
+  opacity: 0.85;
 }
 
 .pw-modal h2 {
@@ -57,9 +334,17 @@
   transition: background 0.15s;
 }
 
+.pw-type-tab:hover {
+  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+}
+
 .pw-type-tab.is-active {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
+}
+
+.pw-type-tab.is-active:hover {
+  background: var(--interactive-accent-hover);
 }
 
 .pw-fields {
