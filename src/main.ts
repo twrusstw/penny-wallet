@@ -87,8 +87,6 @@ export default class PennyWalletPlugin extends Plugin {
   // ── URI Handler ─────────────────────────────────────────────────────────────
 
   private handleURI(data: ObsidianProtocolData) {
-    if (!this.isTargetVault(data['vault'])) return
-
     const params: TransactionModalParams = {}
 
     if (data['type']) params.type = data['type'] as any
@@ -104,13 +102,6 @@ export default class PennyWalletPlugin extends Plugin {
     if (data['date']) params.date = data['date']
 
     this.openTransactionModal(params)
-  }
-
-  private isTargetVault(targetVault?: string) {
-    if (!targetVault) return true
-    const name  = this.app.vault.getName()
-    const appId = (this.app as any).appId as string | undefined
-    return targetVault === name || (appId !== undefined && targetVault === appId)
   }
 
   // ── Refresh ─────────────────────────────────────────────────────────────────

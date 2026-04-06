@@ -77,12 +77,6 @@ Yes. All features work on mobile, including the transaction form and all three v
 
 ---
 
-### I opened a month with lots of transactions and it loads slowly.
-
-The Finance Overview loads all months at once to compute wallet balances. For very large vaults (years of data), this can take a moment on the first open. Subsequent opens of the same month are fast because the frontmatter cache is used for the trend charts.
-
----
-
 ### Something broke after I manually edited a `.md` file.
 
 Check that:

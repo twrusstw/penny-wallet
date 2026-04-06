@@ -12,17 +12,16 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 
 ### 可用參數
 
-| 參數 | 必填 | 說明 | 範例 |
-|------|------|------|------|
-| `type` | 否 | 交易類型，預設 `expense` | `expense` / `income` / `transfer` / `repayment` |
-| `amount` | 否 | 金額 | `250` |
-| `note` | 否 | 備註 | `午餐` |
-| `category` | 否 | 分類 key（預設分類）或自訂名稱 | `food` / `transport` / `我的分類` |
-| `vault` | 否 | 目標 vault 名稱。若多個 vault 都安裝 PennyWallet，建議一定要帶 | `我的記帳庫` |
-| `wallet` | 否 | 帳戶名稱（支出 / 收入用） | `玉山銀行` |
-| `fromWallet` | 否 | 來源帳戶（轉帳 / 還款用） | `玉山銀行` |
-| `toWallet` | 否 | 目標帳戶（轉帳 / 還款用） | `玉山信用卡` |
-| `date` | 否 | 日期，格式 `yyyy-mm-dd`，預設今天 | `2026-04-05` |
+| 參數 | 必填 | 說明 |
+|------|------|------|
+| `type` | 否 | `expense`（預設）/ `income` / `transfer` / `repayment` |
+| `amount` | 否 | 金額 |
+| `note` | 否 | 備註 |
+| `category` | 否 | 分類 key 或自訂名稱 |
+| `wallet` | 否 | 帳戶名稱（支出 / 收入用） |
+| `fromWallet` | 否 | 來源帳戶（轉帳 / 還款用） |
+| `toWallet` | 否 | 目標帳戶（轉帳 / 還款用） |
+| `date` | 否 | 日期，格式 `yyyy-mm-dd`，預設今天 |
 
 ### 分類 key 對照
 
@@ -41,118 +40,45 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 
 ---
 
-## 範例 URI
+## 範例
 
-**快速支出（僅預設類型）：**
-```
-obsidian://penny-wallet?type=expense
-```
-
-**預填金額與分類：**
 ```
 obsidian://penny-wallet?type=expense&amount=280&category=food&note=午餐
-```
-
-**指定某一個 vault：**
-```
-obsidian://penny-wallet?vault=我的記帳庫&type=expense&amount=280&category=food&note=午餐
-```
-
-**指定帳戶：**
-```
-obsidian://penny-wallet?type=expense&amount=1200&category=shopping&wallet=玉山信用卡
-```
-
-**收入：**
-```
-obsidian://penny-wallet?type=income&amount=72000&category=salary&wallet=玉山銀行
-```
-
-**信用卡還款：**
-```
-obsidian://penny-wallet?type=repayment&amount=5000&fromWallet=玉山銀行&toWallet=玉山信用卡
 ```
 
 ---
 
 ## iOS 捷徑設定
 
-### 前置條件
-
-- iPhone 已安裝 Obsidian App
-- Obsidian 已開啟 PennyWallet 所在的 vault
-- 已在 PennyWallet 設定中建立帳戶
-
-### 範例：快速記支出
-
 1. 打開 iPhone **捷徑** App → 點右上角 **+** 新增捷徑
-2. 點 **新增動作** → 搜尋「**詢問輸入**」
-   - 提示：`金額`
-   - 輸入類型：`數字`
-   - 儲存結果為變數 `amount`
-3. 再新增一個「**詢問輸入**」
-   - 提示：`備註（可留空）`
-   - 輸入類型：`文字`
-   - 儲存結果為變數 `note`
-4. 新增「**從選單選擇**」
-   - 提示：`分類`
-   - 選項：`food`、`transport`、`shopping`、`entertainment`、`other`（依需求調整）
-   - 儲存結果為變數 `category`
-5. 新增「**開啟 URL**」
-   - URL 填入：
-     ```
-     obsidian://penny-wallet?type=expense&amount=[amount]&note=[note]&category=[category]
-     ```
-   - 其中 `[amount]`、`[note]`、`[category]` 替換為對應的**捷徑變數**
-6. 點右上角完成，為捷徑命名（例如：`記帳`）
+2. 新增動作「**詢問輸入**」→ 提示 `金額`、類型 `數字`，儲存為變數 `amount`
+3. 新增動作「**詢問輸入**」→ 提示 `備註（可留空）`、類型 `文字`，儲存為變數 `note`
+4. 新增動作「**從選單選擇**」→ 提示 `分類`、選項 `food`、`transport`、`shopping`、`entertainment`、`other`，儲存為變數 `category`
+5. 新增動作「**開啟 URL**」：
+   ```
+   obsidian://penny-wallet?type=expense&amount=[amount]&note=[note]&category=[category]
+   ```
+   將 `[amount]`、`[note]`、`[category]` 替換為對應的捷徑變數。
+6. 點完成並為捷徑命名（例如：`記帳`）
 
-### 多個 Vault 的情況
-
-如果你有不只一個 vault 都安裝了 PennyWallet，建議在 URI 加上 `vault` 參數，讓 Obsidian 先切到正確的 vault，再交給 PennyWallet 處理。
-
-```
-obsidian://penny-wallet?vault=我的記帳庫&type=expense&amount=[amount]&note=[note]&category=[category]
-```
-
-你也可以改用 Obsidian 的 vault ID。對自動化來說，vault ID 通常比顯示名稱更穩定。
+加入主畫面：捷徑編輯頁 → 點 **⋯** → **加入主畫面**。
 
 ---
 
-## 進階範例
+## 常見問題
 
-### 指定帳戶 + 自動填今天日期
+**支援多個 vault 嗎？**
 
-```
-obsidian://penny-wallet?type=expense&amount=[amount]&note=[note]&category=[category]&wallet=玉山信用卡
-```
+不支援。PennyWallet 無法透過 URI 指定目標 vault，URI 一律在當前使用中的 vault 開啟。
 
-### 收入記錄
+**帳戶與分類名稱需要完全相符嗎？**
 
-```
-obsidian://penny-wallet?type=income&amount=[amount]&category=salary&wallet=玉山銀行
-```
+是，區分大小寫，必須與 PennyWallet 設定中的名稱完全一致。
 
-### 信用卡還款
+**URI 可以靜默送出交易嗎？**
 
-```
-obsidian://penny-wallet?type=repayment&amount=[amount]&fromWallet=玉山銀行&toWallet=玉山信用卡
-```
+不行。表單一定會開啟讓使用者確認，無法靜默送出。
 
----
+**帳戶或分類名稱含有空格或中文時需要 URL 編碼嗎？**
 
-## 加入主畫面
-
-1. 捷徑編輯頁 → 點上方捷徑名稱旁的 **⋯**
-2. 選「**加入主畫面**」
-3. 設定圖示與名稱後加入
-
-之後點一下圖示即可快速開啟記帳表單。
-
----
-
-## 注意事項
-
-- URI 中的帳戶名稱必須與 PennyWallet 設定中的完全相符（區分大小寫）
-- 若多個 vault 都有安裝 PennyWallet，建議一定要帶 `vault` 參數，避免開到錯的 vault
-- 表單一定會開啟讓使用者確認 — URI 無法靜默送出交易
-- 若帳戶或分類名稱含有空格或非 ASCII 字元，請進行 URL 編碼（iOS 捷徑會自動處理）
+需要。iOS 捷徑會自動處理，其他工具請手動編碼。
