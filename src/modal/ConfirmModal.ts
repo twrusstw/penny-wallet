@@ -5,9 +5,9 @@ import { t } from '../i18n'
 
 export class ConfirmModal extends Modal {
   private message: string
-  private onConfirm: () => void
+  private onConfirm: () => void | Promise<void>
 
-  constructor(app: App, message: string, onConfirm: () => void) {
+  constructor(app: App, message: string, onConfirm: () => void | Promise<void>) {
     super(app)
     this.message = message
     this.onConfirm = onConfirm
@@ -18,7 +18,7 @@ export class ConfirmModal extends Modal {
     contentEl.createEl('p', { text: this.message })
     const row = contentEl.createDiv('pw-btn-row')
     row.createEl('button', { text: t('ui.confirm'), cls: 'mod-warning' })
-      .addEventListener('click', () => { this.close(); this.onConfirm() })
+      .addEventListener('click', () => { this.close(); void this.onConfirm() })
     row.createEl('button', { text: t('ui.cancel') })
       .addEventListener('click', () => this.close())
   }

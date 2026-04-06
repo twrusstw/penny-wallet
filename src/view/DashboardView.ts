@@ -1,4 +1,4 @@
-import { ItemView, Platform, WorkspaceLeaf } from 'obsidian'
+import { Events, ItemView, Platform, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { MobileTransactionModal } from '../modal/MobileTransactionModal'
@@ -27,11 +27,15 @@ export class DashboardView extends ItemView {
 
   async onOpen() {
     this.registerEvent(
-      (this.app.workspace as any).on('penny-wallet:refresh', () => this.render())
+      (this.app.workspace as Events).on('penny-wallet:refresh', () => { void this.render() })
     )
     await this.render()
   }
-  async onClose() { this.contentEl.empty() }
+
+  onClose(): Promise<void> {
+    this.contentEl.empty()
+    return Promise.resolve()
+  }
 
   async render() {
     const { contentEl } = this
@@ -55,12 +59,12 @@ export class DashboardView extends ItemView {
     const isNextFuture = isAfterCurrentMonth(stepMonth(this.currentYearMonth, 1))
     nextBtn.disabled = isNextFuture
 
-    prevBtn.addEventListener('click', async () => {
+    prevBtn.addEventListener('click', () => {
       this.currentYearMonth = stepMonth(this.currentYearMonth, -1)
-      await this.render()
+      void this.render()
     })
-    nextBtn.addEventListener('click', async () => {
-      if (!isNextFuture) { this.currentYearMonth = stepMonth(this.currentYearMonth, 1); await this.render() }
+    nextBtn.addEventListener('click', () => {
+      if (!isNextFuture) { this.currentYearMonth = stepMonth(this.currentYearMonth, 1); void this.render() }
     })
 
     const headerActions = header.createDiv('pw-nav-right')
@@ -68,19 +72,19 @@ export class DashboardView extends ItemView {
     const trendBtn  = headerActions.createEl('button', { text: t('ui.trend'),  cls: 'pw-action-btn' })
     const addBtn    = headerActions.createEl('button', { text: '+ ' + t('ui.addTransaction'), cls: 'pw-action-btn' })
 
-    detailBtn.addEventListener('click', async () => {
-      await this.openOrRevealView(DETAIL_VIEW_TYPE, {
+    detailBtn.addEventListener('click', () => {
+      void this.openOrRevealView(DETAIL_VIEW_TYPE, {
         state: { yearMonth: this.currentYearMonth },
       })
     })
-    trendBtn.addEventListener('click', async () => {
-      await this.openOrRevealView(TREND_VIEW_TYPE)
+    trendBtn.addEventListener('click', () => {
+      void this.openOrRevealView(TREND_VIEW_TYPE)
     })
     addBtn.addEventListener('click', () => {
       addBtn.disabled = true
       const ModalClass = Platform.isMobile ? MobileTransactionModal : TransactionModal
       new ModalClass(this.app, this.walletFile, {}, null, null,
-        () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
+        () => (this.app.workspace as Events).trigger('penny-wallet:refresh'),
         () => { addBtn.disabled = false },
       ).open()
     })
@@ -110,7 +114,7 @@ export class DashboardView extends ItemView {
       const row = walletList.createDiv('pw-wallet-row')
       const left = row.createDiv('pw-wallet-left')
       left.createEl('span', {
-        text: t(`walletType.${wallet.type}` as any),
+        text: t(`walletType.${wallet.type}`),
         cls: `pw-wallet-badge pw-badge-${wallet.type}`,
       })
       left.createEl('span', { text: wallet.name, cls: 'pw-wallet-name' })
@@ -169,7 +173,7 @@ export class DashboardView extends ItemView {
       state: options?.state,
     })
 
-    this.app.workspace.revealLeaf(leaf)
+    void this.app.workspace.revealLeaf(leaf)
   }
 }
 
@@ -179,8 +183,10 @@ function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 
   const total = [...data.values()].reduce((a, b) => a + b, 0)
 
   const segments: { label: string; value: number; color: string; start: number; end: number }[] = []
+
   let angle = -Math.PI / 2
   let ci = 0
+
   for (const [key, value] of data) {
     const slice = (value / total) * Math.PI * 2
     segments.push({
@@ -195,17 +201,14 @@ function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 
   }
 
   const pieWrap = container.createDiv('pw-pie-wrap')
-
   const SIZE = 120
   const dpr = window.devicePixelRatio || 1
   const CX = SIZE / 2, CY = SIZE / 2
   const R = SIZE / 2 - 8
-
   const canvas = pieWrap.createEl('canvas')
   canvas.width = SIZE * dpr
   canvas.height = SIZE * dpr
-  canvas.style.width = SIZE + 'px'
-  canvas.style.height = SIZE + 'px'
+  canvas.setCssProps({ width: SIZE + 'px', height: SIZE + 'px' })
 
   function redraw(hiIdx: number) {
     const ctx = canvas.getContext('2d')!
@@ -224,20 +227,19 @@ function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 
       ctx.stroke()
     })
   }
+
   redraw(-1)
 
   const legend = pieWrap.createDiv('pw-pie-legend')
   segments.forEach((seg, i) => {
     const item = legend.createDiv('pw-legend-item')
     const dot = item.createEl('span', { cls: 'pw-legend-dot' })
-    dot.style.backgroundColor = seg.color
+    dot.setCssProps({ 'background-color': seg.color })
     item.createEl('span', { text: seg.label, cls: 'pw-legend-name' })
     item.createEl('span', { text: formatAmount(seg.value, dp), cls: 'pw-legend-amt' })
     const pct = Math.round((seg.value / total) * 100)
     item.createEl('span', { text: `${pct}%`, cls: 'pw-legend-pct' })
-
     item.addEventListener('mouseenter', () => redraw(i))
     item.addEventListener('mouseleave', () => redraw(-1))
   })
 }
-

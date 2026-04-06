@@ -6,7 +6,7 @@ import { DashboardView, DASHBOARD_VIEW_TYPE } from './view/DashboardView'
 import { DetailView, DETAIL_VIEW_TYPE } from './view/DetailView'
 import { TrendView, TREND_VIEW_TYPE } from './view/TrendView'
 import { PennyWalletSettingTab } from './settings/SettingTab'
-import { TransactionModalParams } from './types'
+import { TransactionModalParams, TransactionType } from './types'
 import { initI18n, t } from './i18n'
 import pluginIcon from './assets/plugin-icon.svg'
 
@@ -25,11 +25,11 @@ export default class PennyWalletPlugin extends Plugin {
     this.registerView(DETAIL_VIEW_TYPE, (leaf) => new DetailView(leaf, this.walletFile))
     this.registerView(TREND_VIEW_TYPE, (leaf) => new TrendView(leaf, this.walletFile))
 
-    this.addRibbonIcon('pw-icon', 'PennyWallet', () => this.openDashboard())
+    this.addRibbonIcon('pw-icon', 'Penny wallet', () => { void this.openDashboard() })
 
-    this.addCommand({ id: 'open-dashboard', name: 'Open Finance Overview', callback: () => this.openDashboard() })
-    this.addCommand({ id: 'add-transaction', name: 'Add Transaction', callback: () => this.openTransactionModal() })
-    this.addCommand({ id: 'open-detail', name: 'Open Transactions', callback: () => this.openDetailView() })
+    this.addCommand({ id: 'open-dashboard', name: 'Open finance overview', callback: () => { void this.openDashboard() } })
+    this.addCommand({ id: 'add-transaction', name: 'Add transaction', callback: () => this.openTransactionModal() })
+    this.addCommand({ id: 'open-detail', name: 'Open transactions', callback: () => { void this.openDetailView() } })
 
     this.addSettingTab(new PennyWalletSettingTab(this.app, this, this.walletFile))
 
@@ -50,12 +50,6 @@ export default class PennyWalletPlugin extends Plugin {
       console.error('PennyWallet: failed to load config', e)
       new Notice(t('notice.loadFailed'))
     }
-  }
-
-  onunload() {
-    this.app.workspace.detachLeavesOfType(DASHBOARD_VIEW_TYPE)
-    this.app.workspace.detachLeavesOfType(DETAIL_VIEW_TYPE)
-    this.app.workspace.detachLeavesOfType(TREND_VIEW_TYPE)
   }
 
   // ── Open Views ──────────────────────────────────────────────────────────────
@@ -89,7 +83,7 @@ export default class PennyWalletPlugin extends Plugin {
   private handleURI(data: ObsidianProtocolData) {
     const params: TransactionModalParams = {}
 
-    if (data['type']) params.type = data['type'] as any
+    if (data['type']) params.type = data['type'] as TransactionType
     if (data['amount']) {
       const amount = parseFloat(data['amount'])
       if (!Number.isNaN(amount)) params.amount = amount
@@ -109,10 +103,10 @@ export default class PennyWalletPlugin extends Plugin {
   private refreshViews() {
     // Refresh all open PennyWallet leaves
     this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE).forEach((leaf: WorkspaceLeaf) => {
-      (leaf.view as DashboardView).render()
+      void (leaf.view as DashboardView).render()
     })
     this.app.workspace.getLeavesOfType(DETAIL_VIEW_TYPE).forEach((leaf: WorkspaceLeaf) => {
-      (leaf.view as DetailView).render()
+      void (leaf.view as DetailView).render()
     })
   }
 
@@ -126,6 +120,6 @@ export default class PennyWalletPlugin extends Plugin {
       state,
     })
 
-    this.app.workspace.revealLeaf(leaf)
+    void this.app.workspace.revealLeaf(leaf)
   }
 }

@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { Events, ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { t, formatMonthLabel, formatYearMonth, translateCategory } from '../i18n'
 import { createMetric } from '../utils'
@@ -38,12 +38,15 @@ export class TrendView extends ItemView {
 
   async onOpen() {
     this.registerEvent(
-      (this.app.workspace as any).on('penny-wallet:refresh', () => this.render())
+      (this.app.workspace as Events).on('penny-wallet:refresh', () => { void this.render() })
     )
     await this.render()
   }
 
-  async onClose() { this.contentEl.empty() }
+  onClose(): Promise<void> {
+    this.contentEl.empty()
+    return Promise.resolve()
+  }
 
   async render() {
     const { contentEl } = this
@@ -60,11 +63,11 @@ export class TrendView extends ItemView {
     const rangeRow = contentEl.createDiv('pw-range-row')
     for (const r of [3, 6, 12]) {
       rangeRow.createEl('button', {
-        text: t(`trend.${r}m` as any),
+        text: t(`trend.${r}m` as 'trend.3m' | 'trend.6m' | 'trend.12m'),
         cls: 'pw-range-btn' + (this.range === r ? ' is-active' : ''),
-      }).addEventListener('click', async () => {
+      }).addEventListener('click', () => {
         this.range = r
-        await this.render()
+        void this.render()
       })
     }
 
@@ -119,14 +122,13 @@ export class TrendView extends ItemView {
     this.catDp        = dp
 
     const totalEl = catRow.createEl('span', { cls: 'pw-cat-trend-total' })
-    totalEl.style.marginLeft = 'auto'
     this.catTotalEl = totalEl
 
     await this.updateCatChart()
 
-    catSel.addEventListener('change', async () => {
+    catSel.addEventListener('change', () => {
       this.selectedCategory = catSel.value
-      await this.updateCatChart()
+      void this.updateCatChart()
     })
 
     // ── Net asset line chart ─────────────────────────────────────────────────
@@ -158,7 +160,7 @@ export class TrendView extends ItemView {
     const activeData = data.filter(d => d.income > 0 || d.expense > 0)
     const avgIncome  = activeData.length ? average(activeData.map(d => d.income))  : 0
     const avgExpense = activeData.length ? average(activeData.map(d => d.expense)) : 0
-    const netValues  = data.map(d => d.net).filter(d => d !== null) as number[]
+    const netValues  = data.map(d => d.net).filter((d): d is number => d !== null)
     const netChange  = netValues.length >= 2 ? netValues[netValues.length - 1] - netValues[0] : 0
 
     const metricsEl = contentEl.createDiv('pw-metrics')
@@ -197,7 +199,7 @@ export class TrendView extends ItemView {
 
 function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[], dp: 0 | 2 = 0) {
   const canvas = container.createEl('canvas')
-  canvas.style.display = 'block'
+  canvas.setCssProps({ display: 'block' })
 
   const width   = container.clientWidth || 480
   const count   = data.length
@@ -207,8 +209,7 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
 
   canvas.width  = width * dpr
   canvas.height = totalH * dpr
-  canvas.style.width  = width   + 'px'
-  canvas.style.height = totalH  + 'px'
+  canvas.setCssProps({ width: width + 'px', height: totalH + 'px' })
 
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
@@ -298,25 +299,24 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
     const col   = Math.floor((mouseX - leftPad) / colW)
     if (col >= 0 && col < hitAreas.length) {
       const { cx, d } = hitAreas[col]
-      tooltip.innerHTML = `
-        <div class="pw-tt-month">${d.tooltipLabel}</div>
-        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_INCOME}"></div>${t('dash.income')}: ${d.income.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>
-        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${C_EXPENSE}"></div>${t('dash.expense')}: ${d.expense.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
-      tooltip.style.display = 'block'
-      tooltip.style.left = Math.min(cx + 8, width - 140) + 'px'
-      tooltip.style.top  = '8px'
+      tooltip.empty()
+      tooltip.createDiv('pw-tt-month').setText(d.tooltipLabel)
+      buildTooltipRow(tooltip, C_INCOME, `${t('dash.income')}: ${d.income.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}`)
+      buildTooltipRow(tooltip, C_EXPENSE, `${t('dash.expense')}: ${d.expense.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}`)
+      tooltip.show()
+      tooltip.setCssProps({ left: Math.min(cx + 8, width - 140) + 'px', top: '8px' })
     } else {
-      tooltip.style.display = 'none'
+      tooltip.hide()
     }
   })
-  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none' })
+  canvas.addEventListener('mouseleave', () => { tooltip.hide() })
 }
 
 // ─── Net asset line chart ─────────────────────────────────────────────────────
 
 function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[], dp: 0 | 2 = 0) {
   const canvas = container.createEl('canvas')
-  canvas.style.display = 'block'
+  canvas.setCssProps({ display: 'block' })
 
   const width  = container.clientWidth || 480
   const height = 150
@@ -324,8 +324,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
 
   canvas.width  = width  * dpr
   canvas.height = height * dpr
-  canvas.style.width  = width  + 'px'
-  canvas.style.height = height + 'px'
+  canvas.setCssProps({ width: width + 'px', height: height + 'px' })
 
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
@@ -334,7 +333,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
   const innerW = width  - pad.l - pad.r
   const innerH = height - pad.t - pad.b
 
-  const netValues = data.map(d => d.net).filter(d => d !== null) as number[]
+  const netValues = data.map(d => d.net).filter((d): d is number => d !== null)
   if (netValues.length === 0) return
 
   const rawMin  = Math.min(...netValues)
@@ -392,17 +391,16 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
       if (dist < minDist) { minDist = dist; closest = i }
     })
     if (minDist < 28 && data[closest].net !== null) {
-      tooltip.innerHTML = `
-        <div class="pw-tt-month">${data[closest].tooltipLabel}</div>
-        <div class="pw-tt-row"><div style="width:7px;height:7px;border-radius:50%;background:${C_NET}"></div>${t('dash.netAsset')}: ${data[closest].net!.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
-      tooltip.style.display = 'block'
-      tooltip.style.left = Math.min(xOf(closest) + 8, width - 130) + 'px'
-      tooltip.style.top  = yOf(data[closest].net!) - 42 + 'px'
+      tooltip.empty()
+      tooltip.createDiv('pw-tt-month').setText(data[closest].tooltipLabel)
+      buildTooltipDot(tooltip, C_NET, `${t('dash.netAsset')}: ${data[closest].net!.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}`)
+      tooltip.show()
+      tooltip.setCssProps({ left: Math.min(xOf(closest) + 8, width - 130) + 'px', top: yOf(data[closest].net!) - 42 + 'px' })
     } else {
-      tooltip.style.display = 'none'
+      tooltip.hide()
     }
   })
-  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none' })
+  canvas.addEventListener('mouseleave', () => { tooltip.hide() })
 }
 
 // ─── Category trend line chart ────────────────────────────────────────────────
@@ -415,7 +413,7 @@ function drawCatChart(
   color: string,
 ) {
   const canvas = container.createEl('canvas')
-  canvas.style.display = 'block'
+  canvas.setCssProps({ display: 'block' })
 
   const width  = container.clientWidth || 480
   const height = 150
@@ -423,8 +421,7 @@ function drawCatChart(
 
   canvas.width  = width  * dpr
   canvas.height = height * dpr
-  canvas.style.width  = width  + 'px'
-  canvas.style.height = height + 'px'
+  canvas.setCssProps({ width: width + 'px', height: height + 'px' })
 
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
@@ -482,17 +479,16 @@ function drawCatChart(
     })
     if (minDist < 28) {
       const d = data[closest]
-      tooltip.innerHTML = `
-        <div class="pw-tt-month">${d.tooltipLabel}</div>
-        <div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${color}"></div>${d.catAmount.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
-      tooltip.style.display = 'block'
-      tooltip.style.left = Math.min(xOf(closest) + 8, width - 130) + 'px'
-      tooltip.style.top  = yOf(d.catAmount) - 42 + 'px'
+      tooltip.empty()
+      tooltip.createDiv('pw-tt-month').setText(d.tooltipLabel)
+      buildTooltipRow(tooltip, color, d.catAmount.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }))
+      tooltip.show()
+      tooltip.setCssProps({ left: Math.min(xOf(closest) + 8, width - 130) + 'px', top: yOf(d.catAmount) - 42 + 'px' })
     } else {
-      tooltip.style.display = 'none'
+      tooltip.hide()
     }
   })
-  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none' })
+  canvas.addEventListener('mouseleave', () => { tooltip.hide() })
 }
 
 // ─── Wallet balance trend chart ───────────────────────────────────────────────
@@ -507,7 +503,7 @@ function drawWalletTrendChart(
   dp: 0 | 2,
 ) {
   const canvas = container.createEl('canvas')
-  canvas.style.display = 'block'
+  canvas.setCssProps({ display: 'block' })
 
   const width  = container.clientWidth || 480
   const height = 160
@@ -515,8 +511,7 @@ function drawWalletTrendChart(
 
   canvas.width  = width  * dpr
   canvas.height = height * dpr
-  canvas.style.width  = width  + 'px'
-  canvas.style.height = height + 'px'
+  canvas.setCssProps({ width: width + 'px', height: height + 'px' })
 
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
@@ -587,23 +582,39 @@ function drawWalletTrendChart(
     })
     if (minDist < 28) {
       const ym = months[closest]
-      const rows = walletNames.map((name, wi) => {
+      tooltip.empty()
+      tooltip.createDiv('pw-tt-month').setText(data[closest].tooltipLabel)
+      walletNames.forEach((name, wi) => {
         const val = walletTrend.get(name)!.get(ym) ?? 0
         const color = colors[wi % colors.length]
-        return `<div class="pw-tt-row"><div style="width:9px;height:7px;border-radius:2px;background:${color}"></div>${escapeHtml(name)}: ${val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}</div>`
-      }).join('')
-      tooltip.innerHTML = `<div class="pw-tt-month">${data[closest].tooltipLabel}</div>${rows}`
-      tooltip.style.display = 'block'
-      tooltip.style.left = Math.min(xOf(closest) + 8, width - 160) + 'px'
-      tooltip.style.top  = '8px'
+        buildTooltipRow(tooltip, color, `${name}: ${val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}`)
+      })
+      tooltip.show()
+      tooltip.setCssProps({ left: Math.min(xOf(closest) + 8, width - 160) + 'px', top: '8px' })
     } else {
-      tooltip.style.display = 'none'
+      tooltip.hide()
     }
   })
-  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none' })
+  canvas.addEventListener('mouseleave', () => { tooltip.hide() })
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Build a tooltip row with a rectangular color swatch (bar chart style) */
+function buildTooltipRow(tooltip: HTMLElement, color: string, text: string) {
+  const row = tooltip.createDiv('pw-tt-row')
+  const dot = row.createEl('span')
+  dot.setCssProps({ width: '9px', height: '7px', 'border-radius': '2px', background: color })
+  row.appendText(text)
+}
+
+/** Build a tooltip row with a circular color dot (line chart style) */
+function buildTooltipDot(tooltip: HTMLElement, color: string, text: string) {
+  const row = tooltip.createDiv('pw-tt-row')
+  const dot = row.createEl('span')
+  dot.setCssProps({ width: '7px', height: '7px', 'border-radius': '50%', background: color })
+  row.appendText(text)
+}
 
 function getChartColors() {
   const dark = document.body.classList.contains('theme-dark')
@@ -614,10 +625,6 @@ function getChartColors() {
     baseline:  dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
     dotBorder: dark ? '#141413' : '#f5f4f0',
   }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 function getMonthRange(count: number): string[] {
@@ -643,6 +650,6 @@ function formatK(n: number, dp: 0 | 2 = 0): string {
 function addRectLegend(container: HTMLElement, color: string, label: string) {
   const item = container.createDiv('pw-leg')
   const rect = item.createEl('span', { cls: 'pw-leg-rect' })
-  rect.style.backgroundColor = color
+  rect.setCssProps({ 'background-color': color })
   item.createEl('span', { text: label })
 }

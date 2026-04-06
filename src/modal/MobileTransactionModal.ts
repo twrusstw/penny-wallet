@@ -33,7 +33,7 @@ export class MobileTransactionModal extends TransactionModal {
       text: '✓',
     })
     cancelBtn.addEventListener('click', () => this.close())
-    confirmBtn.addEventListener('click', () => this.handleConfirm())
+    confirmBtn.addEventListener('click', () => { void this.handleConfirm() })
 
     // Type tabs
     this.mobileTabsEl = contentEl.createDiv('pw-mobile-tabs')
@@ -46,7 +46,7 @@ export class MobileTransactionModal extends TransactionModal {
 
     // Error
     this.errorEl = contentEl.createDiv('pw-error pw-mobile-error')
-    this.errorEl.style.display = 'none'
+    this.errorEl.hide()
 
     // Field rows
     this.mobileRowsEl = contentEl.createDiv('pw-mobile-rows')
@@ -62,7 +62,7 @@ export class MobileTransactionModal extends TransactionModal {
     const types: TransactionType[] = ['expense', 'income', 'transfer', 'repayment']
     for (const tp of types) {
       const tab = this.mobileTabsEl.createEl('button', {
-        text: t(`type.${tp}` as any),
+        text: t(`type.${tp}`),
         cls: 'pw-mobile-tab' + (this.type === tp ? ' is-active' : ''),
       })
       tab.addEventListener('click', () => {
@@ -91,10 +91,7 @@ export class MobileTransactionModal extends TransactionModal {
       (valueEl) => {
         dateInput = createEl('input', { type: 'date' })
         dateInput.value = this.date
-        dateInput.style.position = 'absolute'
-        dateInput.style.opacity = '0'
-        dateInput.style.width = '0'
-        dateInput.style.height = '0'
+        dateInput.addClass('pw-hidden-date-trigger')
         dateInput.addEventListener('change', () => {
           this.date = dateInput.value
           valueEl.textContent = this.formatMobileDate()
@@ -223,12 +220,11 @@ export class MobileTransactionModal extends TransactionModal {
       btn.addEventListener('click', () => this.handleNumpadKey(key))
     }
 
-    // ✓ spans rows 3–4 at col 4
+    // ✓ spans rows 3–4 at col 4 (handled via CSS class)
     const confirmBtn = el.createEl('button', {
       cls: 'pw-mobile-numpad-btn pw-mobile-numpad-confirm',
       text: '✓',
     })
-    confirmBtn.style.gridRow = 'span 2'
     confirmBtn.addEventListener('click', () => this.handleNumpadKey('✓'))
 
     for (const key of bottomKeys) {
@@ -239,7 +235,7 @@ export class MobileTransactionModal extends TransactionModal {
 
   private handleNumpadKey(key: string) {
     this.clearError()
-    if (key === '✓') { this.handleConfirm(); return }
+    if (key === '✓') { void this.handleConfirm(); return }
     if (key === 'C') { this.amount = ''; this.updateAmountDisplay(); return }
     if (key === '⌫') { this.amount = this.amount.slice(0, -1); this.updateAmountDisplay(); return }
     if (key === '.') {

@@ -133,7 +133,7 @@ export class WalletFile {
       if (existsOnDisk) {
         try {
           const raw = await this.app.vault.adapter.read(path)
-          this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
+          this.config = { ...DEFAULT_CONFIG, ...(JSON.parse(raw) as Partial<PennyWalletConfig>) }
         } catch {
           this.config = { ...DEFAULT_CONFIG }
         }
@@ -155,7 +155,7 @@ export class WalletFile {
 
     try {
       const raw = await this.app.vault.read(file)
-      this.config = { ...DEFAULT_CONFIG, ...JSON.parse(raw) }
+      this.config = { ...DEFAULT_CONFIG, ...(JSON.parse(raw) as Partial<PennyWalletConfig>) }
     } catch {
       this.config = { ...DEFAULT_CONFIG }
     }
@@ -189,8 +189,8 @@ export class WalletFile {
     } else {
       try {
         await this.app.vault.create(path, content)
-      } catch (e: any) {
-        if (!e.message?.includes('already exists')) throw e
+      } catch (e: unknown) {
+        if (!(e instanceof Error) || !e.message?.includes('already exists')) throw e
         // Vault index is stale; write directly via adapter
         await this.app.vault.adapter.write(path, content)
       }
@@ -216,9 +216,9 @@ export class WalletFile {
     if (!this.app.vault.getFolderByPath(folder)) {
       try {
         await this.app.vault.createFolder(folder)
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Ignore "Folder already exists" error from race condition
-        if (!e.message?.includes('already exists')) {
+        if (!(e instanceof Error) || !e.message?.includes('already exists')) {
           throw e
         }
       }
@@ -243,9 +243,9 @@ export class WalletFile {
     } else {
       try {
         await this.app.vault.create(path, content)
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Ignore "File already exists" error from race condition
-        if (!e.message?.includes('already exists')) {
+        if (!(e instanceof Error) || !e.message?.includes('already exists')) {
           throw e
         }
         // File was created by another process; try to modify it
@@ -387,7 +387,7 @@ export class WalletFile {
   }
 
   async calculateWalletData(): Promise<{ balances: WalletBalance[]; walletsWithTransactions: Set<string> }> {
-    const allMonths = await this.getAllYearMonths()
+    const allMonths = this.getAllYearMonths()
     const monthTransactions = await Promise.all(allMonths.map(ym => this.readMonth(ym)))
     const allTransactions: Transaction[] = []
     for (const txs of monthTransactions) allTransactions.push(...txs)
@@ -468,7 +468,7 @@ export class WalletFile {
     const trackedWallets = this.config.wallets.filter(
       w => w.status === 'active' && (w.type === 'cash' || w.type === 'bank')
     )
-    const allAvailableMonths = await this.getAllYearMonths()
+    const allAvailableMonths = this.getAllYearMonths()
     const lastTarget = targetMonths[targetMonths.length - 1]
     const relevantMonths = allAvailableMonths.filter(m => m <= lastTarget).sort()
     const monthTransactions = await Promise.all(relevantMonths.map(ym => this.readMonth(ym)))
@@ -508,7 +508,7 @@ export class WalletFile {
 
   /** Check if a wallet name is used in any transaction */
   async walletHasTransactions(walletName: string): Promise<boolean> {
-    const months = await this.getAllYearMonths()
+    const months = this.getAllYearMonths()
     for (const ym of months) {
       const txs = await this.readMonth(ym)
       const found = txs.some(tx =>
@@ -521,7 +521,7 @@ export class WalletFile {
     return false
   }
 
-  async getAllYearMonths(): Promise<string[]> {
+  getAllYearMonths(): string[] {
     const files = this.app.vault.getMarkdownFiles().filter((f: TFile) =>
       f.path.startsWith(this.config.folderName + '/') &&
       /^\d{4}-\d{2}$/.test(f.basename),
@@ -540,7 +540,7 @@ export class WalletFile {
   }
 
   async getNetAssetTimeline(targetMonths: string[]): Promise<Map<string, number>> {
-    const allAvailableMonths = await this.getAllYearMonths()
+    const allAvailableMonths = this.getAllYearMonths()
     const lastTarget = targetMonths[targetMonths.length - 1]
     const relevantMonths = allAvailableMonths.filter(m => m <= lastTarget).sort()
 
@@ -607,7 +607,7 @@ export class WalletFile {
 
   private getLocaleCashName(): string {
     try {
-      const lang = (window as any).moment?.locale?.() ?? ''
+      const lang = (window as Window & { moment?: { locale?: () => string } }).moment?.locale?.() ?? ''
       if (lang.startsWith('zh')) return '預設錢包'
     } catch { /* ignore */ }
     return 'Default Wallet'

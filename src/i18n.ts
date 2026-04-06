@@ -328,7 +328,7 @@ const LOCALE_TAGS: Record<Locale, string> = {
 export function detectLocale(): Locale {
   try {
     // Obsidian exposes moment with locale set
-    const lang = (window as any).moment?.locale?.() ?? ''
+    const lang = (window as Window & { moment?: { locale?: () => string } }).moment?.locale?.() ?? ''
     if (lang.startsWith('zh')) return 'zh-TW'
   } catch {
     // ignore

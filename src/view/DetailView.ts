@@ -1,4 +1,4 @@
-import { ItemView, Platform, WorkspaceLeaf, Notice } from 'obsidian'
+import { Events, ItemView, Platform, ViewStateResult, WorkspaceLeaf, Notice, setIcon } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { MobileTransactionModal } from '../modal/MobileTransactionModal'
@@ -33,21 +33,22 @@ export class DetailView extends ItemView {
   getDisplayText() { return t('detail.title') }
   getIcon() { return 'pw-icon' }
 
-  async setState(state: any, result: any) {
-    if (state?.yearMonth) this.currentYearMonth = state.yearMonth
+  async setState(state: Record<string, unknown>, result: ViewStateResult) {
+    if (state?.yearMonth) this.currentYearMonth = state.yearMonth as string
     await super.setState(state, result)
     await this.render()
   }
 
   async onOpen() {
     this.registerEvent(
-      (this.app.workspace as any).on('penny-wallet:refresh', () => this.render())
+      (this.app.workspace as Events).on('penny-wallet:refresh', () => { void this.render() })
     )
     await this.render()
   }
 
-  async onClose() {
+  onClose(): Promise<void> {
     this.contentEl.empty()
+    return Promise.resolve()
   }
 
   async render() {
@@ -64,21 +65,21 @@ export class DetailView extends ItemView {
 
     // Month nav
     const navRow = header.createDiv('pw-nav-row')
-    navRow.createEl('button', { text: '←', cls: 'pw-nav-btn' }).addEventListener('click', async () => {
+    navRow.createEl('button', { text: '←', cls: 'pw-nav-btn' }).addEventListener('click', () => {
       this.currentYearMonth = stepMonth(this.currentYearMonth, -1)
       this.filterCategories.clear()
       this.filterSearch = ''
-      await this.render()
+      void this.render()
     })
     navRow.createEl('span', { text: this.currentYearMonth, cls: 'pw-month-label' })
     const nextBtn = navRow.createEl('button', { text: '→', cls: 'pw-nav-btn' })
     nextBtn.disabled = isAfterCurrentMonth(stepMonth(this.currentYearMonth, 1))
-    nextBtn.addEventListener('click', async () => {
+    nextBtn.addEventListener('click', () => {
       if (!nextBtn.disabled) {
         this.currentYearMonth = stepMonth(this.currentYearMonth, 1)
         this.filterCategories.clear()
         this.filterSearch = ''
-        await this.render()
+        void this.render()
       }
     })
 
@@ -88,7 +89,7 @@ export class DetailView extends ItemView {
       addBtn.disabled = true
       const ModalClass = Platform.isMobile ? MobileTransactionModal : TransactionModal
       new ModalClass(this.app, this.walletFile, {}, null, null,
-        () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
+        () => (this.app.workspace as Events).trigger('penny-wallet:refresh'),
         () => { addBtn.disabled = false },
       ).open()
     })
@@ -99,10 +100,10 @@ export class DetailView extends ItemView {
       text: t('detail.filterAll'),
       cls: 'pw-pill' + (this.filterTypes.size === 0 ? ' is-active' : ''),
     })
-    allTypePill.addEventListener('click', async () => {
+    allTypePill.addEventListener('click', () => {
       this.filterTypes.clear()
       this.filterCategories.clear()
-      await this.render()
+      void this.render()
     })
 
     const typeOptions: { value: TransactionType; label: string }[] = [
@@ -116,14 +117,14 @@ export class DetailView extends ItemView {
         text: opt.label,
         cls: 'pw-pill' + (this.filterTypes.has(opt.value) ? ' is-active' : ''),
       })
-      pill.addEventListener('click', async () => {
+      pill.addEventListener('click', () => {
         if (this.filterTypes.has(opt.value)) {
           this.filterTypes.delete(opt.value)
         } else {
           this.filterTypes.add(opt.value)
         }
         this.filterCategories.clear()
-        await this.render()
+        void this.render()
       })
     }
 
@@ -135,7 +136,7 @@ export class DetailView extends ItemView {
     if (showCategories) {
       const catSource = this.cachedTransactions.filter(tx => {
         if (this.filterTypes.size === 0) return tx.type === 'expense' || tx.type === 'income'
-        return this.filterTypes.has(tx.type as TransactionType)
+        return this.filterTypes.has(tx.type)
       })
       const expenseCats = new Set<string>()
       const incomeCats = new Set<string>()
@@ -161,13 +162,13 @@ export class DetailView extends ItemView {
         updateToggleLabel()
 
         const catPanel = catDropdown.createDiv('pw-cat-panel')
-        if (!this.catPanelOpen) catPanel.style.display = 'none'
+        if (!this.catPanelOpen) catPanel.hide()
 
         // Close on outside click
         const onOutsideClick = (e: MouseEvent) => {
           if (!catDropdown.contains(e.target as Node)) {
             this.catPanelOpen = false
-            catPanel.style.display = 'none'
+            catPanel.hide()
             updateToggleLabel()
             document.removeEventListener('click', onOutsideClick)
           }
@@ -182,13 +183,14 @@ export class DetailView extends ItemView {
         catToggleBtn.addEventListener('click', (e) => {
           e.stopPropagation()
           this.catPanelOpen = !this.catPanelOpen
-          catPanel.style.display = this.catPanelOpen ? '' : 'none'
-          updateToggleLabel()
           if (this.catPanelOpen) {
+            catPanel.show()
             document.addEventListener('click', onOutsideClick)
           } else {
+            catPanel.hide()
             document.removeEventListener('click', onOutsideClick)
           }
+          updateToggleLabel()
         })
 
         // 全部 item
@@ -239,7 +241,7 @@ export class DetailView extends ItemView {
     const searchInput = header.createEl('input', {
       cls: 'pw-search-input',
       placeholder: t('detail.searchPlaceholder'),
-    }) as HTMLInputElement
+    })
     searchInput.type = 'text'
     searchInput.value = this.filterSearch
     searchInput.addEventListener('input', () => {
@@ -261,7 +263,7 @@ export class DetailView extends ItemView {
     if (!this.listEl || !this.subtotalEl) return
 
     const filtered = this.cachedTransactions.filter(tx => {
-      if (this.filterTypes.size > 0 && !this.filterTypes.has(tx.type as TransactionType)) return false
+      if (this.filterTypes.size > 0 && !this.filterTypes.has(tx.type)) return false
       if (this.filterCategories.size > 0 && !this.filterCategories.has(tx.category ?? '')) return false
       if (this.filterSearch && !tx.note?.toLowerCase().includes(this.filterSearch.toLowerCase())) return false
       return true
@@ -298,7 +300,7 @@ export class DetailView extends ItemView {
     row.createEl('span', { text: tx.date, cls: 'pw-tx-date' })
 
     row.createEl('span', {
-      text: t(`type.${tx.type}` as any),
+      text: t(`type.${tx.type}`),
       cls: `pw-type-badge pw-type-${tx.type}`,
     })
 
@@ -323,7 +325,7 @@ export class DetailView extends ItemView {
 
     const editBtn = actions.createEl('button', { cls: 'pw-txn-btn' })
     editBtn.setAttribute('aria-label', t('ui.edit'))
-    editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
+    setIcon(editBtn, 'pencil')
     editBtn.addEventListener('click', () => {
       editBtn.disabled = true
       const ModalClass = Platform.isMobile ? MobileTransactionModal : TransactionModal
@@ -333,14 +335,14 @@ export class DetailView extends ItemView {
         {},
         tx,
         this.currentYearMonth,
-        () => (this.app.workspace as any).trigger('penny-wallet:refresh'),
+        () => (this.app.workspace as Events).trigger('penny-wallet:refresh'),
         () => { editBtn.disabled = false },
       ).open()
     })
 
     const deleteBtn = actions.createEl('button', { cls: 'pw-txn-btn pw-txn-btn-del' })
     deleteBtn.setAttribute('aria-label', t('ui.delete'))
-    deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`
+    setIcon(deleteBtn, 'trash')
     deleteBtn.addEventListener('click', () => {
       this.confirmDelete(tx)
     })
@@ -353,7 +355,7 @@ export class DetailView extends ItemView {
       async () => {
         await this.walletFile.deleteTransaction(tx, this.currentYearMonth)
         new Notice(t('notice.transactionDeleted'));
-        (this.app.workspace as any).trigger('penny-wallet:refresh')
+        (this.app.workspace as Events).trigger('penny-wallet:refresh')
       },
     )
     modal.open()

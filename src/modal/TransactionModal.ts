@@ -95,20 +95,20 @@ export class TransactionModal extends Modal {
     this.renderFields(config)
 
     this.errorEl = contentEl.createDiv('pw-error')
-    this.errorEl.style.display = 'none'
+    this.errorEl.hide()
 
     const btnRow = contentEl.createDiv('pw-btn-row')
     const confirmBtn = btnRow.createEl('button', { text: t('ui.confirm'), cls: 'mod-cta' })
     const cancelBtn = btnRow.createEl('button', { text: t('ui.cancel') })
 
     // touchend fires before blur (keyboard dismissal), preventing the double-tap issue on iOS
-    confirmBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.handleConfirm() })
+    confirmBtn.addEventListener('touchend', (e) => { e.preventDefault(); void this.handleConfirm() })
     cancelBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.close() })
-    confirmBtn.addEventListener('click', () => this.handleConfirm())
+    confirmBtn.addEventListener('click', () => { void this.handleConfirm() })
     cancelBtn.addEventListener('click', () => this.close())
 
     // Also fix Obsidian's built-in X close button
-    const closeBtn = this.modalEl.querySelector('.modal-close-button') as HTMLElement | null
+    const closeBtn = this.modalEl.querySelector<HTMLElement>('.modal-close-button')
     closeBtn?.addEventListener('touchend', (e) => { e.preventDefault(); this.close() })
 
     // Sync modal position with keyboard visibility:
@@ -130,7 +130,7 @@ export class TransactionModal extends Modal {
     const types: TransactionType[] = ['expense', 'income', 'transfer', 'repayment']
     for (const tp of types) {
       const tab = this.typeTabsEl.createEl('button', {
-        text: t(`type.${tp}` as any),
+        text: t(`type.${tp}`),
         cls: 'pw-type-tab' + (this.type === tp ? ' is-active' : ''),
       })
     // Update active tab immediately on touch, rebuild after touch ends
@@ -296,11 +296,11 @@ export class TransactionModal extends Modal {
 
   protected showError(msg: string) {
     this.errorEl.textContent = msg
-    this.errorEl.style.display = 'block'
+    this.errorEl.show()
   }
 
   protected clearError() {
-    this.errorEl.style.display = 'none'
+    this.errorEl.hide()
   }
 
   private validate(): boolean {

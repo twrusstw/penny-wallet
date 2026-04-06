@@ -12,41 +12,43 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     this.walletFile = walletFile
   }
 
-  async display(): Promise<void> {
+  display(): void {
     const { containerEl } = this
     containerEl.empty()
-    containerEl.createEl('h2', { text: t('settings.title') })
+    new Setting(containerEl).setName(t('settings.title')).setHeading()
 
-    let walletBalances: WalletBalance[] = []
-    let walletsWithTransactions = new Set<string>()
-    try {
-      const data = await this.walletFile.calculateWalletData()
-      walletBalances = data.balances
-      walletsWithTransactions = data.walletsWithTransactions
-    } catch { /* show initial balance only if calculation fails */ }
+    void (async () => {
+      let walletBalances: WalletBalance[] = []
+      let walletsWithTransactions = new Set<string>()
+      try {
+        const data = await this.walletFile.calculateWalletData()
+        walletBalances = data.balances
+        walletsWithTransactions = data.walletsWithTransactions
+      } catch { /* show initial balance only if calculation fails */ }
 
-    this.renderGeneral()
-    this.renderActiveWallets(walletBalances, walletsWithTransactions)
-    this.renderArchivedWallets()
-    this.renderAddWallet()
-    this.renderCategories()
+      this.renderGeneral()
+      this.renderActiveWallets(walletBalances, walletsWithTransactions)
+      this.renderArchivedWallets()
+      this.renderAddWallet()
+      this.renderCategories()
+    })()
   }
 
   private renderGeneral() {
     const config = this.walletFile.getConfig()
     const { containerEl } = this
 
-    containerEl.createEl('h3', { text: t('settings.general') })
+    new Setting(containerEl).setName(t('settings.general')).setHeading()
 
     new Setting(containerEl)
       .setName(t('settings.folderName'))
       .setDesc(t('settings.folderNameDesc'))
       .addText(text => text
         .setValue(config.folderName)
-        .onChange(async (value) => {
+        .onChange((value) => {
           if (value.trim()) {
             this.walletFile.updateConfig({ folderName: value.trim() })
-            await this.walletFile.saveConfig()
+            void this.walletFile.saveConfig()
           }
         }))
 
@@ -57,9 +59,9 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         const active = config.wallets.filter(w => w.status === 'active')
         for (const w of active) drop.addOption(w.name, w.name)
         drop.setValue(config.defaultWallet)
-        drop.onChange(async (value) => {
+        drop.onChange((value) => {
           this.walletFile.updateConfig({ defaultWallet: value })
-          await this.walletFile.saveConfig()
+          void this.walletFile.saveConfig()
         })
       })
 
@@ -70,10 +72,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         drop.addOption('0', t('settings.dp0'))
         drop.addOption('2', t('settings.dp2'))
         drop.setValue(String(config.decimalPlaces ?? 0))
-        drop.onChange(async (value) => {
+        drop.onChange((value) => {
           this.walletFile.updateConfig({ decimalPlaces: Number(value) as 0 | 2 })
-          await this.walletFile.saveConfig()
-          ;(this.app.workspace as any).trigger('penny-wallet:refresh')
+          void this.walletFile.saveConfig()
+          this.app.workspace.trigger('penny-wallet:refresh')
         })
       })
   }
@@ -82,7 +84,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const config = this.walletFile.getConfig()
     const { containerEl } = this
 
-    containerEl.createEl('h3', { text: t('settings.activeWallets') })
+    new Setting(containerEl).setName(t('settings.activeWallets')).setHeading()
 
     const active = config.wallets.filter(w => w.status === 'active')
     if (active.length === 0) {
@@ -97,10 +99,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         ? `${t('settings.creditDebtPrefix')}${currentBalance.toLocaleString()}`
         : currentBalance.toLocaleString()
 
-      const desc = `${t('settings.initialBalance')}: ${wallet.initialBalance.toLocaleString()}　｜　${t('settings.currentBalance')}: ${displayCurrent}`
+      const desc = `${t('settings.initialBalance')}: ${wallet.initialBalance.toLocaleString()} | ${t('settings.currentBalance')}: ${displayCurrent}`
 
       new Setting(containerEl)
-        .setName(`${wallet.name}（${t(`walletType.${wallet.type}` as any)}）`)
+        .setName(`${wallet.name}（${t(`walletType.${wallet.type}`)}）`)
         .setDesc(desc)
         .addButton(btn => btn
           .setButtonText(t('ui.edit'))
@@ -113,7 +115,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
                 this.walletFile.updateConfig({ wallets })
               }
               await this.walletFile.saveConfig()
-              this.display()
+              void this.display()
             }).open()
           }))
         .addButton(btn => {
@@ -127,7 +129,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
                   )
                   this.walletFile.updateConfig({ wallets })
                   await this.walletFile.saveConfig()
-                  this.display()
+                  void this.display()
                 }).open()
               })
           } else {
@@ -141,7 +143,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
                     : config.defaultWallet
                   this.walletFile.updateConfig({ wallets, defaultWallet })
                   await this.walletFile.saveConfig()
-                  this.display()
+                  void this.display()
                 }).open()
               })
           }
@@ -156,37 +158,39 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const archived = config.wallets.filter(w => w.status === 'archived')
     if (archived.length === 0) return
 
-    containerEl.createEl('h3', { text: t('settings.archivedWallets') })
+    new Setting(containerEl).setName(t('settings.archivedWallets')).setHeading()
 
     for (const wallet of archived) {
       new Setting(containerEl)
-        .setName(`${wallet.name}（${t(`walletType.${wallet.type}` as any)}）`)
+        .setName(`${wallet.name}（${t(`walletType.${wallet.type}`)}）`)
         .addToggle(toggle => toggle
           .setValue(wallet.includeInNetAsset)
           .setTooltip(t('settings.includeInNetAsset'))
-          .onChange(async (value) => {
+          .onChange((value) => {
             const wallets = config.wallets.map(w =>
               w.name === wallet.name ? { ...w, includeInNetAsset: value } : w,
             )
             this.walletFile.updateConfig({ wallets })
-            await this.walletFile.saveConfig()
+            void this.walletFile.saveConfig()
           }))
         .addButton(btn => btn
           .setButtonText(t('ui.unarchive'))
-          .onClick(async () => {
-            const wallets = config.wallets.map(w =>
-              w.name === wallet.name ? { ...w, status: 'active' as const } : w,
-            )
-            this.walletFile.updateConfig({ wallets })
-            await this.walletFile.saveConfig()
-            this.display()
+          .onClick(() => {
+            void (async () => {
+              const wallets = config.wallets.map(w =>
+                w.name === wallet.name ? { ...w, status: 'active' as const } : w,
+              )
+              this.walletFile.updateConfig({ wallets })
+              await this.walletFile.saveConfig()
+              void this.display()
+            })()
           }))
     }
   }
 
   private renderAddWallet() {
     const { containerEl } = this
-    containerEl.createEl('h3', { text: t('settings.addWallet') })
+    new Setting(containerEl).setName(t('settings.addWallet')).setHeading()
 
     let newName = ''
     let newType: WalletType = 'cash'
@@ -219,7 +223,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     for (const walletType of walletTypes) {
       typeSelect.createEl('option', {
         value: walletType,
-        text: t(`walletType.${walletType}` as any),
+        text: t(`walletType.${walletType}`),
       })
     }
     typeSelect.value = 'cash'
@@ -280,10 +284,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       this.walletFile.updateConfig({ wallets })
       await this.walletFile.saveConfig()
       new Notice(tn('notice.walletAdded', { name: newName }))
-      this.display()
+      void this.display()
     }
 
-    addBtn.addEventListener('click', submitAddWallet)
+    addBtn.addEventListener('click', () => { void submitAddWallet() })
 
     for (const inputEl of [nameInput, typeSelect, balanceInput]) {
       inputEl.addEventListener('keydown', (event) => {
@@ -300,7 +304,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     const config = this.walletFile.getConfig()
     const { containerEl } = this
 
-    containerEl.createEl('h3', { text: t('settings.customCategories') })
+    new Setting(containerEl).setName(t('settings.customCategories')).setHeading()
     const cardEl = containerEl.createDiv('pw-card pw-category-card')
 
     this.renderCategorySection(
@@ -310,12 +314,12 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       config.options.categories.income.custom,
       config.options.categories.expense.default,
       async (updated) => {
-        const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
+        const scrollEl = containerEl.closest<HTMLElement>('.vertical-tab-content')
         const scrollTop = scrollEl?.scrollTop ?? 0
         this.walletFile.updateCustomCategories('expense', updated)
         await this.walletFile.saveConfig()
-        ;(this.app.workspace as any).trigger('penny-wallet:refresh')
-        await this.display()
+        this.app.workspace.trigger('penny-wallet:refresh')
+        void this.display()
         if (scrollEl) scrollEl.scrollTop = scrollTop
       },
     )
@@ -329,12 +333,12 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       config.options.categories.expense.custom,
       config.options.categories.income.default,
       async (updated) => {
-        const scrollEl = containerEl.closest('.vertical-tab-content') as HTMLElement | null
+        const scrollEl = containerEl.closest<HTMLElement>('.vertical-tab-content')
         const scrollTop = scrollEl?.scrollTop ?? 0
         this.walletFile.updateCustomCategories('income', updated)
         await this.walletFile.saveConfig()
-        ;(this.app.workspace as any).trigger('penny-wallet:refresh')
-        await this.display()
+        this.app.workspace.trigger('penny-wallet:refresh')
+        void this.display()
         if (scrollEl) scrollEl.scrollTop = scrollTop
       },
     )
@@ -346,7 +350,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     categories: string[],
     otherCategories: string[],
     defaultKeys: readonly string[],
-    onChange: (updated: string[]) => void,
+    onChange: (updated: string[]) => void | Promise<void>,
   ) {
     container.createEl('div', { text: title, cls: 'pw-setting-input-subtitle' })
 
@@ -356,7 +360,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       tag.createEl('span', { text: cat })
       const removeBtn = tag.createEl('button', { text: '×', cls: 'pw-tag-remove' })
       removeBtn.addEventListener('click', () => {
-        onChange(categories.filter(c => c !== cat))
+        void onChange(categories.filter(c => c !== cat))
       })
     }
 
@@ -373,7 +377,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       if (defaultKeys.includes(val))     { new Notice(t('err.categoryExists')); return }
       if (categories.includes(val))      { new Notice(t('err.categoryExists')); return }
       if (otherCategories.includes(val)) { new Notice(t('err.categoryExistsInOtherList')); return }
-      onChange([...categories, val])
+      void onChange([...categories, val])
     })
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addBtn.click()
@@ -385,11 +389,11 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
 class WalletEditModal extends Modal {
   private wallet: Wallet
-  private onSave: (patch: Partial<Wallet>) => void
+  private onSave: (patch: Partial<Wallet>) => void | Promise<void>
   private name: string
   private balance: number
 
-  constructor(app: App, wallet: Wallet, onSave: (patch: Partial<Wallet>) => void) {
+  constructor(app: App, wallet: Wallet, onSave: (patch: Partial<Wallet>) => void | Promise<void>) {
     super(app)
     this.wallet = wallet
     this.onSave = onSave
@@ -408,7 +412,7 @@ class WalletEditModal extends Modal {
       const activeEl = document.activeElement
       const isEditingFieldFocused = !!activeEl && formEl.contains(activeEl)
       if (isEditingFieldFocused) {
-        containerEl.style.setProperty('padding-bottom', '40vh')
+        containerEl.setCssProps({ 'padding-bottom': '40vh' })
       } else {
         containerEl.style.removeProperty('padding-bottom')
       }
@@ -450,7 +454,7 @@ class WalletEditModal extends Modal {
       if (this.wallet.type === 'creditCard' && this.balance < 0) {
         new Notice(t('err.creditNegativeBalanceShort')); return
       }
-      this.onSave({ name: this.name, initialBalance: this.balance })
+      void this.onSave({ name: this.name, initialBalance: this.balance })
       this.close()
     })
     btnRow.createEl('button', { text: t('ui.cancel') }).addEventListener('click', () => this.close())
@@ -462,5 +466,3 @@ class WalletEditModal extends Modal {
     this.contentEl.empty()
   }
 }
-
-// ConfirmModal → src/modals.ts
