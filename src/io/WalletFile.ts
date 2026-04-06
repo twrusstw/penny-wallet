@@ -405,50 +405,13 @@ export class WalletFile {
   computeWalletBalances(transactions: Transaction[]): WalletBalance[] {
     const { wallets } = this.config
 
-    // Separate computation per wallet
     const balanceMap = new Map<string, number>()
     for (const w of wallets) {
-      // creditCard: initialBalance is debt (positive) → store as positive, subtract when computing net asset
       balanceMap.set(w.name, w.initialBalance)
     }
 
     for (const tx of transactions) {
-      switch (tx.type) {
-        case 'expense':
-          if (tx.wallet && balanceMap.has(tx.wallet)) {
-            const w = wallets.find(w => w.name === tx.wallet)
-            if (w?.type === 'creditCard') {
-              // Credit expense increases debt
-              balanceMap.set(tx.wallet, (balanceMap.get(tx.wallet) ?? 0) + tx.amount)
-            } else {
-              balanceMap.set(tx.wallet, (balanceMap.get(tx.wallet) ?? 0) - tx.amount)
-            }
-          }
-          break
-        case 'income':
-          if (tx.wallet && balanceMap.has(tx.wallet)) {
-            balanceMap.set(tx.wallet, (balanceMap.get(tx.wallet) ?? 0) + tx.amount)
-          }
-          break
-        case 'transfer':
-          if (tx.fromWallet && balanceMap.has(tx.fromWallet)) {
-            balanceMap.set(tx.fromWallet, (balanceMap.get(tx.fromWallet) ?? 0) - tx.amount)
-          }
-          if (tx.toWallet && balanceMap.has(tx.toWallet)) {
-            balanceMap.set(tx.toWallet, (balanceMap.get(tx.toWallet) ?? 0) + tx.amount)
-          }
-          break
-        case 'repayment':
-          // repayment from bank/cash (reduce balance) to creditCard (reduce debt)
-          if (tx.fromWallet && balanceMap.has(tx.fromWallet)) {
-            balanceMap.set(tx.fromWallet, (balanceMap.get(tx.fromWallet) ?? 0) - tx.amount)
-          }
-          if (tx.toWallet && balanceMap.has(tx.toWallet)) {
-            // Paying credit card reduces debt (outstanding balance decreases)
-            balanceMap.set(tx.toWallet, (balanceMap.get(tx.toWallet) ?? 0) - tx.amount)
-          }
-          break
-      }
+      this.applyTxToBalanceMap(tx, balanceMap)
     }
 
     // Sort: cash → bank → creditCard
@@ -530,14 +493,14 @@ export class WalletFile {
   }
 
   async getCategoryTrend(yearMonths: string[], category: string): Promise<Map<string, number>> {
+    const allTxs = await Promise.all(yearMonths.map(ym => this.readMonth(ym)))
     const result = new Map<string, number>()
-    for (const ym of yearMonths) {
-      const txs = await this.readMonth(ym)
-      const total = txs
+    yearMonths.forEach((ym, i) => {
+      const total = allTxs[i]
         .filter(tx => tx.category === category)
         .reduce((sum, tx) => sum + tx.amount, 0)
       result.set(ym, total)
-    }
+    })
     return result
   }
 

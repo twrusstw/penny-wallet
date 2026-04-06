@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { t, formatMonthLabel, formatYearMonth, translateCategory } from '../i18n'
+import { createMetric } from '../utils'
 
 export const TREND_VIEW_TYPE = 'penny-wallet-trend'
 
@@ -219,27 +220,16 @@ function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: Mon
   const baselineY = incH + padTop / 2
   const labelSize = count > 6 ? 9 : 10
 
-  const dark       = document.body.classList.contains('theme-dark')
-  const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
-  const colorLabel = dark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)'
-  const colorGrid  = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
+  const { muted: colorMuted, label: colorLabel, grid: colorGrid, baseline: colorBaseline } = getChartColors()
 
   const maxInc = Math.max(...data.map(d => d.income), 1)
   const maxExp = Math.max(...data.map(d => d.expense), 1)
 
   ctx.clearRect(0, 0, width, totalH)
 
-//   // Alternating column tint
-//   data.forEach((_, i) => {
-//     if (i % 2 === 0) {
-//       ctx.fillStyle = dark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)'
-//       ctx.fillRect(leftPad + colW * i, 0, colW, totalH)
-//     }
-//   })
-
   // Baseline
   ctx.beginPath()
-  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'
+  ctx.strokeStyle = colorBaseline
   ctx.lineWidth = 0.5
   ctx.moveTo(leftPad, baselineY)
   ctx.lineTo(width - rightPad, baselineY)
@@ -354,10 +344,7 @@ function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthD
   const maxVal  = rawMax + padding
   const range   = maxVal - minVal
 
-  const dark      = document.body.classList.contains('theme-dark')
-  const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
-  const colorGrid  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
-  const dotBorder  = dark ? '#141413' : '#f5f4f0'
+  const { muted: colorMuted, grid: colorGrid, dotBorder } = getChartColors()
 
   const xOf = (i: number) => pad.l + (i / (data.length - 1 || 1)) * innerW
   const yOf = (v: number) => pad.t + innerH - ((v - minVal) / range) * innerH
@@ -450,10 +437,7 @@ function drawCatChart(
   const maxVal   = Math.max(...amounts, 1) * 1.1
   const minVal   = 0
 
-  const dark       = document.body.classList.contains('theme-dark')
-  const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
-  const colorGrid  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
-  const dotBorder  = dark ? '#141413' : '#f5f4f0'
+  const { muted: colorMuted, grid: colorGrid, dotBorder } = getChartColors()
 
   const xOf = (i: number) => pad.l + (i / (data.length - 1 || 1)) * innerW
   const yOf = (v: number) => pad.t + innerH - ((v - minVal) / (maxVal - minVal)) * innerH
@@ -550,10 +534,7 @@ function drawWalletTrendChart(
   const maxVal  = rawMax + padding
   const range   = maxVal - minVal
 
-  const dark       = document.body.classList.contains('theme-dark')
-  const colorMuted = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
-  const colorGrid  = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
-  const dotBorder  = dark ? '#141413' : '#f5f4f0'
+  const { muted: colorMuted, grid: colorGrid, dotBorder } = getChartColors()
 
   const xOf = (i: number) => pad.l + (i / (months.length - 1 || 1)) * innerW
   const yOf = (v: number) => pad.t + innerH - ((v - minVal) / range) * innerH
@@ -624,6 +605,17 @@ function drawWalletTrendChart(
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function getChartColors() {
+  const dark = document.body.classList.contains('theme-dark')
+  return {
+    muted:     dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)',
+    label:     dark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
+    grid:      dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+    baseline:  dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
+    dotBorder: dark ? '#141413' : '#f5f4f0',
+  }
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
@@ -648,26 +640,9 @@ function formatK(n: number, dp: 0 | 2 = 0): string {
     : Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })
 }
 
-function createMetric(container: HTMLElement, label: string, value: number, cls: string, dp: 0 | 2 = 0) {
-  const card = container.createDiv('pw-metric')
-  card.createEl('div', { text: label, cls: 'pw-metric-label' })
-  const prefix = cls === 'income' || cls === 'positive' ? '+' : cls === 'expense' || cls === 'negative' ? '-' : ''
-  card.createEl('div', {
-    text: prefix + Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }),
-    cls: `pw-metric-value ${cls}`,
-  })
-}
-
 function addRectLegend(container: HTMLElement, color: string, label: string) {
   const item = container.createDiv('pw-leg')
   const rect = item.createEl('span', { cls: 'pw-leg-rect' })
   rect.style.backgroundColor = color
   item.createEl('span', { text: label })
 }
-
-// function addDotLegend(container: HTMLElement, color: string, label: string) {
-//   const item = container.createDiv('pw-leg')
-//   const dot = item.createEl('span', { cls: 'pw-leg-dot' })
-//   dot.style.backgroundColor = color
-//   item.createEl('span', { text: label })
-// }

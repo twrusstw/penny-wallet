@@ -3,7 +3,7 @@ import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { MobileTransactionModal } from '../modal/MobileTransactionModal'
 import { t, translateCategory } from '../i18n'
-import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount } from '../utils'
+import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount, createMetric } from '../utils'
 import { DETAIL_VIEW_TYPE } from './DetailView'
 import { TREND_VIEW_TYPE } from './TrendView'
 
@@ -38,8 +38,10 @@ export class DashboardView extends ItemView {
     contentEl.empty()
     contentEl.addClass('pw-dashboard')
 
-    const transactions = await this.walletFile.readMonth(this.currentYearMonth)
-    const walletBalances = await this.walletFile.calculateAllWalletBalances()
+    const [transactions, walletBalances] = await Promise.all([
+      this.walletFile.readMonth(this.currentYearMonth),
+      this.walletFile.calculateAllWalletBalances(),
+    ])
     const netAsset = this.walletFile.computeNetAsset(walletBalances)
 
     // ── Header ──────────────────────────────────────────────────────────────
@@ -239,14 +241,3 @@ function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 
   })
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function createMetric(container: HTMLElement, label: string, value: number, cls: string, dp: 0 | 2 = 0) {
-  const card = container.createDiv('pw-metric')
-  card.createEl('div', { text: label, cls: 'pw-metric-label' })
-  const prefix = cls === 'income' || cls === 'positive' ? '+' : cls === 'expense' || cls === 'negative' ? '-' : ''
-  card.createEl('div', {
-    text: prefix + formatAmount(Math.abs(value), dp),
-    cls: `pw-metric-value ${cls}`,
-  })
-}

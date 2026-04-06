@@ -16,3 +16,13 @@ export function isAfterCurrentMonth(ym: string): boolean {
 export function formatAmount(n: number, dp: 0 | 2 = 0): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })
 }
+
+export function createMetric(container: HTMLElement, label: string, value: number, cls: string, dp: 0 | 2 = 0) {
+  const card = container.createDiv('pw-metric')
+  card.createEl('div', { text: label, cls: 'pw-metric-label' })
+  const prefix = cls === 'income' || cls === 'positive' ? '+' : cls === 'expense' || cls === 'negative' ? '-' : ''
+  card.createEl('div', {
+    text: prefix + formatAmount(Math.abs(value), dp),
+    cls: `pw-metric-value ${cls}`,
+  })
+}
