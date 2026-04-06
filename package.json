@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs development",
     "dev:watch": "node esbuild.config.mjs",
-"demo:data": "node scripts/generate-demo-data.mjs",
+    "demo:data": "node scripts/generate-demo-data.mjs",
+    "demo:reset": "git clean -fdx demo-vault/ && git restore demo-vault/ && node esbuild.config.mjs development && node scripts/generate-demo-data.mjs",
     "build": "node esbuild.config.mjs production",
     "build:dev": "node esbuild.config.mjs development",
     "lint": "eslint \"src/**/*.ts\" && tsc --noEmit --pretty",
@@ -17,8 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "node scripts/test-ui.mjs",
-    "demo:reset": "git clean -fdx demo-vault/ && git restore demo-vault/ && node esbuild.config.mjs development && node scripts/generate-demo-data.mjs"
+    "test:ui": "node scripts/test-ui.mjs"
   },
   "keywords": [],
   "author": "twrusstw",

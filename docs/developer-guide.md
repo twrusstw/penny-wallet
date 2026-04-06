@@ -24,8 +24,9 @@ penny-wallet/
 │   ├── io/
 │   │   └── WalletFile.ts        ← all file I/O and business logic
 │   ├── modal/
-│   │   ├── TransactionModal.ts  ← add/edit transaction form
-│   │   └── ConfirmModal.ts      ← shared confirmation dialog
+│   │   ├── TransactionModal.ts        ← add/edit transaction form (desktop)
+│   │   ├── MobileTransactionModal.ts  ← add/edit transaction form (mobile)
+│   │   └── ConfirmModal.ts            ← shared confirmation dialog
 │   ├── view/
 │   │   ├── DashboardView.ts     ← Finance Overview
 │   │   ├── DetailView.ts        ← Transactions list
@@ -33,8 +34,8 @@ penny-wallet/
 │   └── settings/
 │       └── SettingTab.ts        ← plugin settings UI
 ├── scripts/
-│   ├── dev-clean.mjs            ← reset demo vault plugin + restart watch
-│   └── generate-demo-data.mjs  ← seed demo vault with realistic data
+│   ├── generate-demo-data.mjs  ← seed demo vault with realistic data
+│   └── test-ui.mjs             ← automated UI test runner (Obsidian CLI)
 ├── demo-vault/                  ← local Obsidian vault for development
 ├── esbuild.config.mjs           ← build configuration
 ├── manifest.json                ← Obsidian plugin manifest
@@ -77,15 +78,15 @@ Enable the plugin if not already: **Settings → Community Plugins → PennyWall
 
 ### 3. Reset and reseed
 
-If the demo vault state gets messy:
+If the demo vault state gets messy, do a full reset:
 
 ```bash
-npm run dev:clean
+npm run demo:reset
 ```
 
-This removes the plugin folder from the demo vault and restarts the watch build from a clean state.
+This removes all generated files from `demo-vault/` (`git clean -fdx`), restores the tracked `community-plugins.json`, rebuilds the plugin, and regenerates 12 months of demo data in one step.
 
-To regenerate demo transaction data:
+To regenerate only the transaction data without wiping vault settings:
 
 ```bash
 npm run demo:data
@@ -101,11 +102,13 @@ This runs `scripts/generate-demo-data.mjs`, which creates 12 months of realistic
 |---------|-------------|
 | `npm run dev:watch` | Watch mode — rebuild on save, sync to demo vault |
 | `npm run dev` | Single development build (with inline sourcemap) |
-| `npm run dev:clean` | Clean demo vault plugin folder + restart watch |
 | `npm run build` | Production build (minified, no sourcemap) |
 | `npm run demo:data` | Seed demo vault with 12 months of dummy data |
+| `npm run demo:reset` | Full reset: wipe demo vault, rebuild plugin, reseed data |
 | `npm run lint` | ESLint + TypeScript type-check |
 | `npm run lint:fix` | ESLint autofix + type-check |
+| `npm run test` | Run unit + integration tests (Vitest) |
+| `npm run test:ui` | Run UI integration tests (requires Obsidian running) |
 
 ---
 
@@ -143,13 +146,19 @@ npm run lint:fix
 
 ## Testing
 
-Run the automated test suite with:
+Run unit and integration tests:
 
 ```bash
 npm test
 ```
 
-Tests are written with [Vitest](https://vitest.dev/) and live in `tests/`. See the [Testing](./testing) page for coverage details.
+Run UI integration tests (Obsidian must be open with `demo-vault`):
+
+```bash
+npm run test:ui
+```
+
+Tests are written with [Vitest](https://vitest.dev/) and live in `tests/`. The UI tests use the Obsidian CLI to drive a live instance. See the [Testing](./testing) page for full coverage details.
 
 ### Manual Test Checklist {#manual-test-checklist}
 
@@ -195,10 +204,6 @@ Before opening a PR, verify the following:
 - [ ] Decimal places switch: new transactions accept decimals / integers correctly
 - [ ] Custom categories: add, duplicate check, remove
 
-**Mobile**
-- [ ] Transaction modal shifts up when keyboard opens (iOS)
-- [ ] Enter key on note/amount blurs the field (iOS)
-
 ---
 
 ## Code Conventions
@@ -233,9 +238,11 @@ Before opening a PR, verify the following:
    git checkout -b feat/your-feature-name
    ```
 2. Make your changes and run through the [Manual Test Checklist](#manual-test-checklist)
-3. Run lint and confirm no errors:
+3. Run all checks:
    ```bash
    npm run lint
+   npm test
+   npm run test:ui   # requires Obsidian running with demo-vault
    ```
 4. Push your branch and open a PR against the `dev` branch
 5. Describe what you changed and why — include screenshots if the UI is affected
