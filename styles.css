@@ -1487,9 +1487,6 @@ select.pw-add-wallet-input {
     font-size: 11px;
   }
 
-  .pw-tx-wallet {
-    display: none;
-  }
 
   .pw-summary-amount {
     font-size: 16px;
