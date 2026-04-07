@@ -830,6 +830,18 @@
   border-color: var(--text-normal);
 }
 
+/* iOS sticky :active fix — prevent Obsidian global button styles from overriding */
+.pw-pill:active:not(.is-active) {
+  background: var(--background-secondary) !important;
+  color: var(--text-muted) !important;
+}
+
+.pw-pill.is-active:active {
+  background: var(--text-normal) !important;
+  color: var(--background-primary) !important;
+  border-color: var(--text-normal) !important;
+}
+
 .pw-search-input {
   width: 100%;
   padding: 5px 10px;
@@ -1421,17 +1433,23 @@ select.pw-add-wallet-input {
 }
 
 .pw-tag-remove {
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--background-modifier-border);
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 0 2px;
-  font-size: 16px;
-  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .pw-tag-remove:hover {
-  color: var(--text-error);
+  background: var(--text-error);
+  color: #fff;
 }
 
 .pw-category-add-row {

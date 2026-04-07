@@ -32,8 +32,12 @@ export class MobileTransactionModal extends TransactionModal {
       cls: 'pw-mobile-top-btn pw-mobile-top-confirm',
       text: '✓',
     })
-    cancelBtn.addEventListener('click', () => this.close())
-    confirmBtn.addEventListener('click', () => { void this.handleConfirm() })
+    let cancelTouched = false
+    cancelBtn.addEventListener('touchend', (e) => { e.preventDefault(); cancelTouched = true; this.close() })
+    cancelBtn.addEventListener('click', () => { if (cancelTouched) { cancelTouched = false; return } this.close() })
+    let confirmTouched = false
+    confirmBtn.addEventListener('touchend', (e) => { e.preventDefault(); confirmTouched = true; void this.handleConfirm() })
+    confirmBtn.addEventListener('click', () => { if (confirmTouched) { confirmTouched = false; return } void this.handleConfirm() })
 
     // Type tabs
     this.mobileTabsEl = contentEl.createDiv('pw-mobile-tabs')

@@ -12,7 +12,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     this.walletFile = walletFile
   }
 
-  display(): void {
+  display(restoreScrollTop?: number): void {
     const { containerEl } = this
     containerEl.empty()
     new Setting(containerEl).setName(t('settings.title')).setHeading()
@@ -31,6 +31,11 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       this.renderArchivedWallets()
       this.renderAddWallet()
       this.renderCategories()
+
+      if (restoreScrollTop !== undefined) {
+        const scrollEl = containerEl.closest<HTMLElement>('.vertical-tab-content')
+        if (scrollEl) scrollEl.scrollTop = restoreScrollTop
+      }
     })()
   }
 
@@ -331,13 +336,11 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       config.options.categories.income.custom,
       config.options.categories.expense.default,
       async (updated) => {
-        const scrollEl = containerEl.closest<HTMLElement>('.vertical-tab-content')
-        const scrollTop = scrollEl?.scrollTop ?? 0
+        const scrollTop = containerEl.closest<HTMLElement>('.vertical-tab-content')?.scrollTop ?? 0
         this.walletFile.updateCustomCategories('expense', updated)
         await this.walletFile.saveConfig()
         this.app.workspace.trigger('penny-wallet:refresh')
-        void this.display()
-        if (scrollEl) scrollEl.scrollTop = scrollTop
+        this.display(scrollTop)
       },
     )
 
@@ -350,13 +353,11 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       config.options.categories.expense.custom,
       config.options.categories.income.default,
       async (updated) => {
-        const scrollEl = containerEl.closest<HTMLElement>('.vertical-tab-content')
-        const scrollTop = scrollEl?.scrollTop ?? 0
+        const scrollTop = containerEl.closest<HTMLElement>('.vertical-tab-content')?.scrollTop ?? 0
         this.walletFile.updateCustomCategories('income', updated)
         await this.walletFile.saveConfig()
         this.app.workspace.trigger('penny-wallet:refresh')
-        void this.display()
-        if (scrollEl) scrollEl.scrollTop = scrollTop
+        this.display(scrollTop)
       },
     )
   }
@@ -375,7 +376,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     for (const cat of categories) {
       const tag = tagsEl.createDiv('pw-category-tag')
       tag.createEl('span', { text: cat })
-      const removeBtn = tag.createEl('button', { text: '×', cls: 'pw-tag-remove' })
+      const removeBtn = tag.createEl('button', { cls: 'pw-tag-remove' })
+      const svg = removeBtn.createSvg('svg', { attr: { viewBox: '0 0 10 10', width: '10', height: '10', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round' } })
+      svg.createSvg('line', { attr: { x1: '2', y1: '2', x2: '8', y2: '8' } })
+      svg.createSvg('line', { attr: { x1: '8', y1: '2', x2: '2', y2: '8' } })
       removeBtn.addEventListener('click', () => {
         void onChange(categories.filter(c => c !== cat))
       })

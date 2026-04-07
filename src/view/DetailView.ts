@@ -100,11 +100,13 @@ export class DetailView extends ItemView {
       text: t('detail.filterAll'),
       cls: 'pw-pill' + (this.filterTypes.size === 0 ? ' is-active' : ''),
     })
-    allTypePill.addEventListener('click', () => {
+    const allPillHandler = () => {
       this.filterTypes.clear()
       this.filterCategories.clear()
       void this.render()
-    })
+    }
+    allTypePill.addEventListener('touchend', (e) => { e.preventDefault(); allPillHandler() })
+    allTypePill.addEventListener('click', allPillHandler)
 
     const typeOptions: { value: TransactionType; label: string }[] = [
       { value: 'expense',   label: t('detail.filterExpense') },
@@ -117,7 +119,7 @@ export class DetailView extends ItemView {
         text: opt.label,
         cls: 'pw-pill' + (this.filterTypes.has(opt.value) ? ' is-active' : ''),
       })
-      pill.addEventListener('click', () => {
+      const pillHandler = () => {
         if (this.filterTypes.has(opt.value)) {
           this.filterTypes.delete(opt.value)
         } else {
@@ -125,7 +127,9 @@ export class DetailView extends ItemView {
         }
         this.filterCategories.clear()
         void this.render()
-      })
+      }
+      pill.addEventListener('touchend', (e) => { e.preventDefault(); pillHandler() })
+      pill.addEventListener('click', pillHandler)
     }
 
     // Category dropdown (same row, right side)
