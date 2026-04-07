@@ -230,8 +230,23 @@ function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 
 
   redraw(-1)
 
+  // Hit-test on canvas: highlight the slice the cursor is over
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const dx = x - CX
+    const dy = y - CY
+    if (dx * dx + dy * dy > (R + 4) * (R + 4)) { redraw(-1); return }
+    // Normalize atan2 result to [-π/2, 3π/2] to match segment angles
+    let a = Math.atan2(dy, dx)
+    if (a < -Math.PI / 2) a += Math.PI * 2
+    redraw(segments.findIndex(seg => a >= seg.start && a < seg.end))
+  })
+  canvas.addEventListener('mouseleave', () => redraw(-1))
+
   const legend = pieWrap.createDiv('pw-pie-legend')
-  segments.forEach((seg, i) => {
+  segments.forEach((seg) => {
     const item = legend.createDiv('pw-legend-item')
     const dot = item.createEl('span', { cls: 'pw-legend-dot' })
     dot.setCssProps({ 'background-color': seg.color })
@@ -239,7 +254,5 @@ function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 
     item.createEl('span', { text: formatAmount(seg.value, dp), cls: 'pw-legend-amt' })
     const pct = Math.round((seg.value / total) * 100)
     item.createEl('span', { text: `${pct}%`, cls: 'pw-legend-pct' })
-    item.addEventListener('mouseenter', () => redraw(i))
-    item.addEventListener('mouseleave', () => redraw(-1))
   })
 }
