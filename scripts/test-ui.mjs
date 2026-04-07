@@ -46,7 +46,7 @@ function obs(...parts) {
   const cmd = `obsidian vault="${VAULT}" ${parts.join(' ')}`
   try {
     return execSync(cmd, { encoding: 'utf8', timeout: 10_000 }).trim()
-  } catch (err) {
+  } catch {
     return null
   }
 }

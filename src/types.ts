@@ -10,6 +10,7 @@ export interface Transaction {
   category?: string   // expense / income; default categories stored as key (e.g. "food"), custom as raw string
   note: string
   amount: number
+  createdAt?: string  // ISO 8601 timestamp; absent in data written before this field was added
 }
 
 export interface Wallet {

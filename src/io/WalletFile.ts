@@ -9,15 +9,15 @@ import {
 } from '../types'
 
 const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
-const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Amount |
-|------|------|--------|------|----|----------|------|--------|`
+const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Amount | CreatedAt |
+|------|------|--------|------|----|----------|------|--------|-----------|`
 
 // ─── Markdown Table Parsing ───────────────────────────────────────────────────
 
 export function parseRow(line: string): Transaction | null {
   const cols = line.split('|').map(c => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1)
-  if (cols.length !== 8) return null
-  const [date, type, wallet, fromWallet, toWallet, category, note, amountStr] = cols
+  if (cols.length !== 8 && cols.length !== 9) return null
+  const [date, type, wallet, fromWallet, toWallet, category, note, amountStr, createdAtStr] = cols
   if (!date || !type) return null
 
   const amount = parseFloat(amountStr)
@@ -35,6 +35,7 @@ export function parseRow(line: string): Transaction | null {
     category: category === '-' ? undefined : category,
     note: note === '-' ? '' : note,
     amount,
+    createdAt: (createdAtStr && createdAtStr !== '-') ? createdAtStr : undefined,
   }
 }
 
@@ -47,7 +48,8 @@ function formatRow(tx: Transaction): string {
   const cat = tx.category ?? '-'
   const note = tx.note || '-'
   const amount = tx.amount
-  return `| ${d} | ${type} | ${wallet} | ${from} | ${to} | ${cat} | ${note} | ${amount} |`
+  const createdAt = tx.createdAt ?? '-'
+  return `| ${d} | ${type} | ${wallet} | ${from} | ${to} | ${cat} | ${note} | ${amount} | ${createdAt} |`
 }
 
 export function parseMonthFile(content: string): Transaction[] {
@@ -282,8 +284,13 @@ export class WalletFile {
   async writeTransaction(tx: Transaction, yearMonth: string): Promise<void> {
     const content = await this.readMonthFile(yearMonth)
     const transactions = content ? parseMonthFile(content) : []
-    transactions.push(tx)
-    transactions.sort((a, b) => b.date.localeCompare(a.date))
+    transactions.push({ ...tx, createdAt: tx.createdAt ?? new Date().toISOString() })
+    transactions.sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date)
+      if (dateCompare !== 0) return dateCompare
+      if (a.createdAt && b.createdAt) return b.createdAt.localeCompare(a.createdAt)
+      return 0
+    })
     const summary = this.computeSummary(transactions)
     await this.writeMonthFile(yearMonth, buildMonthContent(yearMonth, transactions, summary))
   }
@@ -303,8 +310,13 @@ export class WalletFile {
       const content = await this.readMonthFile(oldYearMonth)
       const transactions = content ? parseMonthFile(content) : []
       const idx = this.findTransactionIndex(transactions, oldTx)
-      if (idx !== -1) transactions[idx] = newTx
-      transactions.sort((a, b) => b.date.localeCompare(a.date))
+      if (idx !== -1) transactions[idx] = { ...newTx, createdAt: newTx.createdAt ?? oldTx.createdAt ?? new Date().toISOString() }
+      transactions.sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date)
+        if (dateCompare !== 0) return dateCompare
+        if (a.createdAt && b.createdAt) return b.createdAt.localeCompare(a.createdAt)
+        return 0
+      })
       const summary = this.computeSummary(transactions)
       await this.writeMonthFile(oldYearMonth, buildMonthContent(oldYearMonth, transactions, summary))
     } else {

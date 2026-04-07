@@ -57,7 +57,12 @@ export class DetailView extends ItemView {
     contentEl.addClass('pw-detail')
 
     this.cachedTransactions = (await this.walletFile.readMonth(this.currentYearMonth))
-      .sort((a, b) => b.date.localeCompare(a.date))
+      .sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date)
+        if (dateCompare !== 0) return dateCompare
+        if (a.createdAt && b.createdAt) return b.createdAt.localeCompare(a.createdAt)
+        return 0
+      })
     this.cachedDp = this.walletFile.getConfig().decimalPlaces ?? 0
 
     // ── Header (fixed) ────────────────────────────────────────────────────────

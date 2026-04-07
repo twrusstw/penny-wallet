@@ -141,6 +141,8 @@ function createDate(year, monthIndex, day) {
 }
 
 function makeTransaction(date, type, partial) {
+  const createdAt = new Date(date)
+  createdAt.setHours(randInt(0, 23), randInt(0, 59), randInt(0, 59), randInt(0, 999))
   return {
     date,
     type,
@@ -150,11 +152,12 @@ function makeTransaction(date, type, partial) {
     category: partial.category,
     note: partial.note ?? '',
     amount: partial.amount,
+    createdAt: createdAt.toISOString(),
   }
 }
 
 function formatRow(tx) {
-  return `| ${formatMonthDay(tx.date)} | ${tx.type} | ${tx.wallet ?? '-'} | ${tx.fromWallet ?? '-'} | ${tx.toWallet ?? '-'} | ${tx.category ?? '-'} | ${tx.note || '-'} | ${tx.amount} |`
+  return `| ${formatMonthDay(tx.date)} | ${tx.type} | ${tx.wallet ?? '-'} | ${tx.fromWallet ?? '-'} | ${tx.toWallet ?? '-'} | ${tx.category ?? '-'} | ${tx.note || '-'} | ${tx.amount} | ${tx.createdAt ?? '-'} |`
 }
 
 function computeSummary(transactions) {
@@ -170,7 +173,7 @@ function computeSummary(transactions) {
 function buildMonthContent(yearMonth, transactions) {
   const summary = computeSummary(transactions)
   const frontmatter = `---\nincome: ${summary.income}\nexpense: ${summary.expense}\nnetAsset: ${summary.netAsset}\n---\n`
-  const header = `\n## ${yearMonth}\n\n| Date | Type | Wallet | From | To | Category | Note | Amount |\n|------|------|--------|------|----|----------|------|--------|`
+  const header = `\n## ${yearMonth}\n\n| Date | Type | Wallet | From | To | Category | Note | Amount | CreatedAt |\n|------|------|--------|------|----|----------|------|--------|-----------|`
   const rows = transactions.map(formatRow).join('\n')
   return frontmatter + header + (rows ? `\n${rows}` : '') + '\n'
 }
@@ -346,12 +349,20 @@ function generateMonthTransactions(monthDate, state) {
     }))
   }
 
-  const ascending = [...transactions].sort((left, right) => left.date - right.date)
+  const ascending = [...transactions].sort((left, right) => {
+    const dateCompare = left.date - right.date
+    if (dateCompare !== 0) return dateCompare
+    return left.createdAt.localeCompare(right.createdAt)
+  })
   for (const tx of ascending) {
     applyTransaction(state, tx)
   }
 
-  return ascending.sort((left, right) => right.date - left.date)
+  return ascending.sort((left, right) => {
+    const dateCompare = right.date - left.date
+    if (dateCompare !== 0) return dateCompare
+    return right.createdAt.localeCompare(left.createdAt)
+  })
 }
 
 async function clearExistingMonthFiles() {
