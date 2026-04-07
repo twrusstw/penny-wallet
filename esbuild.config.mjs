@@ -4,7 +4,7 @@ import { copyFile, mkdir } from 'fs/promises'
 import { dirname, join } from 'path'
 import console from 'console'
 import process from 'process'
-import builtins from 'builtin-modules'
+import { builtinModules as builtins } from 'module'
 import { fileURLToPath } from 'url'
 
 const banner = `/*
