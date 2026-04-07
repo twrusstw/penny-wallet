@@ -2,6 +2,16 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
+## [0.0.2] - 2026-04-08
+
+### Added
+- `createdAt` field on each transaction for stable same-date ordering
+- Transactions on the same date now sort by creation time (newest first)
+
+### Fixed
+- iOS touch event handling and lint issues
+- Mobile detail view now shows correct wallet name
+
 ## [0.0.1] - 2026-04-06
 
 ### Added

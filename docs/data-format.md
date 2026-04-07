@@ -32,13 +32,13 @@ netAsset: 0
 
 ## 2026-04
 
-| Date  | Type    | Wallet       | From         | To           | Category  | Note      | Amount |
-|-------|---------|--------------|--------------|--------------|-----------|-----------|--------|
-| 04/15 | income  | HSBC Savings | -            | -            | salary    | April pay | 72000  |
-| 04/12 | expense | Visa Platinum| -            | -            | shopping  | Groceries | 1200   |
-| 04/10 | expense | Cash         | -            | -            | food      | Lunch     | 280    |
-| 04/05 | transfer| -            | HSBC Savings | Cash         | -         | ATM       | 8000   |
-| 04/28 | repayment| -           | HSBC Savings | Visa Platinum| -         | Card bill | 5000   |
+| Date  | Type      | Wallet        | From         | To            | Category | Note      | Amount | CreatedAt                |
+|-------|-----------|---------------|--------------|---------------|----------|-----------|--------|---------------------------|
+| 04/15 | income    | HSBC Savings  | -            | -             | salary   | April pay | 72000  | 2026-04-15T08:12:00.000Z |
+| 04/12 | expense   | Visa Platinum | -            | -             | shopping | Groceries | 1200   | 2026-04-12T14:30:00.000Z |
+| 04/10 | expense   | Cash          | -            | -             | food     | Lunch     | 280    | 2026-04-10T12:05:00.000Z |
+| 04/05 | transfer  | -             | HSBC Savings | Cash          | -        | ATM       | 8000   | 2026-04-05T09:00:00.000Z |
+| 04/28 | repayment | -             | HSBC Savings | Visa Platinum | -        | Card bill | 5000   | 2026-04-28T10:00:00.000Z |
 ```
 
 ### Column Reference
@@ -53,6 +53,7 @@ netAsset: 0
 | Category | category key or custom name | `-` |
 | Note | optional text | optional text |
 | Amount | positive number | positive number |
+| CreatedAt | ISO 8601 UTC timestamp | ISO 8601 UTC timestamp |
 
 ### Frontmatter Cache
 
@@ -142,5 +143,6 @@ You can edit the Markdown files directly in Obsidian. Follow the column format e
 - Dates must be `MM/DD`
 - Use `-` for unused columns (not empty)
 - Amount must be a plain number (no currency symbols or commas)
+- `CreatedAt` is auto-assigned when writing through the UI — do not edit it manually, as it is used for stable same-date ordering
 
 After manual edits, PennyWallet will re-read the file on the next view render. The frontmatter cache will be updated automatically on the next transaction write to that month.
