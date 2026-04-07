@@ -40,7 +40,9 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName(t('settings.general')).setHeading()
 
-    new Setting(containerEl)
+    const group = containerEl.createDiv('pw-settings-group')
+
+    new Setting(group)
       .setName(t('settings.folderName'))
       .setDesc(t('settings.folderNameDesc'))
       .addText(text => text
@@ -52,7 +54,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
           }
         }))
 
-    new Setting(containerEl)
+    new Setting(group)
       .setName(t('settings.defaultWallet'))
       .setDesc(t('settings.defaultWalletDesc'))
       .addDropdown(drop => {
@@ -65,7 +67,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         })
       })
 
-    new Setting(containerEl)
+    new Setting(group)
       .setName(t('settings.decimalPlaces'))
       .setDesc(t('settings.decimalPlacesDesc'))
       .addDropdown(drop => {
@@ -92,66 +94,75 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       return
     }
 
+    const group = containerEl.createDiv('pw-settings-group')
+
     for (const wallet of active) {
       const wb = walletBalances.find(b => b.wallet.name === wallet.name)
       const currentBalance = wb?.balance ?? wallet.initialBalance
-      const displayCurrent = wallet.type === 'creditCard'
+      const isDebt = wallet.type === 'creditCard'
+      const displayBalance = isDebt
         ? `${t('settings.creditDebtPrefix')}${currentBalance.toLocaleString()}`
         : currentBalance.toLocaleString()
 
-      const desc = `${t('settings.initialBalance')}: ${wallet.initialBalance.toLocaleString()} | ${t('settings.currentBalance')}: ${displayCurrent}`
+      const row = group.createDiv('pw-wallet-row')
 
-      new Setting(containerEl)
-        .setName(`${wallet.name}（${t(`walletType.${wallet.type}`)}）`)
-        .setDesc(desc)
-        .addButton(btn => {
-          btn.setButtonText(t('ui.edit'))
-          btn.buttonEl.dataset['action'] = 'edit'
-          btn.onClick(() => {
-            new WalletEditModal(this.app, wallet, async (updated) => {
-              const wallets = config.wallets.map(w => w.name === wallet.name ? { ...w, ...updated } : w)
-              if (updated.name && updated.name !== wallet.name && config.defaultWallet === wallet.name) {
-                this.walletFile.updateConfig({ wallets, defaultWallet: updated.name })
-              } else {
-                this.walletFile.updateConfig({ wallets })
-              }
-              await this.walletFile.saveConfig()
-              void this.display()
-            }).open()
-          })
-        })
-        .addButton(btn => {
-          if (walletsWithTransactions.has(wallet.name)) {
-            btn.setButtonText(t('ui.archive'))
-              .setWarning()
-            btn.buttonEl.dataset['action'] = 'archive'
-            btn.onClick(() => {
-                new ConfirmModal(this.app, t('confirm.archiveWallet'), async () => {
-                  const wallets = config.wallets.map(w =>
-                    w.name === wallet.name ? { ...w, status: 'archived' as const } : w,
-                  )
-                  this.walletFile.updateConfig({ wallets })
-                  await this.walletFile.saveConfig()
-                  void this.display()
-                }).open()
-              })
+      const info = row.createDiv('pw-wallet-row-info')
+      info.createSpan({ text: wallet.name, cls: 'pw-wallet-row-name' })
+      info.createSpan({ text: t(`walletType.${wallet.type}`), cls: 'pw-wallet-type-badge' })
+
+      row.createSpan({
+        text: displayBalance,
+        cls: `pw-wallet-row-balance${isDebt ? ' is-debt' : ''}`,
+      })
+
+      const actions = row.createDiv('pw-wallet-row-actions')
+
+      const editBtn = actions.createEl('button', { text: t('ui.edit') })
+      editBtn.dataset['action'] = 'edit'
+      editBtn.addEventListener('click', () => {
+        new WalletEditModal(this.app, wallet, async (updated) => {
+          const wallets = config.wallets.map(w => w.name === wallet.name ? { ...w, ...updated } : w)
+          if (updated.name && updated.name !== wallet.name && config.defaultWallet === wallet.name) {
+            this.walletFile.updateConfig({ wallets, defaultWallet: updated.name })
           } else {
-            btn.setButtonText(t('ui.delete'))
-              .setWarning()
-            btn.buttonEl.dataset['action'] = 'delete'
-            btn.onClick(() => {
-                new ConfirmModal(this.app, t('confirm.deleteWallet'), async () => {
-                  const wallets = config.wallets.filter(w => w.name !== wallet.name)
-                  const defaultWallet = config.defaultWallet === wallet.name
-                    ? (wallets.find(w => w.status === 'active')?.name ?? '')
-                    : config.defaultWallet
-                  this.walletFile.updateConfig({ wallets, defaultWallet })
-                  await this.walletFile.saveConfig()
-                  void this.display()
-                }).open()
-              })
+            this.walletFile.updateConfig({ wallets })
           }
+          await this.walletFile.saveConfig()
+          this.app.workspace.trigger('penny-wallet:refresh')
+          void this.display()
+        }).open()
+      })
+
+      const actionBtn = actions.createEl('button')
+      if (walletsWithTransactions.has(wallet.name)) {
+        actionBtn.textContent = t('ui.archive')
+        actionBtn.dataset['action'] = 'archive'
+        actionBtn.classList.add('mod-warning')
+        actionBtn.addEventListener('click', () => {
+          new ConfirmModal(this.app, t('confirm.archiveWallet'), async () => {
+            const wallets = config.wallets.map(w =>
+              w.name === wallet.name ? { ...w, status: 'archived' as const } : w)
+            this.walletFile.updateConfig({ wallets })
+            await this.walletFile.saveConfig()
+            void this.display()
+          }).open()
         })
+      } else {
+        actionBtn.textContent = t('ui.delete')
+        actionBtn.dataset['action'] = 'delete'
+        actionBtn.classList.add('mod-warning')
+        actionBtn.addEventListener('click', () => {
+          new ConfirmModal(this.app, t('confirm.deleteWallet'), async () => {
+            const wallets = config.wallets.filter(w => w.name !== wallet.name)
+            const defaultWallet = config.defaultWallet === wallet.name
+              ? (wallets.find(w => w.status === 'active')?.name ?? '')
+              : config.defaultWallet
+            this.walletFile.updateConfig({ wallets, defaultWallet })
+            await this.walletFile.saveConfig()
+            void this.display()
+          }).open()
+        })
+      }
     }
   }
 
@@ -414,7 +425,9 @@ class WalletEditModal extends Modal {
     contentEl.createEl('h2', { text: t('ui.edit') })
 
     const formEl = contentEl.createDiv('pw-wallet-edit-form')
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches
     const syncKeyboardState = () => {
+      if (!isTouchDevice) return
       const activeEl = document.activeElement
       const isEditingFieldFocused = !!activeEl && formEl.contains(activeEl)
       if (isEditingFieldFocused) {

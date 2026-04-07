@@ -376,7 +376,7 @@ section('Account — delete test wallet (cleanup)')
 
 // Test wallet has no transactions → shows "刪除" button
 // Click delete → ConfirmModal appears → confirm → wallet is gone
-evalJs(`const item = [...document.querySelectorAll('.setting-item')].find(el => el.querySelector('.setting-item-name')?.textContent?.includes('${testWalletName}')); item?.querySelector('[data-action="delete"]')?.click()`)
+evalJs(`const item = [...document.querySelectorAll('.pw-wallet-row')].find(el => el.querySelector('.pw-wallet-row-name')?.textContent?.includes('${testWalletName}')); item?.querySelector('[data-action="delete"]')?.click()`)
 wait(500)
 
 assert('Delete confirm dialog appears', count('.modal-content') > 0)
@@ -393,7 +393,7 @@ section('Account — archive and restore')
 
 // Archive a wallet that has transactions (shows "封存" not "刪除")
 // Use last active wallet in the list — Mastercard World
-evalJs(`[...document.querySelectorAll('.setting-item')].find(el => el.querySelector('.setting-item-name')?.textContent?.includes('Mastercard World'))?.querySelector('[data-action="archive"]')?.click()`)
+evalJs(`[...document.querySelectorAll('.pw-wallet-row')].find(el => el.querySelector('.pw-wallet-row-name')?.textContent?.includes('Mastercard World'))?.querySelector('[data-action="archive"]')?.click()`)
 wait(500)
 
 assert('Archive confirm dialog appears', count('.modal-content') > 0)

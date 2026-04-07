@@ -1225,6 +1225,84 @@
 .pw-stat-expense .pw-stat-value { color: #EF9F27; }
 
 /* ── Settings ── */
+
+/* Grouped settings rows (replaces per-item cards) */
+.pw-settings-group {
+  background: var(--setting-items-background);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 4px 0 16px;
+}
+
+.pw-settings-group .setting-item {
+  border-top: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 10px 14px;
+}
+
+.pw-settings-group .setting-item:last-child {
+  border-bottom: none;
+}
+
+/* Wallet list rows */
+.pw-wallet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.pw-wallet-row:last-child {
+  border-bottom: none;
+}
+
+.pw-wallet-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-wallet-row-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pw-wallet-type-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--background-modifier-hover);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pw-wallet-row-balance {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.pw-wallet-row-balance.is-debt {
+  color: var(--text-error);
+}
+
+.pw-wallet-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .pw-add-wallet-card,
 .pw-category-card {
   background: var(--setting-items-background);
