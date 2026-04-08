@@ -1240,8 +1240,9 @@
 
 /* Grouped settings rows (replaces per-item cards) */
 .pw-settings-group {
-  background: var(--setting-items-background);
-  border-radius: 8px;
+  background: var(--background-secondary);
+  border: 0.5px solid var(--background-modifier-border);
+  border-radius: 14px;
   overflow: hidden;
   margin: 4px 0 16px;
 }
@@ -1249,6 +1250,8 @@
 .pw-settings-group .setting-item {
   border-top: none;
   border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 0;
+  margin: 0;
   padding: 10px 14px;
 }
 
