@@ -7,6 +7,7 @@ All notable changes to PennyWallet will be documented in this file.
 ### Added
 - `createdAt` field on each transaction for stable same-date ordering
 - Transactions on the same date now sort by creation time (newest first)
+- Add Command `refresh` that can be reload data
 
 ### Fixed
 - iOS touch event handling and lint issues

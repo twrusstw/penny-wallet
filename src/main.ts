@@ -30,6 +30,9 @@ export default class PennyWalletPlugin extends Plugin {
     this.addCommand({ id: 'open-dashboard', name: 'Open finance overview', callback: () => { void this.openDashboard() } })
     this.addCommand({ id: 'add-transaction', name: 'Add transaction', callback: () => this.openTransactionModal() })
     this.addCommand({ id: 'open-detail', name: 'Open transactions', callback: () => { void this.openDetailView() } })
+    this.addCommand({ id: 'refresh', name: 'Refresh views', callback: () => {
+      this.app.workspace.trigger('penny-wallet:refresh')
+    } })
     this.addCommand({ id: 'open-settings', name: 'Open settings', callback: () => {
       const setting = (this.app as unknown as { setting: { open(): void; openTabById(id: string): void } }).setting
       setting.open()
