@@ -1503,12 +1503,20 @@ select.pw-add-wallet-input {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .pw-nav-right {
+  .pw-nav-row {
     flex-wrap: wrap;
   }
 
-  .pw-action-btn {
-    font-size: 11px;
-    padding: 4px 8px;
+  .pw-nav-right {
+    flex-wrap: nowrap;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .pw-nav-right .pw-action-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    padding: 4px 6px;
   }
 }
