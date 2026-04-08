@@ -330,6 +330,29 @@ export class WalletFile {
     await this.deleteTransactionFromMonth(tx, yearMonth)
   }
 
+  async renameWalletInTransactions(oldName: string, newName: string): Promise<void> {
+    const months = this.getAllYearMonths()
+    await Promise.all(months.map(async (ym) => {
+      const content = await this.readMonthFile(ym)
+      if (!content) return
+      const transactions = parseMonthFile(content)
+      const updated = transactions.map(tx => ({
+        ...tx,
+        wallet:     tx.wallet     === oldName ? newName : tx.wallet,
+        fromWallet: tx.fromWallet === oldName ? newName : tx.fromWallet,
+        toWallet:   tx.toWallet   === oldName ? newName : tx.toWallet,
+      }))
+      const hasChange = updated.some((tx, i) =>
+        tx.wallet !== transactions[i].wallet ||
+        tx.fromWallet !== transactions[i].fromWallet ||
+        tx.toWallet !== transactions[i].toWallet,
+      )
+      if (!hasChange) return
+      const summary = this.computeSummary(updated)
+      await this.writeMonthFile(ym, buildMonthContent(ym, updated, summary))
+    }))
+  }
+
   private async deleteTransactionFromMonth(tx: Transaction, yearMonth: string): Promise<void> {
     const content = await this.readMonthFile(yearMonth)
     if (!content) return

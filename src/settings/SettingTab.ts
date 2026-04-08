@@ -39,6 +39,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     })()
   }
 
+  private getSettingsScrollTop(): number {
+    return this.containerEl.closest<HTMLElement>('.vertical-tab-content')?.scrollTop ?? 0
+  }
+
   private renderGeneral() {
     const config = this.walletFile.getConfig()
     const { containerEl } = this
@@ -113,7 +117,10 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
       const info = row.createDiv('pw-wallet-row-info')
       info.createSpan({ text: wallet.name, cls: 'pw-wallet-row-name' })
-      info.createSpan({ text: t(`walletType.${wallet.type}`), cls: 'pw-wallet-type-badge' })
+      info.createSpan({
+        text: t(`walletType.${wallet.type}`),
+        cls: `pw-wallet-badge pw-badge-${wallet.type}`,
+      })
 
       row.createSpan({
         text: displayBalance,
@@ -126,6 +133,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       editBtn.dataset['action'] = 'edit'
       editBtn.addEventListener('click', () => {
         new WalletEditModal(this.app, wallet, async (updated) => {
+          const scrollTop = this.getSettingsScrollTop()
           const wallets = config.wallets.map(w => w.name === wallet.name ? { ...w, ...updated } : w)
           if (updated.name && updated.name !== wallet.name && config.defaultWallet === wallet.name) {
             this.walletFile.updateConfig({ wallets, defaultWallet: updated.name })
@@ -133,8 +141,11 @@ export class PennyWalletSettingTab extends PluginSettingTab {
             this.walletFile.updateConfig({ wallets })
           }
           await this.walletFile.saveConfig()
+          if (updated.name && updated.name !== wallet.name) {
+            await this.walletFile.renameWalletInTransactions(wallet.name, updated.name)
+          }
           this.app.workspace.trigger('penny-wallet:refresh')
-          void this.display()
+          void this.display(scrollTop)
         }).open()
       })
 
@@ -145,11 +156,12 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         actionBtn.classList.add('mod-warning')
         actionBtn.addEventListener('click', () => {
           new ConfirmModal(this.app, t('confirm.archiveWallet'), async () => {
+            const scrollTop = this.getSettingsScrollTop()
             const wallets = config.wallets.map(w =>
               w.name === wallet.name ? { ...w, status: 'archived' as const } : w)
             this.walletFile.updateConfig({ wallets })
             await this.walletFile.saveConfig()
-            void this.display()
+            void this.display(scrollTop)
           }).open()
         })
       } else {
@@ -158,13 +170,14 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         actionBtn.classList.add('mod-warning')
         actionBtn.addEventListener('click', () => {
           new ConfirmModal(this.app, t('confirm.deleteWallet'), async () => {
+            const scrollTop = this.getSettingsScrollTop()
             const wallets = config.wallets.filter(w => w.name !== wallet.name)
             const defaultWallet = config.defaultWallet === wallet.name
               ? (wallets.find(w => w.status === 'active')?.name ?? '')
               : config.defaultWallet
             this.walletFile.updateConfig({ wallets, defaultWallet })
             await this.walletFile.saveConfig()
-            void this.display()
+            void this.display(scrollTop)
           }).open()
         })
       }
@@ -181,12 +194,29 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(t('settings.archivedWallets')).setHeading()
 
     for (const wallet of archived) {
-      new Setting(containerEl)
-        .setName(`${wallet.name}（${t(`walletType.${wallet.type}`)}）`)
+      const setting = new Setting(containerEl)
+      setting.settingEl.classList.add('pw-archived-wallet-item')
+      setting.setName('')
+
+      const info = setting.nameEl.createDiv('pw-wallet-row-info')
+      info.createSpan({ text: wallet.name, cls: 'pw-wallet-row-name' })
+      info.createSpan({
+        text: t(`walletType.${wallet.type}`),
+        cls: `pw-wallet-badge pw-badge-${wallet.type}`,
+      })
+
+      const syncIncludeDesc = (included: boolean) => {
+        setting.setDesc(included
+          ? t('settings.includeInNetAssetOn')
+          : t('settings.includeInNetAssetOff'))
+      }
+      syncIncludeDesc(wallet.includeInNetAsset)
+
+      setting
         .addToggle(toggle => toggle
           .setValue(wallet.includeInNetAsset)
-          .setTooltip(t('settings.includeInNetAsset'))
           .onChange((value) => {
+            syncIncludeDesc(value)
             const wallets = config.wallets.map(w =>
               w.name === wallet.name ? { ...w, includeInNetAsset: value } : w,
             )
@@ -195,16 +225,18 @@ export class PennyWalletSettingTab extends PluginSettingTab {
           }))
         .addButton(btn => {
           btn.setButtonText(t('ui.unarchive'))
+          btn.buttonEl.classList.add('pw-unarchive-btn')
           btn.buttonEl.dataset['action'] = 'unarchive'
           btn.onClick(() => {
-            void (async () => {
+            new ConfirmModal(this.app, t('confirm.unarchiveWallet'), async () => {
+              const scrollTop = this.getSettingsScrollTop()
               const wallets = config.wallets.map(w =>
                 w.name === wallet.name ? { ...w, status: 'active' as const } : w,
               )
               this.walletFile.updateConfig({ wallets })
               await this.walletFile.saveConfig()
-              void this.display()
-            })()
+              void this.display(scrollTop)
+            }).open()
           })
         })
     }
@@ -284,6 +316,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     })
 
     const submitAddWallet = async () => {
+      const scrollTop = this.getSettingsScrollTop()
       const config = this.walletFile.getConfig()
       if (!newName) { new Notice(t('err.walletNameEmpty')); return }
       if (config.wallets.some(w => w.name === newName)) {
@@ -306,7 +339,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       this.walletFile.updateConfig({ wallets })
       await this.walletFile.saveConfig()
       new Notice(tn('notice.walletAdded', { name: newName }))
-      void this.display()
+      void this.display(scrollTop)
     }
 
     addBtn.addEventListener('click', () => { void submitAddWallet() })
@@ -336,7 +369,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       config.options.categories.income.custom,
       config.options.categories.expense.default,
       async (updated) => {
-        const scrollTop = containerEl.closest<HTMLElement>('.vertical-tab-content')?.scrollTop ?? 0
+        const scrollTop = this.getSettingsScrollTop()
         this.walletFile.updateCustomCategories('expense', updated)
         await this.walletFile.saveConfig()
         this.app.workspace.trigger('penny-wallet:refresh')
@@ -353,7 +386,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
       config.options.categories.expense.custom,
       config.options.categories.income.default,
       async (updated) => {
-        const scrollTop = containerEl.closest<HTMLElement>('.vertical-tab-content')?.scrollTop ?? 0
+        const scrollTop = this.getSettingsScrollTop()
         this.walletFile.updateCustomCategories('income', updated)
         await this.walletFile.saveConfig()
         this.app.workspace.trigger('penny-wallet:refresh')

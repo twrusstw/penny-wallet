@@ -127,6 +127,8 @@ const translations = {
     'settings.walletType': '類型',
     'settings.initialBalance': '初始餘額',
     'settings.includeInNetAsset': '納入淨資產',
+    'settings.includeInNetAssetOn': '目前：納入淨資產',
+    'settings.includeInNetAssetOff': '目前：不納入淨資產',
     'settings.customCategories': '自訂分類',
     'settings.expenseCategories': '支出',
     'settings.incomeCategories': '收入',
@@ -137,6 +139,7 @@ const translations = {
     'confirm.deleteTransaction': '確定要刪除這筆交易？此操作無法復原。',
     'confirm.archiveWallet': '確定要封存此錢包？封存後無法復原，該錢包將不再出現在交易入口中。',
     'confirm.deleteWallet': '確定要刪除此錢包？',
+    'confirm.unarchiveWallet': '確定要取消封存此錢包？',
 
     // Onboarding
     'onboard.welcome': '歡迎使用 PennyWallet！建議先新增您的銀行帳戶與信用卡錢包。',
@@ -280,6 +283,8 @@ const translations = {
     'settings.walletType': 'Type',
     'settings.initialBalance': 'Initial Balance',
     'settings.includeInNetAsset': 'Include in Net Assets',
+    'settings.includeInNetAssetOn': 'Current: Included in Net Assets',
+    'settings.includeInNetAssetOff': 'Current: Excluded from Net Assets',
     'settings.customCategories': 'Custom Categories',
     'settings.expenseCategories': 'Expense',
     'settings.incomeCategories': 'Income',
@@ -289,6 +294,7 @@ const translations = {
     'confirm.deleteTransaction': 'Delete this transaction? This cannot be undone.',
     'confirm.archiveWallet': 'Archive this wallet? This cannot be undone. The wallet will no longer appear in transaction forms.',
     'confirm.deleteWallet': 'Delete this wallet?',
+    'confirm.unarchiveWallet': 'Unarchive this wallet?',
 
     'onboard.welcome': 'Welcome to PennyWallet! We recommend adding your bank accounts and credit cards.',
     'onboard.goToSettings': 'Go to Settings',

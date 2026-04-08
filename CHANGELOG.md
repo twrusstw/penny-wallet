@@ -12,6 +12,7 @@ All notable changes to PennyWallet will be documented in this file.
 ### Fixed
 - iOS touch event handling and lint issues
 - Mobile detail view now shows correct wallet name
+- Improve archived wallet settings UX
 
 ## [0.0.1] - 2026-04-06
 
