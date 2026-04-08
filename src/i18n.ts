@@ -132,6 +132,7 @@ const translations = {
     'settings.incomeCategories': '收入',
     'settings.addCategory': '新增分類',
     'settings.categoryPlaceholder': '輸入分類名稱',
+    'settings.renameCategoryPrompt': '將「{name}」重新命名為：',
 
     // Confirm dialogs
     'confirm.deleteTransaction': '確定要刪除這筆交易？此操作無法復原。',
@@ -154,6 +155,7 @@ const translations = {
     'notice.transactionDeleted': '✓ 交易已刪除',
     'notice.transactionAdded': '✓ 交易已新增',
     'notice.transactionUpdated': '✓ 交易已更新',
+    'notice.categoryRenamed': '✓ 分類已更新：{old} → {new}（已同步 {count} 筆歷史交易）',
     'notice.loadFailed': 'PennyWallet 載入失敗，請檢查插件設定。',
 
     // Errors — extra
@@ -285,6 +287,7 @@ const translations = {
     'settings.incomeCategories': 'Income',
     'settings.addCategory': 'Add Category',
     'settings.categoryPlaceholder': 'Enter category name',
+    'settings.renameCategoryPrompt': 'Rename "{name}" to:',
 
     'confirm.deleteTransaction': 'Delete this transaction? This cannot be undone.',
     'confirm.archiveWallet': 'Archive this wallet? This cannot be undone. The wallet will no longer appear in transaction forms.',
@@ -303,6 +306,7 @@ const translations = {
     'notice.transactionDeleted': '✓ Transaction deleted',
     'notice.transactionAdded': '✓ Transaction added',
     'notice.transactionUpdated': '✓ Transaction updated',
+    'notice.categoryRenamed': '✓ Category renamed: {old} → {new} ({count} historical transactions updated)',
     'notice.loadFailed': 'PennyWallet failed to load. Please check plugin settings.',
 
     'err.cashBankNegativeBalance': 'Cash and bank balance cannot be negative',

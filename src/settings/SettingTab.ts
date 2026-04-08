@@ -331,6 +331,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
     this.renderCategorySection(
       cardEl,
+      'expense',
       t('settings.expenseCategories'),
       config.options.categories.expense.custom,
       config.options.categories.income.custom,
@@ -348,6 +349,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
     this.renderCategorySection(
       cardEl,
+      'income',
       t('settings.incomeCategories'),
       config.options.categories.income.custom,
       config.options.categories.expense.custom,
@@ -364,6 +366,7 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
   private renderCategorySection(
     container: HTMLElement,
+    type: 'expense' | 'income',
     title: string,
     categories: string[],
     otherCategories: string[],
@@ -376,6 +379,19 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     for (const cat of categories) {
       const tag = tagsEl.createDiv('pw-category-tag')
       tag.createEl('span', { text: cat })
+      const renameBtn = tag.createEl('button', { cls: 'pw-tag-rename', text: t('ui.edit') })
+      renameBtn.addEventListener('click', () => {
+        const modal = new CategoryRenameModal(this.app, cat, async (next) => {
+          if (defaultKeys.includes(next))     { new Notice(t('err.categoryExists')); return }
+          if (categories.includes(next))      { new Notice(t('err.categoryExists')); return }
+          if (otherCategories.includes(next)) { new Notice(t('err.categoryExistsInOtherList')); return }
+          const updatedCount = await this.walletFile.renameCustomCategory(type, cat, next)
+          this.app.workspace.trigger('penny-wallet:refresh')
+          new Notice(tn('notice.categoryRenamed', { old: cat, new: next, count: String(updatedCount) }))
+          this.display()
+        })
+        modal.open()
+      })
       const removeBtn = tag.createEl('button', { cls: 'pw-tag-remove' })
       const svg = removeBtn.createSvg('svg', { attr: { viewBox: '0 0 10 10', width: '10', height: '10', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round' } })
       svg.createSvg('line', { attr: { x1: '2', y1: '2', x2: '8', y2: '8' } })
@@ -407,6 +423,54 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 }
 
 // ─── Wallet Edit Modal ────────────────────────────────────────────────────────
+
+class CategoryRenameModal extends Modal {
+  private currentName: string
+  private onSave: (next: string) => void | Promise<void>
+
+  constructor(app: App, currentName: string, onSave: (next: string) => void | Promise<void>) {
+    super(app)
+    this.currentName = currentName
+    this.onSave = onSave
+  }
+
+  onOpen() {
+    const { contentEl } = this
+    contentEl.empty()
+    contentEl.addClass('pw-modal')
+    contentEl.createEl('h2', { text: tn('settings.renameCategoryPrompt', { name: this.currentName }) })
+
+    const input = contentEl.createEl('input', {
+      type: 'text',
+      cls: 'pw-field-input',
+      value: this.currentName,
+    })
+
+    const row = contentEl.createDiv('pw-modal-actions')
+    const cancelBtn = row.createEl('button', { text: t('ui.cancel') })
+    const saveBtn = row.createEl('button', { text: t('ui.save'), cls: 'mod-cta' })
+
+    const submit = async () => {
+      const next = input.value.trim()
+      if (!next || next === this.currentName) {
+        this.close()
+        return
+      }
+      await this.onSave(next)
+      this.close()
+    }
+
+    cancelBtn.addEventListener('click', () => this.close())
+    saveBtn.addEventListener('click', () => { void submit() })
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        void submit()
+      }
+    })
+    window.requestAnimationFrame(() => input.focus())
+  }
+}
 
 class WalletEditModal extends Modal {
   private wallet: Wallet

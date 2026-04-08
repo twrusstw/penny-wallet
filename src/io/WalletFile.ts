@@ -182,6 +182,37 @@ export class WalletFile {
     }
   }
 
+  async renameCustomCategory(type: 'expense' | 'income', from: string, to: string): Promise<number> {
+    if (from === to) return 0
+
+    const updatedCustom = this.config.options.categories[type].custom.map(cat => cat === from ? to : cat)
+    this.updateCustomCategories(type, updatedCustom)
+    await this.saveConfig()
+
+    let updatedTransactions = 0
+    const months = this.getAllYearMonths()
+    for (const yearMonth of months) {
+      const content = await this.readMonthFile(yearMonth)
+      if (!content) continue
+      const transactions = parseMonthFile(content)
+
+      let changed = false
+      for (const tx of transactions) {
+        if (tx.type === type && tx.category === from) {
+          tx.category = to
+          changed = true
+          updatedTransactions++
+        }
+      }
+
+      if (!changed) continue
+      const summary = this.computeSummary(transactions)
+      await this.writeMonthFile(yearMonth, buildMonthContent(yearMonth, transactions, summary))
+    }
+
+    return updatedTransactions
+  }
+
   async saveConfig(): Promise<void> {
     const path = ROOT_CONFIG_PATH
     const content = JSON.stringify(this.config, null, 2)

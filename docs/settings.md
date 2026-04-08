@@ -78,6 +78,12 @@ Add your own expense and income categories.
 
 Categories are shown **after** the default categories in the Add Transaction form.
 
+Click **Edit** on a custom category tag to rename it. PennyWallet will:
+- rename that category in settings
+- migrate matching historical transactions (`expense` or `income`) across all monthly files
+
 Click **×** on a tag to remove a custom category. This does not affect existing transactions that already used that category — they will continue to display the category name as a raw string.
 
 > A category name cannot duplicate an existing default or custom category in either list.
+>
+> For sub-category style grouping in plain Markdown tables, we recommend a composite string format such as `food/lunch`. This keeps the schema unchanged and works well with historical rename migration.

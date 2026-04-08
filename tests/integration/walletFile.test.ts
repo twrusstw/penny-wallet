@@ -289,6 +289,46 @@ describe('getCategoryTrend', () => {
   })
 })
 
+// ── renameCustomCategory ───────────────────────────────────────────────────────
+
+describe('renameCustomCategory', () => {
+  it('renames custom category in config and updates matching historical transactions', async () => {
+    const config = {
+      ...DEFAULT_CONFIG,
+      folderName: 'Ledgers',
+      options: {
+        ...DEFAULT_CONFIG.options,
+        categories: {
+          ...DEFAULT_CONFIG.options.categories,
+          expense: {
+            ...DEFAULT_CONFIG.options.categories.expense,
+            custom: ['brunch'],
+          },
+        },
+      },
+    }
+    const { app, store } = createMockApp({ '.penny-wallet.json': JSON.stringify(config) })
+    const wf = new WalletFile(app)
+    await wf.loadConfig()
+
+    await wf.writeTransaction({ date: '01/10', type: 'expense', wallet: 'Default Wallet', category: 'brunch', note: '', amount: 100 }, '2026-01')
+    await wf.writeTransaction({ date: '01/12', type: 'income', wallet: 'Default Wallet', category: 'brunch', note: '', amount: 200 }, '2026-01')
+    await wf.writeTransaction({ date: '02/10', type: 'expense', wallet: 'Default Wallet', category: 'brunch', note: '', amount: 50 }, '2026-02')
+
+    const updated = await wf.renameCustomCategory('expense', 'brunch', 'food/lunch')
+
+    expect(updated).toBe(2)
+    expect(wf.getConfig().options.categories.expense.custom).toContain('food/lunch')
+    expect(wf.getConfig().options.categories.expense.custom).not.toContain('brunch')
+
+    const janTxs = parseMonthFile(store.get('Ledgers/2026-01.md')!)
+    const febTxs = parseMonthFile(store.get('Ledgers/2026-02.md')!)
+    expect(janTxs.find(tx => tx.type === 'expense')?.category).toBe('food/lunch')
+    expect(janTxs.find(tx => tx.type === 'income')?.category).toBe('brunch')
+    expect(febTxs[0].category).toBe('food/lunch')
+  })
+})
+
 // ── walletHasTransactions ─────────────────────────────────────────────────────
 
 describe('walletHasTransactions', () => {

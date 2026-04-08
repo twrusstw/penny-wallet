@@ -1432,6 +1432,19 @@ select.pw-add-wallet-input {
   font-size: 13px;
 }
 
+.pw-tag-rename {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+.pw-tag-rename:hover {
+  color: var(--text-normal);
+}
+
 .pw-tag-remove {
   display: flex;
   align-items: center;
