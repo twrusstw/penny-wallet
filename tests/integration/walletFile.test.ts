@@ -55,17 +55,17 @@ describe('writeTransaction', () => {
     expect(txs[0].note).toBe('Lunch')
   })
 
-  it('sorts newer dates first', async () => {
+  it('sorts older dates first in the file (ascending)', async () => {
     const { wf, store } = await makeWalletFile()
     const early: Transaction = { ...EXPENSE, date: '04/01', note: 'Early' }
     const late: Transaction = { ...EXPENSE, date: '04/30', note: 'Late' }
 
-    await wf.writeTransaction(early, '2026-04')
     await wf.writeTransaction(late, '2026-04')
+    await wf.writeTransaction(early, '2026-04')
 
     const txs = parseMonthFile(store.get('Ledgers/2026-04.md')!)
-    expect(txs[0].note).toBe('Late')
-    expect(txs[1].note).toBe('Early')
+    expect(txs[0].note).toBe('Early')
+    expect(txs[1].note).toBe('Late')
   })
 
   it('updates frontmatter expense total', async () => {
@@ -134,6 +134,40 @@ describe('updateTransaction', () => {
     expect(newTxs[0].note).toBe('Lunch')
   })
 })
+
+  it('targets the correct transaction when two identical rows exist (uses createdAt)', async () => {
+    const { wf } = await makeWalletFile()
+    const first: Transaction  = { ...EXPENSE, createdAt: '2026-04-15T10:00:00.000Z' }
+    const second: Transaction = { ...EXPENSE, createdAt: '2026-04-15T11:00:00.000Z' }
+    await wf.writeTransaction(first, '2026-04')
+    await wf.writeTransaction(second, '2026-04')
+
+    // Edit only the second one
+    const updated: Transaction = { ...second, amount: 999 }
+    await wf.updateTransaction(second, '2026-04', updated, '2026-04')
+
+    const txs = await wf.readMonth('2026-04')
+    expect(txs).toHaveLength(2)
+    const amounts = txs.map(t => t.amount).sort((a, b) => a - b)
+    expect(amounts).toEqual([150, 999])
+  })
+
+  it('falls back to first-match when createdAt is absent (legacy data)', async () => {
+    const { wf } = await makeWalletFile()
+    // Write two identical rows without createdAt
+    const legacy: Transaction = { ...EXPENSE }
+    await wf.writeTransaction(legacy, '2026-04')
+    await wf.writeTransaction(legacy, '2026-04')
+
+    // Update one — should update exactly one row
+    const updated: Transaction = { ...legacy, amount: 777 }
+    await wf.updateTransaction(legacy, '2026-04', updated, '2026-04')
+
+    const txs = await wf.readMonth('2026-04')
+    expect(txs).toHaveLength(2)
+    const amounts = txs.map(t => t.amount).sort((a, b) => a - b)
+    expect(amounts).toEqual([150, 777])
+  })
 
 // ── deleteTransaction ─────────────────────────────────────────────────────────
 

@@ -286,9 +286,9 @@ export class WalletFile {
     const transactions = content ? parseMonthFile(content) : []
     transactions.push({ ...tx, createdAt: tx.createdAt ?? new Date().toISOString() })
     transactions.sort((a, b) => {
-      const dateCompare = b.date.localeCompare(a.date)
+      const dateCompare = a.date.localeCompare(b.date)
       if (dateCompare !== 0) return dateCompare
-      if (a.createdAt && b.createdAt) return b.createdAt.localeCompare(a.createdAt)
+      if (a.createdAt && b.createdAt) return a.createdAt.localeCompare(b.createdAt)
       return 0
     })
     const summary = this.computeSummary(transactions)
@@ -312,9 +312,9 @@ export class WalletFile {
       const idx = this.findTransactionIndex(transactions, oldTx)
       if (idx !== -1) transactions[idx] = { ...newTx, createdAt: newTx.createdAt ?? oldTx.createdAt ?? new Date().toISOString() }
       transactions.sort((a, b) => {
-        const dateCompare = b.date.localeCompare(a.date)
+        const dateCompare = a.date.localeCompare(b.date)
         if (dateCompare !== 0) return dateCompare
-        if (a.createdAt && b.createdAt) return b.createdAt.localeCompare(a.createdAt)
+        if (a.createdAt && b.createdAt) return a.createdAt.localeCompare(b.createdAt)
         return 0
       })
       const summary = this.computeSummary(transactions)
@@ -349,7 +349,8 @@ export class WalletFile {
       (tx.wallet ?? '') === (target.wallet ?? '') &&
       (tx.fromWallet ?? '') === (target.fromWallet ?? '') &&
       (tx.toWallet ?? '') === (target.toWallet ?? '') &&
-      (tx.category ?? '') === (target.category ?? ''),
+      (tx.category ?? '') === (target.category ?? '') &&
+      (tx.createdAt === undefined || target.createdAt === undefined || tx.createdAt === target.createdAt),
     )
   }
 

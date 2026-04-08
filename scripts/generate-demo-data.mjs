@@ -358,11 +358,7 @@ function generateMonthTransactions(monthDate, state) {
     applyTransaction(state, tx)
   }
 
-  return ascending.sort((left, right) => {
-    const dateCompare = right.date - left.date
-    if (dateCompare !== 0) return dateCompare
-    return right.createdAt.localeCompare(left.createdAt)
-  })
+  return ascending
 }
 
 async function clearExistingMonthFiles() {
