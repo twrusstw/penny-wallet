@@ -450,13 +450,7 @@ export class WalletFile {
       this.applyTxToBalanceMap(tx, balanceMap)
     }
 
-    // Sort: cash → bank → creditCard
-    const order: Record<string, number> = { cash: 0, bank: 1, creditCard: 2 }
-    const sortedWallets = [...wallets].sort((a, b) =>
-      (order[a.type] ?? 3) - (order[b.type] ?? 3),
-    )
-
-    return sortedWallets.map(w => ({
+    return wallets.map(w => ({
       wallet: w,
       balance: balanceMap.get(w.name) ?? w.initialBalance,
     }))

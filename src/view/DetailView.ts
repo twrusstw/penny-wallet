@@ -21,6 +21,7 @@ export class DetailView extends ItemView {
   private cachedTransactions: Transaction[] = []
   private cachedDp: 0 | 2 = 0
   private listEl: HTMLElement | null = null
+  private listWrapEl: HTMLElement | null = null
   private subtotalEl: HTMLElement | null = null
 
   constructor(leaf: WorkspaceLeaf, walletFile: WalletFile) {
@@ -53,6 +54,7 @@ export class DetailView extends ItemView {
 
   async render() {
     const { contentEl } = this
+    const savedScroll = this.listWrapEl?.scrollTop ?? 0
     contentEl.empty()
     contentEl.addClass('pw-detail')
 
@@ -70,14 +72,14 @@ export class DetailView extends ItemView {
 
     // Month nav
     const navRow = header.createDiv('pw-nav-row')
-    navRow.createEl('button', { text: '←', cls: 'pw-nav-btn' }).addEventListener('click', () => {
+    navRow.createEl('button', { text: '‹', cls: 'pw-nav-btn' }).addEventListener('click', () => {
       this.currentYearMonth = stepMonth(this.currentYearMonth, -1)
       this.filterCategories.clear()
       this.filterSearch = ''
       void this.render()
     })
     navRow.createEl('span', { text: this.currentYearMonth, cls: 'pw-month-label' })
-    const nextBtn = navRow.createEl('button', { text: '→', cls: 'pw-nav-btn' })
+    const nextBtn = navRow.createEl('button', { text: '›', cls: 'pw-nav-btn' })
     nextBtn.disabled = isAfterCurrentMonth(stepMonth(this.currentYearMonth, 1))
     nextBtn.addEventListener('click', () => {
       if (!nextBtn.disabled) {
@@ -252,20 +254,26 @@ export class DetailView extends ItemView {
       placeholder: t('detail.searchPlaceholder'),
     })
     searchInput.type = 'text'
+    searchInput.setAttribute('enterkeyhint', 'done')
     searchInput.value = this.filterSearch
     searchInput.addEventListener('input', () => {
       this.filterSearch = searchInput.value
       this.applyFilters()
     })
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchInput.blur()
+    })
 
     // ── Scrollable list area ──────────────────────────────────────────────────
     const listWrap = contentEl.createDiv('pw-detail-list-wrap')
+    this.listWrapEl = listWrap
     this.listEl = listWrap.createDiv('pw-tx-list')
 
     // ── Subtotals (fixed bottom) ──────────────────────────────────────────────
     this.subtotalEl = contentEl.createDiv('pw-subtotal-row')
 
     this.applyFilters()
+    if (savedScroll > 0) listWrap.scrollTop = savedScroll
   }
 
   private applyFilters() {

@@ -139,6 +139,7 @@ const translations = {
 
     // Notices
     'notice.walletAdded': '✓ 帳戶「{name}」已新增',
+    'notice.walletReordered': '✓ 帳戶順序已儲存',
     'notice.transactionDeleted': '✓ 交易已刪除',
     'notice.transactionAdded': '✓ 交易已新增',
     'notice.transactionUpdated': '✓ 交易已更新',
@@ -283,6 +284,7 @@ const translations = {
     'settings.cashBankBalanceHint': 'Enter current actual balance (must be ≥ 0)',
 
     'notice.walletAdded': '✓ Account "{name}" added',
+    'notice.walletReordered': '✓ Wallet order saved',
     'notice.transactionDeleted': '✓ Transaction deleted',
     'notice.transactionAdded': '✓ Transaction added',
     'notice.transactionUpdated': '✓ Transaction updated',

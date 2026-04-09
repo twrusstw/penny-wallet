@@ -975,6 +975,17 @@
   .pw-subtotal-row {
     padding-bottom: calc(8px + var(--mobile-toolbar-height, 48px) + env(safe-area-inset-bottom, 0px));
   }
+
+  .pw-detail:has(.pw-search-input:focus) .pw-subtotal-row {
+    display: none;
+  }
+
+  /* When keyboard is open, constrain list to visible area above keyboard.
+     35vh is conservative: fits above keyboard on all common iPhone sizes (portrait). */
+  .pw-detail:has(.pw-search-input:focus) .pw-detail-list-wrap {
+    flex: none;
+    max-height: 35vh;
+  }
 }
 
 .pw-subtotal-income  { color: #5DCAA5; font-weight: 600; }
@@ -1159,8 +1170,9 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
 }
 
 .pw-wallet-row-name {
@@ -1170,6 +1182,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.pw-wallet-row-desc {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .pw-wallet-type-badge {
@@ -1195,10 +1213,43 @@
   color: var(--text-error);
 }
 
+.pw-drag-handle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 6px;
+  color: var(--text-faint);
+  cursor: grab;
+  padding: 0 2px;
+}
+
+.pw-drag-handle:active {
+  cursor: grabbing;
+}
+
+.pw-wallet-row.pw-dragging {
+  opacity: 0.4;
+}
+
+.pw-wallet-row.pw-drag-over {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.pw-drag-ghost {
+  opacity: 0.4;
+}
+
 .pw-wallet-row-actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.pw-wallet-row-actions button {
+  box-shadow: 0 0 0 1px var(--background-modifier-border-hover);
+  border-radius: var(--button-radius, 4px);
 }
 
 .pw-add-wallet-card,

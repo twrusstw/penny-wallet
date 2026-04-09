@@ -26,6 +26,7 @@
   "devDependencies": {
     "@eslint/js": "^9.24.0",
     "@types/node": "^24.12.2",
+    "@types/sortablejs": "^1.15.9",
     "@vitest/coverage-v8": "^4.1.2",
     "esbuild": "^0.28.0",
     "eslint": "^9.24.0",
@@ -37,5 +38,8 @@
     "typescript-eslint": "^8.29.0",
     "vitepress": "^1.6.3",
     "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "sortablejs": "^1.15.7"
   }
 }

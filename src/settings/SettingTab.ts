@@ -1,4 +1,5 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian'
+import Sortable from 'sortablejs'
 import { WalletFile } from '../io/WalletFile'
 import { ConfirmModal } from '../modal/ConfirmModal'
 import { Wallet, WalletBalance, WalletType } from '../types'
@@ -115,6 +116,11 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
       const row = group.createDiv('pw-wallet-row')
 
+      const handle = row.createDiv('pw-drag-handle')
+      const svg = handle.createSvg('svg', { attr: { viewBox: '0 0 16 16', width: '14', height: '14', fill: 'currentColor' } })
+      for (const [cx, cy] of [[5,4],[5,8],[5,12],[11,4],[11,8],[11,12]] as [number,number][]) {
+        svg.createSvg('circle', { attr: { cx, cy, r: '1.2' } })
+      }
       const info = row.createDiv('pw-wallet-row-info')
       info.createSpan({ text: wallet.name, cls: 'pw-wallet-row-name' })
       info.createSpan({
@@ -182,6 +188,39 @@ export class PennyWalletSettingTab extends PluginSettingTab {
         })
       }
     }
+
+    Sortable.create(group, {
+      animation: 150,
+      handle: '.pw-drag-handle',
+      ghostClass: 'pw-drag-ghost',
+      chosenClass: 'pw-dragging',
+      forceFallback: true,
+      fallbackOnBody: true,
+      scroll: group.closest<HTMLElement>('.vertical-tab-content') ?? true,
+      scrollSensitivity: 80,
+      scrollSpeed: 8,
+      onEnd: (evt) => {
+        const from = evt.oldIndex
+        const to = evt.newIndex
+        if (from === undefined || to === undefined || from === to) return
+        const wallets = [...config.wallets]
+        const activeIndices = wallets.reduce<number[]>((acc, w, i) => {
+          if (w.status === 'active') { acc.push(i) }
+          return acc
+        }, [])
+        const [moved] = wallets.splice(activeIndices[from], 1)
+        // Recalculate target index after splice
+        const toGlobalIdx = activeIndices[to] > activeIndices[from]
+          ? activeIndices[to] - 1
+          : activeIndices[to]
+        wallets.splice(toGlobalIdx, 0, moved)
+        this.walletFile.updateConfig({ wallets })
+        void this.walletFile.saveConfig().then(() => {
+          new Notice(t('notice.walletReordered'))
+          this.app.workspace.trigger('penny-wallet:refresh')
+        })
+      },
+    })
   }
 
   private renderArchivedWallets() {
@@ -193,52 +232,52 @@ export class PennyWalletSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName(t('settings.archivedWallets')).setHeading()
 
-    for (const wallet of archived) {
-      const setting = new Setting(containerEl)
-      setting.settingEl.classList.add('pw-archived-wallet-item')
-      setting.setName('')
+    const group = containerEl.createDiv('pw-settings-group')
 
-      const info = setting.nameEl.createDiv('pw-wallet-row-info')
+    for (const wallet of archived) {
+      const row = group.createDiv('pw-wallet-row')
+
+      const info = row.createDiv('pw-wallet-row-info')
       info.createSpan({ text: wallet.name, cls: 'pw-wallet-row-name' })
       info.createSpan({
         text: t(`walletType.${wallet.type}`),
         cls: `pw-wallet-badge pw-badge-${wallet.type}`,
       })
-
-      const syncIncludeDesc = (included: boolean) => {
-        setting.setDesc(included
+      const descSpan = info.createSpan({
+        text: wallet.includeInNetAsset
           ? t('settings.includeInNetAssetOn')
-          : t('settings.includeInNetAssetOff'))
-      }
-      syncIncludeDesc(wallet.includeInNetAsset)
+          : t('settings.includeInNetAssetOff'),
+        cls: 'pw-wallet-row-desc',
+      })
 
-      setting
-        .addToggle(toggle => toggle
-          .setValue(wallet.includeInNetAsset)
-          .onChange((value) => {
-            syncIncludeDesc(value)
-            const wallets = config.wallets.map(w =>
-              w.name === wallet.name ? { ...w, includeInNetAsset: value } : w,
-            )
-            this.walletFile.updateConfig({ wallets })
-            void this.walletFile.saveConfig()
-          }))
-        .addButton(btn => {
-          btn.setButtonText(t('ui.unarchive'))
-          btn.buttonEl.classList.add('pw-unarchive-btn')
-          btn.buttonEl.dataset['action'] = 'unarchive'
-          btn.onClick(() => {
-            new ConfirmModal(this.app, t('confirm.unarchiveWallet'), async () => {
-              const scrollTop = this.getSettingsScrollTop()
-              const wallets = config.wallets.map(w =>
-                w.name === wallet.name ? { ...w, status: 'active' as const } : w,
-              )
-              this.walletFile.updateConfig({ wallets })
-              await this.walletFile.saveConfig()
-              void this.display(scrollTop)
-            }).open()
-          })
-        })
+      const actions = row.createDiv('pw-wallet-row-actions')
+
+      const toggleEl = actions.createDiv({ cls: 'checkbox-container' + (wallet.includeInNetAsset ? ' is-enabled' : '') })
+      const checkboxEl = toggleEl.createEl('input', { type: 'checkbox' })
+      checkboxEl.checked = wallet.includeInNetAsset
+      toggleEl.addEventListener('click', () => {
+        const newVal = !checkboxEl.checked
+        checkboxEl.checked = newVal
+        toggleEl.classList.toggle('is-enabled', newVal)
+        descSpan.textContent = newVal ? t('settings.includeInNetAssetOn') : t('settings.includeInNetAssetOff')
+        const wallets = config.wallets.map(w =>
+          w.name === wallet.name ? { ...w, includeInNetAsset: newVal } : w)
+        this.walletFile.updateConfig({ wallets })
+        void this.walletFile.saveConfig()
+      })
+
+      const unarchiveBtn = actions.createEl('button', { text: t('ui.unarchive') })
+      unarchiveBtn.dataset['action'] = 'unarchive'
+      unarchiveBtn.addEventListener('click', () => {
+        new ConfirmModal(this.app, t('confirm.unarchiveWallet'), async () => {
+          const scrollTop = this.getSettingsScrollTop()
+          const wallets = config.wallets.map(w =>
+            w.name === wallet.name ? { ...w, status: 'active' as const } : w)
+          this.walletFile.updateConfig({ wallets })
+          await this.walletFile.saveConfig()
+          void this.display(scrollTop)
+        }).open()
+      })
     }
   }
 
