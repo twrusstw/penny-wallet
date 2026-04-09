@@ -2,14 +2,16 @@ import { Events, ItemView, Platform, WorkspaceLeaf } from 'obsidian'
 import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { MobileTransactionModal } from '../modal/MobileTransactionModal'
-import { t, translateCategory } from '../i18n'
-import { currentYearMonth, stepMonth, isAfterCurrentMonth, formatAmount, createMetric } from '../utils'
+import { t, formatMonthLabel, formatYearMonth } from '../i18n'
+import { currentYearMonth, stepMonth, isAfterCurrentMonth, createMetric } from '../utils'
 import { DETAIL_VIEW_TYPE } from './DetailView'
-import { TREND_VIEW_TYPE } from './TrendView'
+import { ASSET_VIEW_TYPE } from './AssetView'
+import { MonthData, drawIncExpChart, drawPie, addRectLegend, getMonthRangeEndingAt } from './charts'
 
 export const DASHBOARD_VIEW_TYPE = 'penny-wallet-dashboard'
 
-const PIE_COLORS = ['#D85A30','#378ADD','#7F77DD','#1D9E75','#EF9F27','#888780','#5DC8C8','#E8A0BF']
+const C_INCOME  = '#1D9E75'
+const C_EXPENSE = '#D85A30'
 
 export class DashboardView extends ItemView {
   private walletFile: WalletFile
@@ -42,11 +44,13 @@ export class DashboardView extends ItemView {
     contentEl.empty()
     contentEl.addClass('pw-dashboard')
 
-    const [transactions, walletBalances] = await Promise.all([
+    const months = getMonthRangeEndingAt(this.currentYearMonth, 6)
+
+    const [transactions, summaries, netTimeline] = await Promise.all([
       this.walletFile.readMonth(this.currentYearMonth),
-      this.walletFile.calculateAllWalletBalances(),
+      this.walletFile.getMonthSummaries(months),
+      this.walletFile.getNetAssetTimeline(months),
     ])
-    const netAsset = this.walletFile.computeNetAsset(walletBalances)
 
     // ── Header ──────────────────────────────────────────────────────────────
     const header = contentEl.createDiv('pw-nav-row')
@@ -68,17 +72,17 @@ export class DashboardView extends ItemView {
     })
 
     const headerActions = header.createDiv('pw-nav-right')
-    const detailBtn = headerActions.createEl('button', { text: t('ui.detail'), cls: 'pw-action-btn' })
-    const trendBtn  = headerActions.createEl('button', { text: t('ui.trend'),  cls: 'pw-action-btn' })
+    const assetBtn  = headerActions.createEl('button', { text: t('ui.asset'),           cls: 'pw-action-btn' })
+    const detailBtn = headerActions.createEl('button', { text: t('ui.detail'),          cls: 'pw-action-btn' })
     const addBtn    = headerActions.createEl('button', { text: '+ ' + t('ui.addTransaction'), cls: 'pw-action-btn' })
 
+    assetBtn.addEventListener('click', () => {
+      void this.openOrRevealView(ASSET_VIEW_TYPE)
+    })
     detailBtn.addEventListener('click', () => {
       void this.openOrRevealView(DETAIL_VIEW_TYPE, {
         state: { yearMonth: this.currentYearMonth },
       })
-    })
-    trendBtn.addEventListener('click', () => {
-      void this.openOrRevealView(TREND_VIEW_TYPE)
     })
     addBtn.addEventListener('click', () => {
       addBtn.disabled = true
@@ -89,7 +93,9 @@ export class DashboardView extends ItemView {
       ).open()
     })
 
-    // ── Metrics ─────────────────────────────────────────────────────────────
+    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
+
+    // ── Monthly metrics ──────────────────────────────────────────────────────
     let monthIncome = 0, monthExpense = 0
     for (const tx of transactions) {
       if (tx.type === 'income') monthIncome += tx.amount
@@ -97,56 +103,31 @@ export class DashboardView extends ItemView {
     }
     const monthBalance = monthIncome - monthExpense
 
-    const dp = this.walletFile.getConfig().decimalPlaces ?? 0
-
     const metricsEl = contentEl.createDiv('pw-metrics')
     createMetric(metricsEl, t('dash.income'),  monthIncome,   'income',   dp)
     createMetric(metricsEl, t('dash.expense'), monthExpense,  'expense',  dp)
     createMetric(metricsEl, t('dash.balance'), monthBalance,  monthBalance >= 0 ? 'positive' : 'negative', dp)
 
-    // ── Wallet balances card ─────────────────────────────────────────────────
-    const walletCard = contentEl.createDiv('pw-card')
-    walletCard.createEl('div', { text: t('dash.walletBalances'), cls: 'pw-card-title' })
-    const walletList = walletCard.createDiv('pw-wallet-list')
+    // ── 6-month bar chart ────────────────────────────────────────────────────
+    const data: MonthData[] = months.map(ym => ({
+      monthLabel: formatMonthLabel(ym),
+      tooltipLabel: formatYearMonth(ym, 'short'),
+      income: summaries.get(ym)?.income ?? 0,
+      expense: summaries.get(ym)?.expense ?? 0,
+      net: netTimeline.get(ym) ?? null,
+    }))
 
-    for (const { wallet, balance } of walletBalances) {
-      if (wallet.status === 'archived') continue
-      const row = walletList.createDiv('pw-wallet-row')
-      const left = row.createDiv('pw-wallet-left')
-      left.createEl('span', {
-        text: t(`walletType.${wallet.type}`),
-        cls: `pw-wallet-badge pw-badge-${wallet.type}`,
-      })
-      left.createEl('span', { text: wallet.name, cls: 'pw-wallet-name' })
+    const incExpCard = contentEl.createDiv('pw-card')
+    incExpCard.createEl('div', { text: t('trend.monthlyIncomeExpense'), cls: 'pw-card-title' })
+    const legRow = incExpCard.createDiv('pw-leg-row')
+    addRectLegend(legRow, C_INCOME, t('dash.income'))
+    addRectLegend(legRow, C_EXPENSE, t('dash.expense'))
+    const incExpChartWrap = incExpCard.createDiv('pw-chart-wrap')
+    const incExpTooltip = incExpChartWrap.createDiv('pw-tooltip')
+    incExpTooltip.hide()
+    requestAnimationFrame(() => drawIncExpChart(incExpChartWrap, incExpTooltip, data, dp))
 
-      const displayBalance = wallet.type === 'creditCard' ? -balance : balance
-      row.createEl('span', {
-        text: formatAmount(Math.abs(displayBalance), dp),
-        cls: 'pw-wallet-balance' + (displayBalance < 0 ? ' is-negative' : ''),
-      })
-    }
-
-    const netRow = walletCard.createDiv('pw-wallet-row pw-net-asset-row')
-    netRow.createEl('span', { text: t('dash.netAsset'), cls: 'pw-net-label' })
-    netRow.createEl('span', {
-      text: formatAmount(Math.abs(netAsset), dp),
-      cls: 'pw-net-value' + (netAsset < 0 ? ' is-negative' : ''),
-    })
-
-    // ── Asset allocation pie ─────────────────────────────────────────────────
-    const assetMap = new Map<string, number>()
-    for (const { wallet, balance } of walletBalances) {
-      if (wallet.status === 'archived') continue
-      if (wallet.type === 'creditCard') continue
-      if (balance > 0) assetMap.set(wallet.name, balance)
-    }
-    if (assetMap.size >= 2) {
-      const assetCard = contentEl.createDiv('pw-card')
-      assetCard.createEl('div', { text: t('dash.assetAllocation'), cls: 'pw-card-title' })
-      drawPie(assetCard, assetMap, dp)
-    }
-
-    // ── Pie charts (2 cards side by side) ────────────────────────────────────
+    // ── Category pies ────────────────────────────────────────────────────────
     const chartsRow = contentEl.createDiv('pw-charts-row')
 
     const expenseMap = this.walletFile.groupByCategory(transactions, 'expense')
@@ -175,84 +156,4 @@ export class DashboardView extends ItemView {
 
     void this.app.workspace.revealLeaf(leaf)
   }
-}
-
-// ─── Pie chart ────────────────────────────────────────────────────────────────
-
-function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 0) {
-  const total = [...data.values()].reduce((a, b) => a + b, 0)
-
-  const segments: { label: string; value: number; color: string; start: number; end: number }[] = []
-
-  let angle = -Math.PI / 2
-  let ci = 0
-
-  for (const [key, value] of data) {
-    const slice = (value / total) * Math.PI * 2
-    segments.push({
-      label: translateCategory(key),
-      value,
-      color: PIE_COLORS[ci % PIE_COLORS.length],
-      start: angle,
-      end: angle + slice,
-    })
-    angle += slice
-    ci++
-  }
-
-  const pieWrap = container.createDiv('pw-pie-wrap')
-  const SIZE = 120
-  const dpr = window.devicePixelRatio || 1
-  const CX = SIZE / 2, CY = SIZE / 2
-  const R = SIZE / 2 - 8
-  const canvas = pieWrap.createEl('canvas')
-  canvas.width = SIZE * dpr
-  canvas.height = SIZE * dpr
-  canvas.setCssProps({ width: SIZE + 'px', height: SIZE + 'px' })
-
-  function redraw(hiIdx: number) {
-    const ctx = canvas.getContext('2d')!
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    ctx.clearRect(0, 0, SIZE, SIZE)
-    segments.forEach((seg, i) => {
-      const expand = hiIdx === i ? 4 : 0
-      ctx.beginPath()
-      ctx.moveTo(CX, CY)
-      ctx.arc(CX, CY, R + expand, seg.start, seg.end)
-      ctx.closePath()
-      ctx.fillStyle = seg.color
-      ctx.fill()
-      ctx.strokeStyle = 'rgba(0,0,0,0.06)'
-      ctx.lineWidth = 1.5
-      ctx.stroke()
-    })
-  }
-
-  redraw(-1)
-
-  // Hit-test on canvas: highlight the slice the cursor is over
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const dx = x - CX
-    const dy = y - CY
-    if (dx * dx + dy * dy > (R + 4) * (R + 4)) { redraw(-1); return }
-    // Normalize atan2 result to [-π/2, 3π/2] to match segment angles
-    let a = Math.atan2(dy, dx)
-    if (a < -Math.PI / 2) a += Math.PI * 2
-    redraw(segments.findIndex(seg => a >= seg.start && a < seg.end))
-  })
-  canvas.addEventListener('mouseleave', () => redraw(-1))
-
-  const legend = pieWrap.createDiv('pw-pie-legend')
-  segments.forEach((seg) => {
-    const item = legend.createDiv('pw-legend-item')
-    const dot = item.createEl('span', { cls: 'pw-legend-dot' })
-    dot.setCssProps({ 'background-color': seg.color })
-    item.createEl('span', { text: seg.label, cls: 'pw-legend-name' })
-    item.createEl('span', { text: formatAmount(seg.value, dp), cls: 'pw-legend-amt' })
-    const pct = Math.round((seg.value / total) * 100)
-    item.createEl('span', { text: `${pct}%`, cls: 'pw-legend-pct' })
-  })
 }

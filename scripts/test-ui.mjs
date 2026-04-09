@@ -36,6 +36,27 @@ function readConfig() {
   catch { return null }
 }
 
+function getWalletStatus(configText, walletName) {
+  if (!configText || !walletName) return null
+  try {
+    const cfg = JSON.parse(configText)
+    const wallet = cfg.wallets?.find(w => w.name === walletName)
+    return wallet?.status ?? null
+  } catch {
+    return null
+  }
+}
+
+function parseEvalString(raw) {
+  if (raw == null) return ''
+  try {
+    const parsed = JSON.parse(raw)
+    return typeof parsed === 'string' ? parsed : String(parsed)
+  } catch {
+    return raw
+  }
+}
+
 // ─── Runner ──────────────────────────────────────────────────────────────────
 
 let passed = 0
@@ -80,6 +101,11 @@ function openDashboard() {
 
 function openDetail() {
   obs('command id="penny-wallet:open-detail"')
+  wait(600)
+}
+
+function openAsset() {
+  obs('command id="penny-wallet:open-asset"')
   wait(600)
 }
 
@@ -139,7 +165,7 @@ assert('Month label is present',   count('.pw-month-label') > 0)
 assert('Prev navigation button',   count('.pw-nav-btn') >= 2)
 assert('Metrics row rendered',     count('.pw-metrics') > 0)
 assert('Income metric exists',     count('.pw-metric') >= 3)
-assert('Wallet balances card',     count('.pw-wallet-list') > 0)
+assert('Category charts row',      count('.pw-charts-row') > 0)
 
 // ─────────────────────────────────────────────────────────────────────────────
 section('Finance Overview — month navigation')
@@ -193,8 +219,8 @@ wait(300)
 evalJs("document.querySelector('.pw-type-tab[data-type=expense]')?.click()")
 wait(400)
 
-// Select the first available wallet
-evalJs("const sel = document.querySelector('.modal-content select'); if(sel){ const opt = Array.from(sel.options).find(o => o.value); if(opt){ sel.value = opt.value; sel.dispatchEvent(new Event('change',{bubbles:true})); }}")
+// Fill all selects with the first non-empty option (wallet/category), locale-agnostic
+evalJs("document.querySelectorAll('.modal-content select').forEach(sel => { const opt = Array.from(sel.options).find(o => o.value); if (opt) { sel.value = opt.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } })")
 wait(200)
 
 // Fill amount — use input[type=number]
@@ -205,6 +231,12 @@ wait(200)
 evalJs("document.querySelector('.modal-content [data-action=confirm]')?.click()")
 wait(800)
 
+// Retry once if validation prevented closing (avoids cascading failures)
+if (count('.modal-content') > 0) {
+  evalJs("document.querySelector('.modal-content [data-action=confirm]')?.click()")
+  wait(600)
+}
+
 // Modal should be closed after submit
 const modalGone = count('.modal-content') === 0
 assert('Modal closes after submit', modalGone)
@@ -213,21 +245,18 @@ assert('Modal closes after submit', modalGone)
 assert('Dashboard metrics visible after add', count('.pw-metric') >= 3)
 
 // ─────────────────────────────────────────────────────────────────────────────
-section('Finance Trends view')
+section('Assets view')
 
-openDashboard()
-wait(400)
-// Open Trend via the Trend button in dashboard header
-click('.pw-action-btn:nth-child(2)')
+openAsset()
 wait(800)
 
-assert('Trend view opens',           count('.pw-trend') > 0)
-assert('Range selector present',     count('.pw-range-btn, .pw-range-selector button') > 0)
+assert('Asset view opens',            count('.pw-asset') > 0)
+assert('Range selector present',      count('.pw-range-btn') > 0)
 
 // Click 6M range
 evalJs("Array.from(document.querySelectorAll('.pw-range-btn')).find(b => b.textContent?.includes('6'))?.click()")
 wait(600)
-assert('6M range button clickable', count('.pw-range-btn.is-active, .pw-range-btn[data-active]') > 0
+assert('6M range button clickable', count('.pw-range-btn.is-active') > 0
                                  || count('.pw-range-btn') > 0)
 
 // Charts should render
@@ -353,14 +382,14 @@ evalJs("document.querySelector('.pw-add-wallet-submit button')?.click()")
 wait(600)
 
 // Verify by name — count-based check is unreliable when leftover wallets exist
-const walletInDom = evalJs(`[...document.querySelectorAll('.setting-item')].some(el => el.textContent?.includes('${testWalletName}'))`)
+const walletInDom = evalJs(`[...document.querySelectorAll('.pw-wallet-row-name')].some(el => el.textContent?.includes('${testWalletName}'))`)
 assert('New wallet appears in list', walletInDom === 'true')
 
 // ─────────────────────────────────────────────────────────────────────────────
 section('Account — edit wallet')
 
-// Click Edit on the first wallet (Default Wallet)
-evalJs("document.querySelectorAll('.setting-item-control button')[0]?.click()")
+// Click Edit on the first active wallet row
+evalJs("document.querySelector('.pw-wallet-row [data-action=edit]')?.click()")
 wait(400)
 
 assert('Edit wallet modal opens',       count('.modal-content') > 0)
@@ -392,8 +421,9 @@ assert('Test wallet removed after delete',
 section('Account — archive and restore')
 
 // Archive a wallet that has transactions (shows "封存" not "刪除")
-// Use last active wallet in the list — Mastercard World
-evalJs(`[...document.querySelectorAll('.pw-wallet-row')].find(el => el.querySelector('.pw-wallet-row-name')?.textContent?.includes('Mastercard World'))?.querySelector('[data-action="archive"]')?.click()`)
+const archiveTargetName = parseEvalString(evalJs("(() => { const row = [...document.querySelectorAll('.pw-wallet-row')].find(el => el.querySelector('[data-action=archive]')); return row?.querySelector('.pw-wallet-row-name')?.textContent?.trim() || ''; })()"))
+assert('Archive target wallet is found', archiveTargetName.length > 0)
+evalJs(`[...document.querySelectorAll('.pw-wallet-row')].find(el => el.querySelector('.pw-wallet-row-name')?.textContent?.trim() === ${JSON.stringify(archiveTargetName)})?.querySelector('[data-action="archive"]')?.click()`)
 wait(500)
 
 assert('Archive confirm dialog appears', count('.modal-content') > 0)
@@ -403,17 +433,20 @@ wait(800)
 // Verify via config file
 const configAfterArchive = readConfig()
 assert('Wallet status is archived in config',
-  configAfterArchive !== null && configAfterArchive.includes('"status": "archived"'))
+  getWalletStatus(configAfterArchive, archiveTargetName) === 'archived')
 
 // Restore — settings re-renders after archive, wait and re-navigate
 wait(400)
 evalJs("Array.from(document.querySelectorAll('.vertical-tab-nav-item')).find(el => el.textContent?.includes('PennyWallet'))?.click()")
 wait(500)
-evalJs(`[...document.querySelectorAll('.setting-item')].find(el => el.querySelector('.setting-item-name')?.textContent?.includes('Mastercard World'))?.querySelector('[data-action="unarchive"]')?.click()`)
+evalJs(`[...document.querySelectorAll('.pw-archived-wallet-item')].find(el => el.querySelector('.pw-wallet-row-name')?.textContent?.trim() === ${JSON.stringify(archiveTargetName)})?.querySelector('[data-action="unarchive"]')?.click()`)
+wait(400)
+assert('Unarchive confirm dialog appears', count('.modal-content') > 0)
+evalJs("document.querySelector('.modal-content [data-action=\"confirm\"]')?.click()")
 wait(800)
 const configAfterRestore = readConfig()
 assert('Wallet restored to active in config',
-  configAfterRestore !== null && !configAfterRestore.includes('"status": "archived"'))
+  getWalletStatus(configAfterRestore, archiveTargetName) === 'active')
 
 // Close settings
 evalJs("document.querySelector('.modal-close-button')?.click()")

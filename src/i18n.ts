@@ -29,7 +29,6 @@ const translations = {
 
     // UI labels
     'ui.addTransaction': '新增交易',
-    'ui.trend': '趨勢',
     'ui.detail': '明細',
     'ui.confirm': '確認',
     'ui.cancel': '取消',
@@ -37,7 +36,6 @@ const translations = {
     'ui.edit': '編輯',
     'ui.archive': '封存',
     'ui.save': '儲存',
-    'ui.add': '新增',
 
     // Dashboard
     'dashboard.title': '帳本總覽',
@@ -58,7 +56,6 @@ const translations = {
     'detail.filterIncome': '收入',
     'detail.filterTransfer': '轉帳',
     'detail.filterRepayment': '還款',
-    'detail.allCategories': '所有分類',
     'detail.subtotalIncome': '收入小計',
     'detail.subtotalExpense': '支出小計',
     'detail.noTransactions': '無符合條件的交易',
@@ -66,19 +63,10 @@ const translations = {
     'detail.filterCategory': '分類',
 
     // Trend view
-    'trend.title': '財務趨勢',
     'trend.3m': '3 個月',
     'trend.6m': '6 個月',
     'trend.12m': '12 個月',
     'trend.monthlyIncomeExpense': '每月收支',
-    'trend.netAssetTrend': '淨資產趨勢',
-    'trend.avgIncome': '平均月收入',
-    'trend.avgExpense': '平均月支出',
-    'trend.netAssetChange': '淨資產變化',
-    'trend.categoryTrend': '分類趨勢',
-    'trend.walletBalanceTrend': '帳戶餘額趨勢',
-    'trend.selectCategory': '選擇分類',
-    'trend.rangeTotal': '區間合計',
 
     // Date formatting
     'date.yearMonthNumeric': '{year} 年 {month} 月',
@@ -126,7 +114,6 @@ const translations = {
     'settings.walletName': '名稱',
     'settings.walletType': '類型',
     'settings.initialBalance': '初始餘額',
-    'settings.includeInNetAsset': '納入淨資產',
     'settings.includeInNetAssetOn': '目前：納入淨資產',
     'settings.includeInNetAssetOff': '目前：不納入淨資產',
     'settings.customCategories': '自訂分類',
@@ -143,11 +130,9 @@ const translations = {
 
     // Onboarding
     'onboard.welcome': '歡迎使用 PennyWallet！建議先新增您的銀行帳戶與信用卡錢包。',
-    'onboard.goToSettings': '前往設定',
 
     // Settings — extra
     'settings.noActiveWallets': '無使用中錢包',
-    'settings.currentBalance': '目前餘額',
     'settings.creditDebtPrefix': '欠 ',
     'settings.creditBalanceHint': '信用卡填入目前未還金額（正數）。例：欠 3,000 → 填 3000',
     'settings.cashBankBalanceHint': '填入目前實際餘額（需 ≥ 0）',
@@ -168,6 +153,13 @@ const translations = {
     'err.invalidDate': '日期格式無效',
 
     'ui.unarchive': '取消封存',
+
+    // Asset view
+    'asset.title': '資產',
+    'ui.asset': '資產',
+    'ui.overview': '總覽',
+    'asset.netAssetTrend': '淨資產趨勢',
+    'asset.savingsRate': '儲蓄率',
   },
   'en': {
     'type.expense': 'Expense',
@@ -192,7 +184,6 @@ const translations = {
     'cat.side_income': 'Side Income',
 
     'ui.addTransaction': 'Add Transaction',
-    'ui.trend': 'Finance Trends',
     'ui.detail': 'Transactions',
     'ui.confirm': 'Confirm',
     'ui.cancel': 'Cancel',
@@ -200,7 +191,6 @@ const translations = {
     'ui.edit': 'Edit',
     'ui.archive': 'Archive',
     'ui.save': 'Save',
-    'ui.add': 'Add',
 
     'dashboard.title': 'Finance Overview',
     'dash.income': 'Income',
@@ -219,26 +209,16 @@ const translations = {
     'detail.filterIncome': 'Income',
     'detail.filterTransfer': 'Transfer',
     'detail.filterRepayment': 'Repayment',
-    'detail.allCategories': 'All Categories',
     'detail.subtotalIncome': 'Income Subtotal',
     'detail.subtotalExpense': 'Expense Subtotal',
     'detail.noTransactions': 'No matching transactions',
     'detail.searchPlaceholder': 'Search notes...',
     'detail.filterCategory': 'Category',
 
-    'trend.title': 'Finance Trends',
     'trend.3m': '3 Months',
     'trend.6m': '6 Months',
     'trend.12m': '12 Months',
     'trend.monthlyIncomeExpense': 'Monthly Income & Expense',
-    'trend.netAssetTrend': 'Net Asset Trend',
-    'trend.avgIncome': 'Avg Monthly Income',
-    'trend.avgExpense': 'Avg Monthly Expense',
-    'trend.netAssetChange': 'Net Asset Change',
-    'trend.categoryTrend': 'Category Trend',
-    'trend.walletBalanceTrend': 'Account Balance Trend',
-    'trend.selectCategory': 'Select Category',
-    'trend.rangeTotal': 'Range Total',
 
     'date.yearMonthNumeric': '{month}/{year}',
     'date.yearMonthShort': '{monthName} {year}',
@@ -282,7 +262,6 @@ const translations = {
     'settings.walletName': 'Name',
     'settings.walletType': 'Type',
     'settings.initialBalance': 'Initial Balance',
-    'settings.includeInNetAsset': 'Include in Net Assets',
     'settings.includeInNetAssetOn': 'Current: Included in Net Assets',
     'settings.includeInNetAssetOff': 'Current: Excluded from Net Assets',
     'settings.customCategories': 'Custom Categories',
@@ -297,10 +276,8 @@ const translations = {
     'confirm.unarchiveWallet': 'Unarchive this wallet?',
 
     'onboard.welcome': 'Welcome to PennyWallet! We recommend adding your bank accounts and credit cards.',
-    'onboard.goToSettings': 'Go to Settings',
 
     'settings.noActiveWallets': 'No active wallets',
-    'settings.currentBalance': 'Current Balance',
     'settings.creditDebtPrefix': 'Owed ',
     'settings.creditBalanceHint': 'Enter current outstanding debt (positive). e.g. owe 3,000 → enter 3000',
     'settings.cashBankBalanceHint': 'Enter current actual balance (must be ≥ 0)',
@@ -319,6 +296,13 @@ const translations = {
     'err.invalidDate': 'Invalid date',
 
     'ui.unarchive': 'Unarchive',
+
+    // Asset view
+    'asset.title': 'Assets',
+    'ui.asset': 'Assets',
+    'ui.overview': 'Overview',
+    'asset.netAssetTrend': 'Net Asset Trend',
+    'asset.savingsRate': 'Savings Rate',
   },
 } as const
 

@@ -4,7 +4,7 @@ import { TransactionModal } from './modal/TransactionModal'
 import { MobileTransactionModal } from './modal/MobileTransactionModal'
 import { DashboardView, DASHBOARD_VIEW_TYPE } from './view/DashboardView'
 import { DetailView, DETAIL_VIEW_TYPE } from './view/DetailView'
-import { TrendView, TREND_VIEW_TYPE } from './view/TrendView'
+import { AssetView, ASSET_VIEW_TYPE } from './view/AssetView'
 import { PennyWalletSettingTab } from './settings/SettingTab'
 import { TransactionModalParams, TransactionType } from './types'
 import { initI18n, t } from './i18n'
@@ -23,13 +23,14 @@ export default class PennyWalletPlugin extends Plugin {
     // ── All synchronous registrations FIRST (so ribbon/commands survive restart) ──
     this.registerView(DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this.walletFile))
     this.registerView(DETAIL_VIEW_TYPE, (leaf) => new DetailView(leaf, this.walletFile))
-    this.registerView(TREND_VIEW_TYPE, (leaf) => new TrendView(leaf, this.walletFile))
+    this.registerView(ASSET_VIEW_TYPE, (leaf) => new AssetView(leaf, this.walletFile))
 
     this.addRibbonIcon('pw-icon', 'Penny wallet', () => { void this.openDashboard() })
 
     this.addCommand({ id: 'open-dashboard', name: 'Open finance overview', callback: () => { void this.openDashboard() } })
-    this.addCommand({ id: 'add-transaction', name: 'Add transaction', callback: () => this.openTransactionModal() })
+    this.addCommand({ id: 'open-asset', name: 'Open assets', callback: () => { void this.openAssetView() } })
     this.addCommand({ id: 'open-detail', name: 'Open transactions', callback: () => { void this.openDetailView() } })
+    this.addCommand({ id: 'add-transaction', name: 'Add transaction', callback: () => this.openTransactionModal() })
     this.addCommand({ id: 'refresh', name: 'Refresh views', callback: () => {
       this.app.workspace.trigger('penny-wallet:refresh')
     } })
@@ -70,8 +71,8 @@ export default class PennyWalletPlugin extends Plugin {
     await this.openOrRevealView(DETAIL_VIEW_TYPE, yearMonth ? { yearMonth } : undefined)
   }
 
-  async openTrendView() {
-    await this.openOrRevealView(TREND_VIEW_TYPE)
+  async openAssetView() {
+    await this.openOrRevealView(ASSET_VIEW_TYPE)
   }
 
   openTransactionModal(params: TransactionModalParams = {}) {
@@ -115,6 +116,9 @@ export default class PennyWalletPlugin extends Plugin {
     })
     this.app.workspace.getLeavesOfType(DETAIL_VIEW_TYPE).forEach((leaf: WorkspaceLeaf) => {
       void (leaf.view as DetailView).render()
+    })
+    this.app.workspace.getLeavesOfType(ASSET_VIEW_TYPE).forEach((leaf: WorkspaceLeaf) => {
+      void (leaf.view as AssetView).render()
     })
   }
 

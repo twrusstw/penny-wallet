@@ -3,7 +3,7 @@
 /* Allow text selection in all PennyWallet views (Obsidian sets user-select: none on leaves) */
 .pw-dashboard,
 .pw-detail,
-.pw-trend {
+.pw-asset {
   user-select: text;
   -webkit-user-select: text;
 }
@@ -417,6 +417,19 @@
   margin: 0 auto;
 }
 
+/* Asset view */
+.pw-asset {
+  padding: 16px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.pw-view-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
 .pw-nav-row {
   display: flex;
   align-items: center;
@@ -486,63 +499,7 @@
 
 .pw-ml-auto { margin-left: auto; }
 
-/* Legacy class names for compatibility */
-.pw-add-btn, .pw-trend-btn, .pw-detail-btn {
-  background: none;
-  border: 0.5px solid var(--background-modifier-border-hover);
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  color: var(--text-normal);
-  transition: background 0.1s;
-}
 
-.pw-add-btn:hover, .pw-trend-btn:hover, .pw-detail-btn:hover {
-  background: var(--background-secondary);
-}
-
-.pw-section {
-  margin-bottom: 20px;
-}
-
-.pw-section-title {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-/* Summary cards */
-.pw-summary-cards {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.pw-summary-card {
-  flex: 1;
-  min-width: 120px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-}
-
-.pw-summary-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.pw-summary-amount {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-normal);
-}
-
-.pw-summary-income .pw-summary-amount { color: #5DCAA5; }
-.pw-summary-expense .pw-summary-amount { color: #EF9F27; }
 
 /* Wallet list */
 .pw-wallet-list {
@@ -624,12 +581,6 @@
   min-width: 180px;
 }
 
-.pw-chart-title {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  text-align: center;
-}
 
 .pw-no-data {
   color: var(--text-faint);
@@ -1029,13 +980,6 @@
 .pw-subtotal-income  { color: #5DCAA5; font-weight: 600; }
 .pw-subtotal-expense { color: #EF9F27; font-weight: 600; }
 
-/* ── Trend View ── */
-.pw-trend {
-  padding: 16px;
-  max-width: 680px;
-  margin: 0 auto;
-}
-
 /* Card container for charts */
 .pw-card {
   background: var(--background-secondary);
@@ -1093,6 +1037,10 @@
   margin-bottom: 1rem;
 }
 
+.pw-asset .pw-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .pw-metric {
   background: var(--background-secondary);
   border-radius: 10px;
@@ -1120,29 +1068,6 @@
   display: flex;
   gap: 5px;
   margin-bottom: 16px;
-}
-
-.pw-cat-trend-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.pw-cat-trend-sel {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-  font-size: 12px;
-}
-
-.pw-cat-trend-total {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
 }
 
 /* Range selection tabs (3個月 / 6個月 / 12個月) */
@@ -1193,48 +1118,6 @@
   color: var(--text-muted);
   margin-bottom: 3px;
 }
-
-.pw-trend-chart-wrap {
-  margin-bottom: 16px;
-}
-
-.pw-trend-legend {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.pw-trend-summary {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.pw-stat-card {
-  flex: 1;
-  min-width: 140px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-}
-
-.pw-stat-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.pw-stat-value {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.pw-stat-income .pw-stat-value  { color: #5DCAA5; }
-.pw-stat-expense .pw-stat-value { color: #EF9F27; }
 
 /* ── Settings ── */
 
@@ -1488,11 +1371,6 @@ select.pw-add-wallet-input {
 
   .pw-tx-date {
     font-size: 11px;
-  }
-
-
-  .pw-summary-amount {
-    font-size: 16px;
   }
 
   .pw-charts-row {
