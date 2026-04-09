@@ -6,9 +6,9 @@ A personal finance tracker plugin for [Obsidian](https://obsidian.md). Log expen
 
 ## Features
 
-- **Finance Overview** — monthly income / expense summary, account balances, net asset, asset allocation, and category pie charts
+- **Finance Overview** — monthly income / expense summary, 6-month income/expense chart, and category pie charts
 - **Transactions** — multi-select type filter, category checklist, keyword search, inline edit and delete, with sticky subtotals
-- **Finance Trends** — 3 / 6 / 12-month income/expense bar chart, category trend, net asset line chart, and per-account balance trend
+- **Assets** — 3 / 6 / 12-month range selector, account balances, net asset trend, savings rate, and asset allocation pie
 - **Multiple account types** — cash, bank account, credit card (with debt tracking)
 - **Custom categories** — add your own expense and income categories
 - **iOS Shortcuts support** — add transactions via URI without opening Obsidian
@@ -47,7 +47,7 @@ Credit card accounts track outstanding debt. Expenses increase the debt; repayme
 
 ### Finance Overview
 
-Monthly summary with income, expense, balance, account balances, net asset, asset allocation pie (cash/bank), and expense/income category pie charts. Each pie legend shows name, amount, and percentage.
+Monthly summary with income, expense, and balance metrics, plus a 6-month income/expense chart and expense/income category pie charts. Each pie legend shows name, amount, and percentage.
 
 ![Finance Overview](images/finance-overview.png)
 
@@ -57,11 +57,11 @@ Full transaction list with multi-select type filter, category checklist dropdown
 
 ![Transactions](images/transactions-view.png)
 
-### Finance Trends
+### Assets
 
-Income/expense bar chart, category spending trend (select any category), net asset line chart, and per-account balance trend — all with a 3 / 6 / 12-month range selector.
+Medium-term financial view with a 3 / 6 / 12-month range selector, account balances, net asset trend, savings rate, and asset allocation pie.
 
-![Finance Trends](images/asset-statistics-view.png)
+![Assets](images/asset-view.png)
 
 ### Settings
 

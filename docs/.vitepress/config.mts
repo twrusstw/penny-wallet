@@ -8,6 +8,22 @@ export default defineConfig({
     ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/penny-wallet/apple-touch-icon.png?v=2' }],
   ],
 
+  markdown: {
+    config(md) {
+      const originalFence = md.renderer.rules.fence
+      md.renderer.rules.fence = (...args) => {
+        const [tokens, idx] = args
+        const info = tokens[idx]?.info?.trim()
+        if (info === 'dataview') {
+          tokens[idx].info = 'sql'
+        }
+        return originalFence
+          ? originalFence(...args)
+          : md.renderer.renderToken(tokens, idx, args[2])
+      }
+    },
+  },
+
   locales: {
     root: {
       label: 'English',

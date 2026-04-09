@@ -43,7 +43,9 @@
 |------|------|
 | `PennyWallet: Open Finance Overview` | 開啟儀表板 |
 | `PennyWallet: Open Transactions` | 開啟交易清單 |
+| `PennyWallet: Open assets` | 開啟資產檢視 |
 | `PennyWallet: Add Transaction` | 直接開啟交易表單 |
+| `PennyWallet: Refresh views` | 重新整理所有已開啟的 PennyWallet 檢視 |
 
 填寫欄位：
 - **類型** — 支出、收入、轉帳或還款

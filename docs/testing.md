@@ -305,7 +305,7 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 | Finance Overview — pie charts | Chart renders, legend items |
 | Add Transaction modal | Modal opens, type tabs present |
 | Add expense transaction | Full form submit: wallet selected, amount filled, modal closes |
-| Finance Trends view | View opens, range selector, canvas renders |
+| Assets view | View opens, range selector, and charts render |
 | Transactions (Detail) view | View opens, filter pills, rows rendered, expense filter |
 | Edit transaction | Edit modal opens, pre-fills data, submit closes modal, row count unchanged |
 | Delete transaction — cancel | Confirm dialog appears, cancel keeps row count |

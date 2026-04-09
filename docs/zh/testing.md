@@ -305,7 +305,7 @@ export function createMockApp(initialFiles: Record<string, string> = {}) {
 | Finance Overview — pie charts | 圓餅圖渲染、圖例項目 |
 | Add Transaction modal | Modal 開啟、type tabs 存在 |
 | Add expense transaction | 完整表單提交：選擇帳戶、填金額、modal 關閉 |
-| Finance Trends view | View 開啟、區間選擇器、canvas 渲染 |
+| Assets view | View 開啟、區間選擇器與圖表渲染 |
 | Transactions (Detail) view | View 開啟、篩選 pills、rows 渲染、支出篩選 |
 | Edit transaction | 編輯 modal 開啟、預填資料、送出後關閉、row 數不變 |
 | Delete transaction — cancel | 確認對話框出現、取消後 row 數不變 |

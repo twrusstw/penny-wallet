@@ -43,7 +43,9 @@ Alternatively, use these Command Palette commands (`Cmd+P`):
 |---------|--------|
 | `PennyWallet: Open Finance Overview` | Open the dashboard |
 | `PennyWallet: Open Transactions` | Open the transaction list |
+| `PennyWallet: Open assets` | Open the assets view |
 | `PennyWallet: Add Transaction` | Open the transaction form directly |
+| `PennyWallet: Refresh views` | Refresh all open PennyWallet views |
 
 Fill in:
 - **Type** — Expense, Income, Transfer, or Repayment

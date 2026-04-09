@@ -30,7 +30,7 @@ penny-wallet/
 │   ├── view/
 │   │   ├── DashboardView.ts     ← Finance Overview
 │   │   ├── DetailView.ts        ← Transactions list
-│   │   └── TrendView.ts         ← Finance Trends charts
+│   │   └── AssetView.ts         ← Assets view
 │   └── settings/
 │       └── SettingTab.ts        ← plugin settings UI
 ├── scripts/
@@ -193,10 +193,11 @@ Before opening a PR, verify the following:
 - [ ] Category dropdown appears and filters correctly
 - [ ] Subtotals match filtered transactions
 
-**Finance Trends**
+**Assets View**
 - [ ] 3 / 6 / 12-month range selector switches data
-- [ ] Bar chart and line chart render without errors
-- [ ] Tooltip shows on hover
+- [ ] Account balances and net assets are correct
+- [ ] Net asset trend chart renders and tooltip shows on hover
+- [ ] Asset allocation pie appears with two or more positive cash/bank accounts
 
 **Settings**
 - [ ] Folder name change persists
