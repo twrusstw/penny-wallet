@@ -221,7 +221,7 @@ export class MobileTransactionModal extends TransactionModal {
     for (const key of topKeys) {
       const btn = el.createEl('button', { cls: 'pw-mobile-numpad-btn', text: key })
       if (key === '⌫' || key === 'C') btn.addClass('pw-mobile-numpad-control')
-      btn.addEventListener('click', () => this.handleNumpadKey(key))
+      this.bindNumpadButton(btn, key)
     }
 
     // ✓ spans rows 3–4 at col 4 (handled via CSS class)
@@ -229,12 +229,57 @@ export class MobileTransactionModal extends TransactionModal {
       cls: 'pw-mobile-numpad-btn pw-mobile-numpad-confirm',
       text: '✓',
     })
-    confirmBtn.addEventListener('click', () => this.handleNumpadKey('✓'))
+    this.bindNumpadButton(confirmBtn, '✓')
 
     for (const key of bottomKeys) {
       const btn = el.createEl('button', { cls: 'pw-mobile-numpad-btn', text: key })
-      btn.addEventListener('click', () => this.handleNumpadKey(key))
+      this.bindNumpadButton(btn, key)
     }
+  }
+
+  private bindNumpadButton(btn: HTMLButtonElement, key: string) {
+    let touched = false
+    let clearPressedTimer: number | null = null
+    const clearFocus = () => requestAnimationFrame(() => btn.blur())
+    const setPressed = () => {
+      if (clearPressedTimer !== null) {
+        window.clearTimeout(clearPressedTimer)
+        clearPressedTimer = null
+      }
+      btn.classList.add('is-pressed')
+    }
+    const clearPressed = () => {
+      btn.classList.remove('is-pressed')
+      clearFocus()
+    }
+    const scheduleClearPressed = () => {
+      if (clearPressedTimer !== null) window.clearTimeout(clearPressedTimer)
+      clearPressedTimer = window.setTimeout(() => {
+        clearPressedTimer = null
+        clearPressed()
+      }, 90)
+    }
+
+    btn.addEventListener('touchstart', setPressed, { passive: true })
+    btn.addEventListener('pointerdown', setPressed)
+    btn.addEventListener('pointerup', scheduleClearPressed)
+    btn.addEventListener('pointercancel', clearPressed)
+    btn.addEventListener('pointerleave', clearPressed)
+    btn.addEventListener('touchcancel', clearPressed)
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault()
+      touched = true
+      this.handleNumpadKey(key)
+      scheduleClearPressed()
+    })
+    btn.addEventListener('click', () => {
+      if (touched) {
+        touched = false
+        return
+      }
+      this.handleNumpadKey(key)
+      scheduleClearPressed()
+    })
   }
 
   private handleNumpadKey(key: string) {

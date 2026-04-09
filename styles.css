@@ -270,7 +270,8 @@
 }
 
 .pw-mobile-numpad-btn {
-  background: var(--background-primary);
+  background: var(--interactive-normal);
+  border-radius: 0;
   border: none;
   font-size: 22px;
   height: 60px;
@@ -284,14 +285,15 @@
   user-select: none;
   -webkit-user-select: none;
   cursor: pointer;
+  transition: background-color 90ms ease, opacity 90ms ease;
 }
 
 /* Override Obsidian's global button styles */
 .pw-transaction-modal-container .pw-mobile-numpad-btn:hover {
-  background: var(--background-primary) !important;
+  background: var(--interactive-normal) !important;
 }
 
-.pw-transaction-modal-container .pw-mobile-numpad-btn:active {
+.pw-transaction-modal-container .pw-mobile-numpad-btn.is-pressed {
   background: var(--background-modifier-hover) !important;
 }
 
@@ -299,6 +301,7 @@
 .pw-transaction-modal-container .pw-mobile-numpad-btn:focus-visible {
   outline: none !important;
   box-shadow: none !important;
+  background: var(--interactive-normal) !important;
 }
 
 .pw-mobile-numpad-control {
@@ -307,8 +310,13 @@
   background: var(--background-secondary);
 }
 
-.pw-mobile-numpad-control:active {
-  background: var(--background-modifier-hover);
+.pw-transaction-modal-container .pw-mobile-numpad-control:focus,
+.pw-transaction-modal-container .pw-mobile-numpad-control:focus-visible {
+  background: var(--background-secondary) !important;
+}
+
+.pw-transaction-modal-container .pw-mobile-numpad-control.is-pressed {
+  background: var(--background-modifier-hover) !important;
 }
 
 .pw-mobile-numpad-confirm {
@@ -319,7 +327,13 @@
   font-weight: 600;
 }
 
-.pw-mobile-numpad-confirm:active {
+.pw-transaction-modal-container .pw-mobile-numpad-confirm:focus,
+.pw-transaction-modal-container .pw-mobile-numpad-confirm:focus-visible {
+  background: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+}
+
+.pw-transaction-modal-container .pw-mobile-numpad-confirm.is-pressed {
   opacity: 0.85;
 }
 
