@@ -10,6 +10,7 @@ All notable changes to PennyWallet will be documented in this file.
 
 ### Fixed
 - Wallet balance ordering now follows the configured wallet order.
+- Fix mobile numpad tap feedback on iOS
 
 ## [0.0.4] - 2026-04-09
 
