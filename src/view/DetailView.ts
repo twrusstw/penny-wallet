@@ -36,6 +36,8 @@ export class DetailView extends ItemView {
 
   async setState(state: Record<string, unknown>, result: ViewStateResult) {
     if (state?.yearMonth) this.currentYearMonth = state.yearMonth as string
+    if (state?.filterType) this.filterTypes = new Set([state.filterType as TransactionType])
+    if (state?.filterCategory) this.filterCategories = new Set([state.filterCategory as string])
     await super.setState(state, result)
     await this.render()
   }

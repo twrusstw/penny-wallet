@@ -284,10 +284,15 @@ export function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data:
 
 // ─── Pie chart ────────────────────────────────────────────────────────────────
 
-export function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0 | 2 = 0) {
+export function drawPie(
+  container: HTMLElement,
+  data: Map<string, number>,
+  dp: 0 | 2 = 0,
+  onSegmentClick?: (categoryKey: string) => void,
+) {
   const total = [...data.values()].reduce((a, b) => a + b, 0)
 
-  const segments: { label: string; value: number; color: string; start: number; end: number }[] = []
+  const segments: { key: string; label: string; value: number; color: string; start: number; end: number }[] = []
 
   let angle = -Math.PI / 2
   let ci = 0
@@ -295,6 +300,7 @@ export function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0
   for (const [key, value] of data) {
     const slice = (value / total) * Math.PI * 2
     segments.push({
+      key,
       label: translateCategory(key),
       value,
       color: PIE_COLORS[ci % PIE_COLORS.length],
@@ -314,6 +320,10 @@ export function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0
   canvas.width = SIZE * dpr
   canvas.height = SIZE * dpr
   canvas.setCssProps({ width: SIZE + 'px', height: SIZE + 'px' })
+  if (onSegmentClick) canvas.setCssProps({ cursor: 'pointer' })
+
+  const tooltip = pieWrap.createDiv('pw-tooltip')
+  tooltip.hide()
 
   function redraw(hiIdx: number) {
     const ctx = canvas.getContext('2d')!
@@ -333,24 +343,69 @@ export function drawPie(container: HTMLElement, data: Map<string, number>, dp: 0
     })
   }
 
+  function hitTest(clientX: number, clientY: number): number {
+    const rect = canvas.getBoundingClientRect()
+    const dx = clientX - rect.left - CX
+    const dy = clientY - rect.top - CY
+    if (dx * dx + dy * dy > (R + 4) * (R + 4)) return -1
+    let a = Math.atan2(dy, dx)
+    if (a < -Math.PI / 2) a += Math.PI * 2
+    return segments.findIndex(seg => a >= seg.start && a < seg.end)
+  }
+
+  function showTooltip(seg: (typeof segments)[0], clientX: number, clientY: number) {
+    const pct = Math.round((seg.value / total) * 100)
+    tooltip.setText(`${seg.label} ${pct}%`)
+    const wrapRect = pieWrap.getBoundingClientRect()
+    tooltip.setCssProps({
+      left: (clientX - wrapRect.left + 12) + 'px',
+      top:  (clientY - wrapRect.top  - 8)  + 'px',
+    })
+    tooltip.show()
+  }
+
   redraw(-1)
 
   canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const dx = x - CX
-    const dy = y - CY
-    if (dx * dx + dy * dy > (R + 4) * (R + 4)) { redraw(-1); return }
-    let a = Math.atan2(dy, dx)
-    if (a < -Math.PI / 2) a += Math.PI * 2
-    redraw(segments.findIndex(seg => a >= seg.start && a < seg.end))
+    const idx = hitTest(e.clientX, e.clientY)
+    redraw(idx)
+    if (idx >= 0) showTooltip(segments[idx], e.clientX, e.clientY)
+    else tooltip.hide()
   })
-  canvas.addEventListener('mouseleave', () => redraw(-1))
+
+  canvas.addEventListener('mouseleave', () => {
+    redraw(-1)
+    tooltip.hide()
+  })
+
+  if (onSegmentClick) {
+    canvas.addEventListener('click', (e) => {
+      const idx = hitTest(e.clientX, e.clientY)
+      if (idx >= 0) onSegmentClick(segments[idx].key)
+    })
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      const idx = hitTest(touch.clientX, touch.clientY)
+      if (idx < 0) return
+      redraw(idx)
+      showTooltip(segments[idx], touch.clientX, touch.clientY)
+      setTimeout(() => {
+        tooltip.hide()
+        redraw(-1)
+        onSegmentClick(segments[idx].key)
+      }, 600)
+    }, { passive: false })
+  }
 
   const legend = pieWrap.createDiv('pw-pie-legend')
   segments.forEach((seg) => {
     const item = legend.createDiv('pw-legend-item')
+    if (onSegmentClick) {
+      item.setCssProps({ cursor: 'pointer' })
+      item.addEventListener('click', () => onSegmentClick(seg.key))
+    }
     const dot = item.createEl('span', { cls: 'pw-legend-dot' })
     dot.setCssProps({ 'background-color': seg.color })
     item.createEl('span', { text: seg.label, cls: 'pw-legend-name' })

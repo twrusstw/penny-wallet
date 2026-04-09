@@ -4,6 +4,7 @@ import { TransactionModal } from '../modal/TransactionModal'
 import { MobileTransactionModal } from '../modal/MobileTransactionModal'
 import { t, formatMonthLabel, formatYearMonth } from '../i18n'
 import { currentYearMonth, stepMonth, isAfterCurrentMonth, createMetric } from '../utils'
+import { TransactionType } from '../types'
 import { DETAIL_VIEW_TYPE } from './DetailView'
 import { ASSET_VIEW_TYPE } from './AssetView'
 import { MonthData, drawIncExpChart, drawPie, addRectLegend, getMonthRangeEndingAt } from './charts'
@@ -135,13 +136,19 @@ export class DashboardView extends ItemView {
 
     const expCard = chartsRow.createDiv('pw-card')
     expCard.createEl('div', { text: t('dash.expenseByCategory'), cls: 'pw-card-title' })
-    if (expenseMap.size > 0) drawPie(expCard, expenseMap, dp)
+    if (expenseMap.size > 0) drawPie(expCard, expenseMap, dp, (cat) => { void this.openDetailWithFilter('expense', cat) })
     else expCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
 
     const incCard = chartsRow.createDiv('pw-card')
     incCard.createEl('div', { text: t('dash.incomeByCategory'), cls: 'pw-card-title' })
-    if (incomeMap.size > 0) drawPie(incCard, incomeMap, dp)
+    if (incomeMap.size > 0) drawPie(incCard, incomeMap, dp, (cat) => { void this.openDetailWithFilter('income', cat) })
     else incCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
+  }
+
+  private async openDetailWithFilter(type: TransactionType, category: string) {
+    await this.openOrRevealView(DETAIL_VIEW_TYPE, {
+      state: { yearMonth: this.currentYearMonth, filterType: type, filterCategory: category },
+    })
   }
 
   private async openOrRevealView(type: string, options?: { state?: Record<string, unknown> }) {
