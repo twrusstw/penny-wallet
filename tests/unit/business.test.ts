@@ -81,10 +81,10 @@ describe('computeWalletBalances', () => {
     expect(result[0].balance).toBe(4700) // 5000 - 100 - 200
   })
 
-  it('returns wallets sorted: cash → bank → creditCard', () => {
+  it('preserves wallet order from config', () => {
     const wf = makeWalletFile([CARD, BANK, CASH])
     const result = wf.computeWalletBalances([])
-    expect(result.map(r => r.wallet.type)).toEqual(['cash', 'bank', 'creditCard'])
+    expect(result.map(r => r.wallet.type)).toEqual(['creditCard', 'bank', 'cash'])
   })
 })
 
