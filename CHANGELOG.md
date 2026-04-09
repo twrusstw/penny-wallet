@@ -2,6 +2,15 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
+## [0.0.5] - 2026-04-10
+
+### Added
+- Add click-through from income and expense pie charts to the Transactions view with related filters.
+- Add drag-and-drop wallet reordering in Settings (SortableJS) and improve settings/detail UX.
+
+### Fixed
+- Wallet balance ordering now follows the configured wallet order.
+
 ## [0.0.4] - 2026-04-09
 
 ### Changed
