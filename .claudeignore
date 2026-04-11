@@ -1,0 +1,13 @@
+# Build outputs
+.claude/graphify-out/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+demo-vault/
+main.js
+
+# Dependencies & lock
+node_modules/
+package-lock.json
+
+# Coverage & test artifacts
+coverage/
