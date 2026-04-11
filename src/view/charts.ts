@@ -92,11 +92,16 @@ export function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, da
   const canvas = container.createEl('canvas')
   canvas.setCssProps({ display: 'block' })
 
-  const width   = container.clientWidth || 480
-  const count   = data.length
-  const incH    = 130, expH = 95, padTop = 18, padBot = 28
-  const totalH  = incH + expH + padTop + padBot
-  const dpr     = window.devicePixelRatio || 1
+  const width    = container.clientWidth || 480
+  const count    = data.length
+  const incH0    = 130, expH0 = 95, padTop0 = 18, padBot0 = 28
+  const defaultH = incH0 + expH0 + padTop0 + padBot0
+  const availH   = container.clientHeight
+  const s        = availH > 60 ? availH / defaultH : 1
+  const incH     = incH0 * s, expH = expH0 * s
+  const padTop   = padTop0 * s, padBot = padBot0 * s
+  const totalH   = incH + expH + padTop + padBot
+  const dpr      = window.devicePixelRatio || 1
 
   canvas.width  = width * dpr
   canvas.height = totalH * dpr
@@ -128,7 +133,7 @@ export function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, da
 
   const incUsable = baselineY - padTop
   const expBase   = baselineY
-  const expUsable = expH - 20
+  const expUsable = expH - 20 * s
 
   ctx.fillStyle = colorMuted; ctx.font = '9px sans-serif'; ctx.textAlign = 'right'
   ctx.fillText('0', leftPad - 4, baselineY + 3)
@@ -201,8 +206,8 @@ export function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data:
   const canvas = container.createEl('canvas')
   canvas.setCssProps({ display: 'block' })
 
-  const width  = container.clientWidth || 480
-  const height = 150
+  const width  = container.clientWidth  || 480
+  const height = Math.max(container.clientHeight || 0, 150)
   const dpr    = window.devicePixelRatio || 1
 
   canvas.width  = width  * dpr
@@ -289,6 +294,7 @@ export function drawPie(
   data: Map<string, number>,
   dp: 0 | 2 = 0,
   onSegmentClick?: (categoryKey: string) => void,
+  size = 120,
 ) {
   const total = [...data.values()].reduce((a, b) => a + b, 0)
 
@@ -312,7 +318,7 @@ export function drawPie(
   }
 
   const pieWrap = container.createDiv('pw-pie-wrap')
-  const SIZE = 120
+  const SIZE = size
   const dpr = window.devicePixelRatio || 1
   const CX = SIZE / 2, CY = SIZE / 2
   const R = SIZE / 2 - 8

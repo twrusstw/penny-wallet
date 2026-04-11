@@ -3,7 +3,7 @@ import { WalletFile } from '../io/WalletFile'
 import { TransactionModal } from '../modal/TransactionModal'
 import { MobileTransactionModal } from '../modal/MobileTransactionModal'
 import { t, formatMonthLabel, formatYearMonth } from '../i18n'
-import { formatAmount, createMetric } from '../utils'
+import { formatAmount } from '../utils'
 import { DETAIL_VIEW_TYPE } from './DetailView'
 import { DASHBOARD_VIEW_TYPE } from './DashboardView'
 import { MonthData, drawNetChart, drawPie, getMonthRange } from './charts'
@@ -56,16 +56,12 @@ export class AssetView extends ItemView {
     const header = contentEl.createDiv('pw-nav-row')
 
     const headerActions = header.createDiv('pw-nav-right')
-    const overviewBtn = headerActions.createEl('button', { text: t('ui.overview'),          cls: 'pw-action-btn' })
-    const detailBtn   = headerActions.createEl('button', { text: t('ui.detail'),            cls: 'pw-action-btn' })
+    const overviewBtn = headerActions.createEl('button', { text: t('ui.overview'),              cls: 'pw-action-btn' })
+    const detailBtn   = headerActions.createEl('button', { text: t('ui.detail'),                cls: 'pw-action-btn' })
     const addBtn      = headerActions.createEl('button', { text: '+ ' + t('ui.addTransaction'), cls: 'pw-action-btn' })
 
-    overviewBtn.addEventListener('click', () => {
-      void this.openOrRevealView(DASHBOARD_VIEW_TYPE)
-    })
-    detailBtn.addEventListener('click', () => {
-      void this.openOrRevealView(DETAIL_VIEW_TYPE)
-    })
+    overviewBtn.addEventListener('click', () => void this.openOrRevealView(DASHBOARD_VIEW_TYPE))
+    detailBtn.addEventListener('click', () => void this.openOrRevealView(DETAIL_VIEW_TYPE))
     addBtn.addEventListener('click', () => {
       addBtn.disabled = true
       const ModalClass = Platform.isMobile ? MobileTransactionModal : TransactionModal
@@ -75,8 +71,14 @@ export class AssetView extends ItemView {
       ).open()
     })
 
-    // ── Wallet balances card ─────────────────────────────────────────────────
-    const walletCard = contentEl.createDiv('pw-card')
+    // ── 2-column grid ────────────────────────────────────────────────────────
+    const grid = contentEl.createDiv('pw-grid-2 pw-asset-grid')
+
+    // ── Left column ─────────────────────────────────────────────────────────
+    const leftCol = grid.createDiv('pw-asset-left')
+
+    // Wallet balances card
+    const walletCard = leftCol.createDiv('pw-card')
     walletCard.createEl('div', { text: t('dash.walletBalances'), cls: 'pw-card-title' })
     const walletList = walletCard.createDiv('pw-wallet-list')
 
@@ -104,8 +106,27 @@ export class AssetView extends ItemView {
       cls: 'pw-net-value' + (netAsset < 0 ? ' is-negative' : ''),
     })
 
-    // ── Range picker ─────────────────────────────────────────────────────────
-    const rangeRow = contentEl.createDiv('pw-range-row')
+    // Asset allocation pie (≥2 positive-balance non-credit wallets)
+    const assetMap = new Map<string, number>()
+    for (const { wallet, balance } of walletBalances) {
+      if (wallet.status === 'archived') continue
+      if (wallet.type === 'creditCard') continue
+      if (balance > 0) assetMap.set(wallet.name, balance)
+    }
+    if (assetMap.size >= 2) {
+      const assetCard = leftCol.createDiv('pw-card')
+      assetCard.createEl('div', { text: t('dash.assetAllocation'), cls: 'pw-card-title' })
+      drawPie(assetCard, assetMap, dp)
+    }
+
+    // ── Right column ─────────────────────────────────────────────────────────
+    const rightCol = grid.createDiv('pw-asset-right')
+
+    // Net asset trend card (with range picker inside)
+    const netCard = rightCol.createDiv('pw-card')
+    const netCardHeader = netCard.createDiv('pw-card-header-row')
+    netCardHeader.createEl('div', { text: t('asset.netAssetTrend'), cls: 'pw-card-title' })
+    const rangeRow = netCardHeader.createDiv('pw-range-row')
     for (const r of [3, 6, 12]) {
       rangeRow.createEl('button', {
         text: t(`trend.${r}m` as 'trend.3m' | 'trend.6m' | 'trend.12m'),
@@ -116,28 +137,6 @@ export class AssetView extends ItemView {
       })
     }
 
-    // ── Cashflow metrics for range ───────────────────────────────────────────
-    let rangeIncome = 0, rangeExpense = 0
-    for (const ym of months) {
-      const s = summaries.get(ym)
-      if (s) { rangeIncome += s.income; rangeExpense += s.expense }
-    }
-    const rangeNet = rangeIncome - rangeExpense
-
-    const savingsRate = rangeIncome > 0 ? Math.round((rangeNet / rangeIncome) * 100) : 0
-
-    const metricsEl = contentEl.createDiv('pw-metrics')
-    createMetric(metricsEl, t('dash.income'),       rangeIncome,  'income',   dp)
-    createMetric(metricsEl, t('dash.expense'),      rangeExpense, 'expense',  dp)
-    createMetric(metricsEl, t('dash.balance'),      rangeNet,     rangeNet >= 0 ? 'positive' : 'negative', dp)
-    const savingsCard = metricsEl.createDiv('pw-metric')
-    savingsCard.createEl('div', { text: t('asset.savingsRate'), cls: 'pw-metric-label' })
-    savingsCard.createEl('div', {
-      text: savingsRate + '%',
-      cls: `pw-metric-value ${savingsRate >= 0 ? 'positive' : 'negative'}`,
-    })
-
-    // ── Net asset trend card ─────────────────────────────────────────────────
     const data: MonthData[] = months.map(ym => ({
       monthLabel: formatMonthLabel(ym),
       tooltipLabel: formatYearMonth(ym, 'short'),
@@ -146,28 +145,14 @@ export class AssetView extends ItemView {
       net: netTimeline.get(ym) ?? null,
     }))
 
-    const netCard = contentEl.createDiv('pw-card')
-    netCard.createEl('div', { text: t('asset.netAssetTrend'), cls: 'pw-card-title' })
     const netChartWrap = netCard.createDiv('pw-chart-wrap')
     const netTooltip = netChartWrap.createDiv('pw-tooltip')
     netTooltip.hide()
+
     requestAnimationFrame(() => {
       drawNetChart(netChartWrap, netTooltip, data, dp)
       contentEl.scrollTop = savedScroll
     })
-
-    // ── Asset allocation pie (≥2 positive-balance non-credit wallets) ────────
-    const assetMap = new Map<string, number>()
-    for (const { wallet, balance } of walletBalances) {
-      if (wallet.status === 'archived') continue
-      if (wallet.type === 'creditCard') continue
-      if (balance > 0) assetMap.set(wallet.name, balance)
-    }
-    if (assetMap.size >= 2) {
-      const assetCard = contentEl.createDiv('pw-card')
-      assetCard.createEl('div', { text: t('dash.assetAllocation'), cls: 'pw-card-title' })
-      drawPie(assetCard, assetMap, dp)
-    }
   }
 
   private async openOrRevealView(type: string, options?: { state?: Record<string, unknown> }) {
