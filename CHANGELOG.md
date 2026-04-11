@@ -2,6 +2,11 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
+## [0.0.6] - 2026-04-11
+
+### Changed
+- Dashboard and Asset views now use a 2-column grid layout for better use of screen space.
+
 ## [0.0.5] - 2026-04-10
 
 ### Added
