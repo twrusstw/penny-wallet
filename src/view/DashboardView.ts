@@ -118,7 +118,10 @@ export class DashboardView extends ItemView {
       net: netTimeline.get(ym) ?? null,
     }))
 
-    const incExpCard = contentEl.createDiv('pw-card')
+    // ── 2-column grid: bar chart left, pie charts right ─────────────────────
+    const grid2 = contentEl.createDiv('pw-grid-2')
+
+    const incExpCard = grid2.createDiv('pw-card pw-inc-exp-card')
     incExpCard.createEl('div', { text: t('trend.monthlyIncomeExpense'), cls: 'pw-card-title' })
     const legRow = incExpCard.createDiv('pw-leg-row')
     addRectLegend(legRow, C_INCOME, t('dash.income'))
@@ -129,19 +132,19 @@ export class DashboardView extends ItemView {
     requestAnimationFrame(() => drawIncExpChart(incExpChartWrap, incExpTooltip, data, dp))
 
     // ── Category pies ────────────────────────────────────────────────────────
-    const chartsRow = contentEl.createDiv('pw-charts-row')
+    const gridRight = grid2.createDiv('pw-grid-right')
 
     const expenseMap = this.walletFile.groupByCategory(transactions, 'expense')
     const incomeMap  = this.walletFile.groupByCategory(transactions, 'income')
 
-    const expCard = chartsRow.createDiv('pw-card')
+    const expCard = gridRight.createDiv('pw-card')
     expCard.createEl('div', { text: t('dash.expenseByCategory'), cls: 'pw-card-title' })
-    if (expenseMap.size > 0) drawPie(expCard, expenseMap, dp, (cat) => { void this.openDetailWithFilter('expense', cat) })
+    if (expenseMap.size > 0) drawPie(expCard, expenseMap, dp, (cat) => { void this.openDetailWithFilter('expense', cat) }, 160)
     else expCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
 
-    const incCard = chartsRow.createDiv('pw-card')
+    const incCard = gridRight.createDiv('pw-card')
     incCard.createEl('div', { text: t('dash.incomeByCategory'), cls: 'pw-card-title' })
-    if (incomeMap.size > 0) drawPie(incCard, incomeMap, dp, (cat) => { void this.openDetailWithFilter('income', cat) })
+    if (incomeMap.size > 0) drawPie(incCard, incomeMap, dp, (cat) => { void this.openDetailWithFilter('income', cat) }, 160)
     else incCard.createEl('p', { text: t('dash.noData'), cls: 'pw-no-data' })
   }
 

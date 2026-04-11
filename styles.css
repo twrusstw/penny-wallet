@@ -426,16 +426,58 @@
 
 /* ── Dashboard ── */
 .pw-dashboard {
-  padding: 16px;
-  max-width: 680px;
-  margin: 0 auto;
+  padding-bottom: 40px;
 }
 
 /* Asset view */
 .pw-asset {
   padding: 16px;
-  max-width: 680px;
-  margin: 0 auto;
+}
+
+.pw-grid-2.pw-asset-grid {
+  grid-template-columns: 300px 1fr;
+  padding-top: 16px;
+}
+
+.pw-asset-left,
+.pw-asset-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pw-asset-right > .pw-card:last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pw-asset-right > .pw-card:last-child > .pw-chart-wrap {
+  flex: 1;
+}
+
+/* Card header row — title + inline controls (e.g. range buttons) */
+.pw-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pw-card-header-row .pw-card-title {
+  margin-bottom: 0;
+}
+
+.pw-card-header-row .pw-range-row {
+  margin-bottom: 0;
+}
+
+/* Chart legend (rect + label, horizontal) */
+.pw-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .pw-view-title {
@@ -448,7 +490,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  padding: 14px 20px 12px;
+  border-bottom: 0.5px solid var(--background-modifier-border);
 }
 
 .pw-month-nav {
@@ -588,6 +631,31 @@
   flex: 1 1 0;
   min-width: 0;
   margin-bottom: 0;
+}
+
+/* PC 2-column dashboard grid */
+.pw-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+.pw-grid-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Bar chart card — flex so chart-wrap fills height */
+.pw-inc-exp-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.pw-inc-exp-card .pw-chart-wrap {
+  flex: 1;
+  min-height: 0;
 }
 
 .pw-chart-wrap {
@@ -1060,7 +1128,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 1rem;
+  padding: 16px 20px;
+  margin-bottom: 0;
 }
 
 .pw-asset .pw-metrics {
@@ -1443,12 +1512,20 @@ select.pw-add-wallet-input {
     flex-direction: column;
   }
 
+  .pw-grid-2 {
+    grid-template-columns: 1fr;
+    padding: 0 12px 20px;
+  }
+
+
   .pw-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 12px;
   }
 
   .pw-nav-row {
     flex-wrap: wrap;
+    padding: 10px 12px;
   }
 
   .pw-nav-right {
@@ -1463,4 +1540,14 @@ select.pw-add-wallet-input {
     font-size: 14px;
     padding: 4px 6px;
   }
+}
+
+/* ── Asset view: mobile overrides ── */
+.is-mobile .pw-grid-2.pw-asset-grid {
+  grid-template-columns: 1fr;
+  padding-top: 0;
+}
+
+.is-mobile .pw-asset-right > .pw-card:last-child {
+  flex: none;
 }
