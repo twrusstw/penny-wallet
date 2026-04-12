@@ -89,10 +89,22 @@ export function getMonthRange(count: number): string[] {
 // ─── Income / Expense bar chart ───────────────────────────────────────────────
 
 export function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[], dp: 0 | 2 = 0) {
+  if (!container.clientWidth) {
+    const ro = new ResizeObserver(() => {
+      if (container.clientWidth > 0) {
+        ro.disconnect()
+        container.querySelectorAll('canvas').forEach(c => c.remove())
+        drawIncExpChart(container, tooltip, data, dp)
+      }
+    })
+    ro.observe(container)
+    return
+  }
+
   const canvas = container.createEl('canvas')
   canvas.setCssProps({ display: 'block' })
 
-  const width    = container.clientWidth || 480
+  const width    = container.clientWidth
   const count    = data.length
   const incH0    = 130, expH0 = 95, padTop0 = 18, padBot0 = 28
   const defaultH = incH0 + expH0 + padTop0 + padBot0
@@ -203,10 +215,22 @@ export function drawIncExpChart(container: HTMLElement, tooltip: HTMLElement, da
 // ─── Net asset line chart ─────────────────────────────────────────────────────
 
 export function drawNetChart(container: HTMLElement, tooltip: HTMLElement, data: MonthData[], dp: 0 | 2 = 0) {
+  if (!container.clientWidth) {
+    const ro = new ResizeObserver(() => {
+      if (container.clientWidth > 0) {
+        ro.disconnect()
+        container.querySelectorAll('canvas').forEach(c => c.remove())
+        drawNetChart(container, tooltip, data, dp)
+      }
+    })
+    ro.observe(container)
+    return
+  }
+
   const canvas = container.createEl('canvas')
   canvas.setCssProps({ display: 'block' })
 
-  const width  = container.clientWidth  || 480
+  const width  = container.clientWidth
   const height = Math.max(container.clientHeight || 0, 150)
   const dpr    = window.devicePixelRatio || 1
 

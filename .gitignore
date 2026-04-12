@@ -5,6 +5,7 @@ docs/.vitepress/cache
 *.local
 .DS_Store
 .claude/
+graphify-out/**
 .vscode/
 coverage/
 main.js
