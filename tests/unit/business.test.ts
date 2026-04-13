@@ -50,18 +50,31 @@ describe('computeWalletBalances', () => {
     expect(cash.balance).toBe(1500)
   })
 
-  it('repayment: bank decreases, creditCard debt decreases', () => {
+  it('credit_card_payment (was repayment): bank decreases, creditCard debt decreases', () => {
     const wf = makeWalletFile([BANK, CARD])
     // First create some credit card debt
     const txs: Transaction[] = [
       { date: '04/01', type: 'expense', wallet: 'Card', category: 'food', note: '', amount: 500 },
-      { date: '04/15', type: 'repayment', fromWallet: 'Bank', toWallet: 'Card', note: '', amount: 500 },
+      { date: '04/15', type: 'transfer', category: 'credit_card_payment', fromWallet: 'Bank', toWallet: 'Card', note: '', amount: 500 },
     ]
     const result = wf.computeWalletBalances(txs)
     const bank = result.find(r => r.wallet.name === 'Bank')!
     const card = result.find(r => r.wallet.name === 'Card')!
     expect(bank.balance).toBe(4500)   // 5000 - 500
     expect(card.balance).toBe(0)      // 0 + 500 - 500
+  })
+
+  it('credit_card_refund: creditCard debt decreases, no other wallet affected', () => {
+    const wf = makeWalletFile([BANK, CARD])
+    const txs: Transaction[] = [
+      { date: '04/01', type: 'expense', wallet: 'Card', category: 'shopping', note: '', amount: 300 },
+      { date: '04/02', type: 'transfer', category: 'credit_card_refund', fromWallet: 'Card', toWallet: 'Card', note: '', amount: 100 },
+    ]
+    const result = wf.computeWalletBalances(txs)
+    const bank = result.find(r => r.wallet.name === 'Bank')!
+    const card = result.find(r => r.wallet.name === 'Card')!
+    expect(bank.balance).toBe(5000)   // unaffected
+    expect(card.balance).toBe(200)    // 300 - 100
   })
 
   it('unknown wallet in transaction is silently ignored', () => {
@@ -155,11 +168,11 @@ describe('computeSummary', () => {
     expect(wf.computeSummary(txs)).toEqual({ income: 50000, expense: 0, netAsset: 0 })
   })
 
-  it('excludes transfer and repayment from totals', () => {
+  it('excludes transfer from totals', () => {
     const wf = makeWalletFile([])
     const txs: Transaction[] = [
       { date: '04/01', type: 'transfer', fromWallet: 'Bank', toWallet: 'Cash', note: '', amount: 1000 },
-      { date: '04/02', type: 'repayment', fromWallet: 'Bank', toWallet: 'Card', note: '', amount: 500 },
+      { date: '04/02', type: 'transfer', category: 'credit_card_payment', fromWallet: 'Bank', toWallet: 'Card', note: '', amount: 500 },
     ]
     expect(wf.computeSummary(txs)).toEqual({ income: 0, expense: 0, netAsset: 0 })
   })
@@ -185,12 +198,12 @@ describe('groupByCategory', () => {
     expect(map.get('food')).toBe(300)
   })
 
-  it('falls back to "other" for undefined category', () => {
+  it('falls back to "" for undefined category', () => {
     const txs: Transaction[] = [
       { date: '04/01', type: 'expense', wallet: 'Cash', note: '', amount: 50 },
     ]
     const map = wf.groupByCategory(txs, 'expense')
-    expect(map.get('other')).toBe(50)
+    expect(map.get('')).toBe(50)
   })
 
   it('excludes transactions of the wrong type', () => {

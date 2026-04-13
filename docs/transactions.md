@@ -1,6 +1,6 @@
 # Transactions
 
-PennyWallet has four transaction types. Each is designed for a specific real-world scenario.
+PennyWallet has three transaction types. Each is designed for a specific real-world scenario.
 
 ---
 
@@ -47,41 +47,35 @@ Money arriving into one of your accounts.
 
 ### Transfer
 
-Moving money between two of your own accounts. No category.
+Moving money between two of your own accounts — including credit card payments, refunds, and investment trades.
 
 | Field | Required | Notes |
 |-------|----------|-------|
+| Category | Yes | e.g. Account Transfer, Credit Card Payment |
 | From Account | Yes | Source account |
-| To Account | Yes | Destination account (must differ from source) |
-| Note | No | e.g. `Transfer to savings` |
+| To Account | Yes | Destination account |
+| Note | No | Free-text description |
 | Amount | Yes | Positive number |
 
+**Transfer categories and their account rules:**
+
+| Category | From Account | To Account |
+|----------|-------------|------------|
+| Account Transfer | Any non-credit-card | Any non-credit-card |
+| Credit Card Payment | Cash or Bank | Credit Card |
+| Credit Card Refund | Credit Card | Same Credit Card |
+| Investment Trade | Any | Any |
+
 **Effect on balance:**
-- From Account → balance decreases
-- To Account → balance increases
+- Account Transfer / Investment Trade: From decreases, To increases
+- Credit Card Payment: From (bank) decreases, To (credit card) debt decreases
+- Credit Card Refund: Credit card debt decreases (refund reversal)
 
 **Example:** Withdraw NT$8,000 cash from ATM
-→ From: `HSBC Savings`, To: `Cash`, Amount: `8000`
-
----
-
-### Repayment
-
-Pay off a credit card bill from a bank or cash account.
-
-| Field | Required | Notes |
-|-------|----------|-------|
-| From Account | Yes | Must be Cash or Bank (not a credit card) |
-| To Account | Yes | Must be a Credit Card |
-| Note | No | e.g. `Card payment` |
-| Amount | Yes | Positive number |
-
-**Effect on balance:**
-- From Account (Cash/Bank) → balance decreases
-- To Account (Credit Card) → outstanding debt decreases
+→ Category: `Account Transfer`, From: `HSBC Savings`, To: `Cash`, Amount: `8000`
 
 **Example:** Pay NT$5,200 credit card bill from savings
-→ From: `HSBC Savings`, To: `Visa Platinum`, Amount: `5200`
+→ Category: `Credit Card Payment`, From: `HSBC Savings`, To: `Visa Platinum`, Amount: `5200`
 
 > See [Credit Card Workflow](./credit-card-workflow) for the full credit card cycle.
 
@@ -110,9 +104,14 @@ Editing supports changing the **date** (including moving the transaction to a di
 ## Default Categories
 
 ### Expense
-`Food` · `Transport` · `Shopping` · `Entertainment` · `Medical` · `Home` · `Other`
+`Food` · `Clothing` · `Home` · `Transport` · `Education` · `Entertainment` · `Shopping` · `Medical` · `Cash Expense` · `Insurance` · `Fees` · `Tax`
 
 ### Income
-`Salary` · `Bonus` · `Side Income` · `Other`
+`Salary` · `Interest` · `Side Income` · `Bonus` · `Lottery` · `Rent` · `Cashback` · `Dividend` · `Investment Profit` · `Insurance Claim` · `Pension`
+
+### Transfer
+`Account Transfer` · `Credit Card Payment` · `Credit Card Refund` · `Investment Trade`
+
+If a transaction has no category, it is shown as **Uncategorized**. This is a display-only label — nothing is stored.
 
 Custom categories can be added in **Settings → PennyWallet → Custom Categories**.

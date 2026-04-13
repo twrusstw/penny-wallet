@@ -74,9 +74,9 @@ Click **Add Account** or press **Enter** in any field to confirm.
 
 ## Custom Categories
 
-Add your own expense and income categories.
+Add your own expense, income, and transfer categories.
 
-Categories are shown **after** the default categories in the Add Transaction form.
+Three sections are available: **Expense**, **Income**, and **Transfer**. Custom categories are shown **after** the default categories in the Add Transaction form.
 
 Click **×** on a tag to remove a custom category. This does not affect existing transactions that already used that category — they will continue to display the category name as a raw string.
 

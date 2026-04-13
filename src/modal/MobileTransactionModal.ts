@@ -63,7 +63,7 @@ export class MobileTransactionModal extends TransactionModal {
 
   private renderMobileTabs(config: PennyWalletConfig) {
     this.mobileTabsEl.empty()
-    const types: TransactionType[] = ['expense', 'income', 'transfer', 'repayment']
+    const types: TransactionType[] = ['expense', 'income', 'transfer']
     for (const tp of types) {
       const tab = this.mobileTabsEl.createEl('button', {
         text: t(`type.${tp}`),
@@ -76,7 +76,6 @@ export class MobileTransactionModal extends TransactionModal {
           this.toWallet = ''
         } else {
           this.wallet = ''
-          this.category = ''
         }
         this.renderMobileTabs(config)
         this.renderMobileRows(config)
@@ -106,22 +105,6 @@ export class MobileTransactionModal extends TransactionModal {
     )
 
     if (this.type === 'expense' || this.type === 'income') {
-      // Wallet
-      this.addMobilePickerRow(this.mobileRowsEl, t('modal.wallet'), this.wallet || '—', (valueEl) => {
-        const sel = createEl('select')
-        sel.addClass('pw-mobile-row-picker')
-        sel.createEl('option', { text: '—', value: '' })
-        for (const w of activeWallets) {
-          const opt = sel.createEl('option', { text: w.name, value: w.name })
-          if (w.name === this.wallet) opt.selected = true
-        }
-        sel.addEventListener('change', () => {
-          this.wallet = sel.value
-          valueEl.textContent = this.wallet || '—'
-        })
-        return sel
-      })
-
       // Category
       const categories = this.getCategoryOptions(config)
       const catLabel = categories.find(c => c.key === this.category)?.label ?? (this.category || '—')
@@ -140,44 +123,113 @@ export class MobileTransactionModal extends TransactionModal {
         })
         return sel
       })
-    } else {
-      // From wallet
-      const fromCandidates = this.type === 'repayment'
-        ? activeWallets.filter(w => w.type !== 'creditCard')
-        : activeWallets
-      this.addMobilePickerRow(this.mobileRowsEl, t('modal.fromWallet'), this.fromWallet || '—', (valueEl) => {
+
+      // Wallet
+      this.addMobilePickerRow(this.mobileRowsEl, t('modal.wallet'), this.wallet || '—', (valueEl) => {
         const sel = createEl('select')
         sel.addClass('pw-mobile-row-picker')
         sel.createEl('option', { text: '—', value: '' })
-        for (const w of fromCandidates) {
+        for (const w of activeWallets) {
           const opt = sel.createEl('option', { text: w.name, value: w.name })
-          if (w.name === this.fromWallet) opt.selected = true
+          if (w.name === this.wallet) opt.selected = true
         }
         sel.addEventListener('change', () => {
-          this.fromWallet = sel.value
-          valueEl.textContent = this.fromWallet || '—'
+          this.wallet = sel.value
+          valueEl.textContent = this.wallet || '—'
+        })
+        return sel
+      })
+    } else {
+      // Category
+      const categories = this.getCategoryOptions(config)
+      const catLabel = categories.find(c => c.key === this.category)?.label ?? (this.category || '—')
+      this.addMobilePickerRow(this.mobileRowsEl, t('modal.category'), catLabel, (valueEl) => {
+        const sel = createEl('select')
+        sel.addClass('pw-mobile-row-picker')
+        sel.createEl('option', { text: '—', value: '' })
+        for (const { key, label } of categories) {
+          const opt = sel.createEl('option', { text: label, value: key })
+          if (key === this.category) opt.selected = true
+        }
+        sel.addEventListener('change', () => {
+          this.category = sel.value
+          const found = categories.find(c => c.key === this.category)
+          valueEl.textContent = found?.label ?? (this.category || '—')
+          this.renderMobileRows(config)
         })
         return sel
       })
 
-      // To wallet
-      const toCandidates = this.type === 'repayment'
-        ? activeWallets.filter(w => w.type === 'creditCard')
-        : activeWallets
-      this.addMobilePickerRow(this.mobileRowsEl, t('modal.toWallet'), this.toWallet || '—', (valueEl) => {
-        const sel = createEl('select')
-        sel.addClass('pw-mobile-row-picker')
-        sel.createEl('option', { text: '—', value: '' })
-        for (const w of toCandidates) {
-          const opt = sel.createEl('option', { text: w.name, value: w.name })
-          if (w.name === this.toWallet) opt.selected = true
-        }
-        sel.addEventListener('change', () => {
-          this.toWallet = sel.value
-          valueEl.textContent = this.toWallet || '—'
+      // Normalize wallet state when category constrains wallet types
+      if (this.category === 'credit_card_payment') {
+        const fromType = config.wallets.find(w => w.name === this.fromWallet)?.type
+        const toType   = config.wallets.find(w => w.name === this.toWallet)?.type
+        if (fromType === 'creditCard') this.fromWallet = ''
+        if (toType && toType !== 'creditCard') this.toWallet = ''
+      } else if (this.category === 'credit_card_refund') {
+        const fromType = config.wallets.find(w => w.name === this.fromWallet)?.type
+        if (fromType && fromType !== 'creditCard') this.fromWallet = ''
+        this.toWallet = this.fromWallet
+      }
+
+      if (this.category === 'credit_card_refund') {
+        // Single account field — always a credit card
+        const ccWallets = activeWallets.filter(w => w.type === 'creditCard')
+        this.addMobilePickerRow(this.mobileRowsEl, t('modal.wallet'), this.fromWallet || '—', (valueEl) => {
+          const sel = createEl('select')
+          sel.addClass('pw-mobile-row-picker')
+          sel.createEl('option', { text: '—', value: '' })
+          for (const w of ccWallets) {
+            const opt = sel.createEl('option', { text: w.name, value: w.name })
+            if (w.name === this.fromWallet) opt.selected = true
+          }
+          sel.addEventListener('change', () => {
+            this.fromWallet = sel.value
+            this.toWallet = sel.value
+            valueEl.textContent = this.fromWallet || '—'
+          })
+          return sel
         })
-        return sel
-      })
+      } else {
+        const fromWallets = this.category === 'credit_card_payment'
+          ? activeWallets.filter(w => w.type !== 'creditCard')
+          : activeWallets
+        const toWallets = this.category === 'credit_card_payment'
+          ? activeWallets.filter(w => w.type === 'creditCard')
+          : activeWallets
+
+        // From wallet
+        this.addMobilePickerRow(this.mobileRowsEl, t('modal.fromWallet'), this.fromWallet || '—', (valueEl) => {
+          const sel = createEl('select')
+          sel.addClass('pw-mobile-row-picker')
+          sel.createEl('option', { text: '—', value: '' })
+          for (const w of fromWallets) {
+            const opt = sel.createEl('option', { text: w.name, value: w.name })
+            if (w.name === this.fromWallet) opt.selected = true
+          }
+          sel.addEventListener('change', () => {
+            this.fromWallet = sel.value
+            valueEl.textContent = this.fromWallet || '—'
+          })
+          return sel
+        })
+
+        // To wallet
+        this.addMobilePickerRow(this.mobileRowsEl, t('modal.toWallet'), this.toWallet || '—', (valueEl) => {
+          const sel = createEl('select')
+          sel.addClass('pw-mobile-row-picker')
+          sel.createEl('option', { text: '—', value: '' })
+          for (const w of toWallets) {
+            const opt = sel.createEl('option', { text: w.name, value: w.name })
+            if (w.name === this.toWallet) opt.selected = true
+          }
+          sel.addEventListener('change', () => {
+            this.toWallet = sel.value
+            valueEl.textContent = this.toWallet || '—'
+          })
+          return sel
+        })
+      }
     }
 
     // Note

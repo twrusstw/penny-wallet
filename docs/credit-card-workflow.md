@@ -10,7 +10,8 @@ Credit card accounts in PennyWallet track **outstanding debt**, not a traditiona
 |-------|-----------------------|
 | Add a credit card with initial balance `3000` | Starts with NT$3,000 outstanding debt |
 | Record an **Expense** on the credit card | Debt increases |
-| Record a **Repayment** to the credit card | Debt decreases |
+| Record a **Transfer (Credit Card Payment)** | Debt decreases |
+| Record a **Transfer (Credit Card Refund)** | Debt decreases (refund reversal) |
 
 The balance shown in Finance Overview is displayed as a **negative number** (e.g. `−4,500`) because it represents money you owe, and is **subtracted** from your net asset.
 
@@ -56,7 +57,8 @@ After all spending:
 
 You pay NT$7,450 from your HSBC Savings account to clear the bill.
 
-> **Type:** Repayment
+> **Type:** Transfer
+> **Category:** Credit Card Payment
 > **From Account:** HSBC Savings
 > **To Account:** Visa Platinum
 > **Amount:** 7450
@@ -72,7 +74,8 @@ After this transaction:
 
 You can pay off only part of the balance. For example, if the bill is NT$7,450 but you only pay NT$5,000:
 
-> **Type:** Repayment
+> **Type:** Transfer
+> **Category:** Credit Card Payment
 > **From Account:** HSBC Savings
 > **To Account:** Visa Platinum
 > **Amount:** 5000
@@ -84,8 +87,9 @@ This carries over into the next month automatically.
 
 ## Key Rules
 
-- **Repayment From Account** must be Cash or Bank — you cannot repay one credit card with another
-- **Repayment To Account** must be a Credit Card
+- **Credit Card Payment From Account** must be Cash or Bank — you cannot pay one credit card with another
+- **Credit Card Payment To Account** must be a Credit Card
+- **Credit Card Refund** uses the same account for both From and To — the credit card that was charged
 - A credit card's balance **cannot go below zero** in normal usage (paying more than you owe is technically allowed but unusual)
 
 ---

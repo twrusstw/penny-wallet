@@ -2,6 +2,25 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
+## [0.0.7] - 2026-04-14
+
+### Changed
+- Merged `repayment` transaction type into `transfer` — existing repayments are read as `transfer` with category `credit_card_payment`
+- Renamed transfer type label from 「轉帳」to 「移轉」(zh) / "Transfer" (en)
+- `translateCategory`: empty, `-`, and `other` values now display as 「未分類」/ "Uncategorized" instead of a dash
+- Category defaults are now always normalized on config load (`normalizeOptions`), ignoring stale stored defaults
+
+### Added
+- Expanded default expense categories: `clothing`, `education`, `cash_expense`, `insurance`, `fees`, `tax`
+- Expanded default income categories: `interest`, `lottery`, `rent`, `cashback`, `dividend`, `investment_profit`, `insurance_income`, `pension`
+- Default transfer categories: `account_transfer`, `credit_card_payment`, `credit_card_refund`, `investment_trade`
+- Custom transfer categories section in Settings
+- `scripts/migrate-categories.mjs` — migrates old ledger rows (`repayment`→`transfer`, `other`→`-`) and `.penny-wallet.json` config to the new schema
+
+### Fixed
+- `credit_card_refund` balance calculation now correctly adjusts only the single credit card wallet (not double-counted)
+- `credit_card_payment` balance calculation now decreases both bank (from) and credit card debt (to)
+
 ## [0.0.6] - 2026-04-11
 
 ### Changed

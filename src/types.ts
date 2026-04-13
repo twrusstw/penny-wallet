@@ -1,4 +1,4 @@
-export type TransactionType = 'expense' | 'income' | 'transfer' | 'repayment'
+export type TransactionType = 'expense' | 'income' | 'transfer'
 export type WalletType = 'cash' | 'bank' | 'creditCard'
 
 export interface Transaction {
@@ -42,6 +42,7 @@ export interface PennyWalletOptions {
   categories: {
     expense: OptionsListGroup
     income: OptionsListGroup
+    transfer: OptionsListGroup
   }
 }
 
@@ -66,11 +67,20 @@ export interface TransactionModalParams {
 
 // Default category keys
 export const DEFAULT_EXPENSE_CATEGORIES = [
-  'food', 'transport', 'shopping', 'entertainment', 'medical', 'housing', 'other'
+  'food', 'clothing', 'housing', 'transport', 'education',
+  'entertainment', 'shopping', 'medical', 'cash_expense',
+  'insurance', 'fees', 'tax',
 ] as const
 
 export const DEFAULT_INCOME_CATEGORIES = [
-  'salary', 'bonus', 'side_income', 'other'
+  'salary', 'interest', 'side_income', 'bonus', 'lottery',
+  'rent', 'cashback', 'dividend', 'investment_profit',
+  'insurance_income', 'pension',
+] as const
+
+export const DEFAULT_TRANSFER_CATEGORIES = [
+  'account_transfer', 'credit_card_payment',
+  'credit_card_refund', 'investment_trade',
 ] as const
 
 export const DEFAULT_CONFIG: PennyWalletConfig = {
@@ -88,7 +98,7 @@ export const DEFAULT_CONFIG: PennyWalletConfig = {
   decimalPlaces: 0,
   options: {
     types: {
-      default: ['expense', 'income', 'transfer', 'repayment'],
+      default: ['expense', 'income', 'transfer'],
       custom: [],
     },
     categories: {
@@ -98,6 +108,10 @@ export const DEFAULT_CONFIG: PennyWalletConfig = {
       },
       income: {
         default: [...DEFAULT_INCOME_CATEGORIES],
+        custom: [],
+      },
+      transfer: {
+        default: [...DEFAULT_TRANSFER_CATEGORIES],
         custom: [],
       },
     },

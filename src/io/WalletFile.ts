@@ -5,7 +5,11 @@ import {
   WalletBalance,
   MonthSummary,
   PennyWalletConfig,
+  PennyWalletOptions,
   DEFAULT_CONFIG,
+  DEFAULT_EXPENSE_CATEGORIES,
+  DEFAULT_INCOME_CATEGORIES,
+  DEFAULT_TRANSFER_CATEGORIES,
 } from '../types'
 
 const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
@@ -23,8 +27,18 @@ export function parseRow(line: string): Transaction | null {
   const amount = parseFloat(amountStr)
   if (isNaN(amount)) return null
 
-  let txType = type as TransactionType
-  if ((txType as string) === 'payment') txType = 'repayment'  // backward compat
+  // backward compat: 'payment' → 'repayment' → 'transfer'
+  const rawType: string = type
+  let txType: TransactionType = rawType === 'expense' || rawType === 'income' || rawType === 'transfer'
+    ? rawType
+    : 'transfer'  // unknown/legacy types default to transfer
+
+  let txCategory = category === '-' ? undefined : category
+
+  if (rawType === 'payment' || rawType === 'repayment') {
+    txType = 'transfer'
+    if (!txCategory) txCategory = 'credit_card_payment'
+  }
 
   return {
     date,
@@ -32,7 +46,7 @@ export function parseRow(line: string): Transaction | null {
     wallet: wallet === '-' ? undefined : wallet,
     fromWallet: fromWallet === '-' ? undefined : fromWallet,
     toWallet: toWallet === '-' ? undefined : toWallet,
-    category: category === '-' ? undefined : category,
+    category: txCategory,
     note: note === '-' ? '' : note,
     amount,
     createdAt: (createdAtStr && createdAtStr !== '-') ? createdAtStr : undefined,
@@ -135,7 +149,8 @@ export class WalletFile {
       if (existsOnDisk) {
         try {
           const raw = await this.app.vault.adapter.read(path)
-          this.config = { ...DEFAULT_CONFIG, ...(JSON.parse(raw) as Partial<PennyWalletConfig>) }
+          const parsed = JSON.parse(raw) as Partial<PennyWalletConfig>
+          this.config = { ...DEFAULT_CONFIG, ...parsed, options: this.normalizeOptions(parsed) }
         } catch {
           this.config = { ...DEFAULT_CONFIG }
         }
@@ -157,7 +172,8 @@ export class WalletFile {
 
     try {
       const raw = await this.app.vault.read(file)
-      this.config = { ...DEFAULT_CONFIG, ...(JSON.parse(raw) as Partial<PennyWalletConfig>) }
+      const parsed = JSON.parse(raw) as Partial<PennyWalletConfig>
+      this.config = { ...DEFAULT_CONFIG, ...parsed, options: this.normalizeOptions(parsed) }
     } catch {
       this.config = { ...DEFAULT_CONFIG }
     }
@@ -168,7 +184,7 @@ export class WalletFile {
     return this.createdDefaultConfigOnLastLoad
   }
 
-  updateCustomCategories(type: 'expense' | 'income', custom: string[]): void {
+  updateCustomCategories(type: 'expense' | 'income' | 'transfer', custom: string[]): void {
     const { options } = this.config
     this.config = {
       ...this.config,
@@ -178,6 +194,21 @@ export class WalletFile {
           ...options.categories,
           [type]: { ...options.categories[type], custom },
         },
+      },
+    }
+  }
+
+  private normalizeOptions(parsed: Partial<PennyWalletConfig>): PennyWalletOptions {
+    const p = parsed.options
+    return {
+      types: {
+        default: ['expense', 'income', 'transfer'],
+        custom: p?.types?.custom ?? [],
+      },
+      categories: {
+        expense:  { default: [...DEFAULT_EXPENSE_CATEGORIES],  custom: p?.categories?.expense?.custom  ?? [] },
+        income:   { default: [...DEFAULT_INCOME_CATEGORIES],   custom: p?.categories?.income?.custom   ?? [] },
+        transfer: { default: [...DEFAULT_TRANSFER_CATEGORIES], custom: (p?.categories as Record<string, { custom?: string[] }>)?.['transfer']?.custom ?? [] },
       },
     }
   }
@@ -487,7 +518,7 @@ export class WalletFile {
     const map = new Map<string, number>()
     for (const tx of transactions) {
       if (tx.type !== type) continue
-      const key = tx.category ?? 'other'
+      const key = tx.category ?? ''
       map.set(key, (map.get(key) ?? 0) + tx.amount)
     }
     return map
@@ -611,16 +642,23 @@ export class WalletFile {
         }
         break
       case 'transfer':
-        if (tx.fromWallet && map.has(tx.fromWallet))
-          map.set(tx.fromWallet, (map.get(tx.fromWallet) ?? 0) - tx.amount)
-        if (tx.toWallet && map.has(tx.toWallet))
-          map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) + tx.amount)
-        break
-      case 'repayment':
-        if (tx.fromWallet && map.has(tx.fromWallet))
-          map.set(tx.fromWallet, (map.get(tx.fromWallet) ?? 0) - tx.amount)
-        if (tx.toWallet && map.has(tx.toWallet))
-          map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) - tx.amount)
+        if (tx.category === 'credit_card_refund' && tx.fromWallet === tx.toWallet) {
+          // Credit card refund: fromWallet == toWallet == credit card; debt decreases once
+          if (tx.toWallet && map.has(tx.toWallet))
+            map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) - tx.amount)
+        } else if (tx.category === 'credit_card_payment') {
+          // Credit card payment: from (bank) decreases, to (credit card) debt decreases
+          if (tx.fromWallet && map.has(tx.fromWallet))
+            map.set(tx.fromWallet, (map.get(tx.fromWallet) ?? 0) - tx.amount)
+          if (tx.toWallet && map.has(tx.toWallet))
+            map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) - tx.amount)
+        } else {
+          // Normal transfer: from decreases, to increases
+          if (tx.fromWallet && map.has(tx.fromWallet))
+            map.set(tx.fromWallet, (map.get(tx.fromWallet) ?? 0) - tx.amount)
+          if (tx.toWallet && map.has(tx.toWallet))
+            map.set(tx.toWallet, (map.get(tx.toWallet) ?? 0) + tx.amount)
+        }
         break
     }
   }

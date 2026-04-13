@@ -401,11 +401,15 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(t('settings.customCategories')).setHeading()
     const cardEl = containerEl.createDiv('pw-card pw-category-card')
 
+    const expenseCustom = config.options.categories.expense.custom
+    const incomeCustom = config.options.categories.income.custom
+    const transferCustom = config.options.categories.transfer.custom
+
     this.renderCategorySection(
       cardEl,
       t('settings.expenseCategories'),
-      config.options.categories.expense.custom,
-      config.options.categories.income.custom,
+      expenseCustom,
+      [...incomeCustom, ...transferCustom],
       config.options.categories.expense.default,
       async (updated) => {
         const scrollTop = this.getSettingsScrollTop()
@@ -421,12 +425,29 @@ export class PennyWalletSettingTab extends PluginSettingTab {
     this.renderCategorySection(
       cardEl,
       t('settings.incomeCategories'),
-      config.options.categories.income.custom,
-      config.options.categories.expense.custom,
+      incomeCustom,
+      [...expenseCustom, ...transferCustom],
       config.options.categories.income.default,
       async (updated) => {
         const scrollTop = this.getSettingsScrollTop()
         this.walletFile.updateCustomCategories('income', updated)
+        await this.walletFile.saveConfig()
+        this.app.workspace.trigger('penny-wallet:refresh')
+        this.display(scrollTop)
+      },
+    )
+
+    cardEl.createEl('hr', { cls: 'pw-category-divider' })
+
+    this.renderCategorySection(
+      cardEl,
+      t('settings.transferCategories'),
+      transferCustom,
+      [...expenseCustom, ...incomeCustom],
+      config.options.categories.transfer.default,
+      async (updated) => {
+        const scrollTop = this.getSettingsScrollTop()
+        this.walletFile.updateCustomCategories('transfer', updated)
         await this.walletFile.saveConfig()
         this.app.workspace.trigger('penny-wallet:refresh')
         this.display(scrollTop)

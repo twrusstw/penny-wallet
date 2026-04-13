@@ -118,10 +118,9 @@ export class DetailView extends ItemView {
     allTypePill.addEventListener('click', allPillHandler)
 
     const typeOptions: { value: TransactionType; label: string }[] = [
-      { value: 'expense',   label: t('detail.filterExpense') },
-      { value: 'income',    label: t('detail.filterIncome') },
-      { value: 'transfer',  label: t('detail.filterTransfer') },
-      { value: 'repayment', label: t('detail.filterRepayment') },
+      { value: 'expense',  label: t('detail.filterExpense') },
+      { value: 'income',   label: t('detail.filterIncome') },
+      { value: 'transfer', label: t('detail.filterTransfer') },
     ]
     for (const opt of typeOptions) {
       const pill = typePills.createEl('button', {
@@ -144,21 +143,18 @@ export class DetailView extends ItemView {
     // Category dropdown (same row, right side)
     const showCategories = this.filterTypes.size === 0 ||
       this.filterTypes.has('expense') ||
-      this.filterTypes.has('income')
+      this.filterTypes.has('income') ||
+      this.filterTypes.has('transfer')
 
     if (showCategories) {
       const catSource = this.cachedTransactions.filter(tx => {
-        if (this.filterTypes.size === 0) return tx.type === 'expense' || tx.type === 'income'
+        if (this.filterTypes.size === 0) return tx.type === 'expense' || tx.type === 'income' || tx.type === 'transfer'
         return this.filterTypes.has(tx.type)
       })
-      const expenseCats = new Set<string>()
-      const incomeCats = new Set<string>()
+      const allCategories = new Set<string>()
       catSource.forEach(tx => {
-        if (!tx.category) return
-        if (tx.type === 'expense') expenseCats.add(tx.category)
-        else if (tx.type === 'income') incomeCats.add(tx.category)
+        if (tx.category) allCategories.add(tx.category)
       })
-      const allCategories = new Set<string>([...expenseCats, ...incomeCats])
 
       for (const cat of this.filterCategories) {
         if (!allCategories.has(cat)) this.filterCategories.delete(cat)
@@ -325,7 +321,7 @@ export class DetailView extends ItemView {
 
     const main = row.createDiv('pw-tx-main')
     const top = main.createDiv('pw-tx-top')
-    const catText = tx.category ? translateCategory(tx.category) : '—'
+    const catText = translateCategory(tx.category ?? '')
     top.createEl('span', { text: catText, cls: 'pw-tx-cat' })
     if (tx.note) top.createEl('span', { text: tx.note, cls: 'pw-tx-note' })
     const walletText = tx.wallet ?? (tx.fromWallet && tx.toWallet ? `${tx.fromWallet} → ${tx.toWallet}` : '—')

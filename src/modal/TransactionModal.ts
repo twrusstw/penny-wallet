@@ -129,7 +129,7 @@ export class TransactionModal extends Modal {
 
   private renderTypeTabs() {
     this.typeTabsEl.empty()
-    const types: TransactionType[] = ['expense', 'income', 'transfer', 'repayment']
+    const types: TransactionType[] = ['expense', 'income', 'transfer']
     for (const tp of types) {
       const tab = this.typeTabsEl.createEl('button', {
         text: t(`type.${tp}`),
@@ -146,7 +146,6 @@ export class TransactionModal extends Modal {
           this.toWallet = ''
         } else {
           this.wallet = ''
-          this.category = ''
         }
         Array.from(this.typeTabsEl.children).forEach((el, i) => {
           el.classList.toggle('is-active', types[i] === tp)
@@ -162,7 +161,6 @@ export class TransactionModal extends Modal {
           this.toWallet = ''
         } else {
           this.wallet = ''
-          this.category = ''
         }
         this.renderTypeTabs()
         this.renderFields(this.walletFile.getConfig(), false)
@@ -192,18 +190,6 @@ export class TransactionModal extends Modal {
     const activeWallets = config.wallets.filter(w => w.status === 'active')
 
     if (this.type === 'expense' || this.type === 'income') {
-      this.addField(this.fieldsEl, t('modal.wallet'), () => {
-        const sel = createEl('select')
-        sel.createEl('option', { text: '—', value: '' })
-        for (const w of activeWallets) {
-          const opt = sel.createEl('option', { text: w.name, value: w.name })
-          if (w.name === this.wallet) opt.selected = true
-        }
-        sel.addEventListener('change', () => { this.wallet = sel.value })
-        onPickerTouch(sel)
-        return sel
-      })
-
       const categories = this.getCategoryOptions(config)
       this.addField(this.fieldsEl, t('modal.category'), () => {
         const sel = createEl('select')
@@ -216,40 +202,95 @@ export class TransactionModal extends Modal {
         onPickerTouch(sel)
         return sel
       })
+
+      this.addField(this.fieldsEl, t('modal.wallet'), () => {
+        const sel = createEl('select')
+        sel.createEl('option', { text: '—', value: '' })
+        for (const w of activeWallets) {
+          const opt = sel.createEl('option', { text: w.name, value: w.name })
+          if (w.name === this.wallet) opt.selected = true
+        }
+        sel.addEventListener('change', () => { this.wallet = sel.value })
+        onPickerTouch(sel)
+        return sel
+      })
     } else {
-      // From wallet — repayment excludes creditCard wallets as source
-      const fromCandidates = this.type === 'repayment'
-        ? activeWallets.filter(w => w.type !== 'creditCard')
-        : activeWallets
-
-      this.addField(this.fieldsEl, t('modal.fromWallet'), () => {
+      const categories = this.getCategoryOptions(config)
+      this.addField(this.fieldsEl, t('modal.category'), () => {
         const sel = createEl('select')
         sel.createEl('option', { text: '—', value: '' })
-        for (const w of fromCandidates) {
-          const opt = sel.createEl('option', { text: w.name, value: w.name })
-          if (w.name === this.fromWallet) opt.selected = true
+        for (const { key, label } of categories) {
+          const opt = sel.createEl('option', { text: label, value: key })
+          if (key === this.category) opt.selected = true
         }
-        sel.addEventListener('change', () => { this.fromWallet = sel.value })
+        sel.addEventListener('change', () => {
+          this.category = sel.value
+          this.renderFields(config, false)
+        })
         onPickerTouch(sel)
         return sel
       })
 
-      // To wallet — repayment only allows creditCard wallets as target
-      const toCandidates = this.type === 'repayment'
-        ? activeWallets.filter(w => w.type === 'creditCard')
-        : activeWallets
+      // Normalize wallet state when category constrains wallet types
+      if (this.category === 'credit_card_payment') {
+        const fromType = config.wallets.find(w => w.name === this.fromWallet)?.type
+        const toType   = config.wallets.find(w => w.name === this.toWallet)?.type
+        if (fromType === 'creditCard') this.fromWallet = ''
+        if (toType && toType !== 'creditCard') this.toWallet = ''
+      } else if (this.category === 'credit_card_refund') {
+        const fromType = config.wallets.find(w => w.name === this.fromWallet)?.type
+        if (fromType && fromType !== 'creditCard') this.fromWallet = ''
+        this.toWallet = this.fromWallet
+      }
 
-      this.addField(this.fieldsEl, t('modal.toWallet'), () => {
-        const sel = createEl('select')
-        sel.createEl('option', { text: '—', value: '' })
-        for (const w of toCandidates) {
-          const opt = sel.createEl('option', { text: w.name, value: w.name })
-          if (w.name === this.toWallet) opt.selected = true
-        }
-        sel.addEventListener('change', () => { this.toWallet = sel.value })
-        onPickerTouch(sel)
-        return sel
-      })
+      if (this.category === 'credit_card_refund') {
+        const ccWallets = activeWallets.filter(w => w.type === 'creditCard')
+        this.addField(this.fieldsEl, t('modal.wallet'), () => {
+          const sel = createEl('select')
+          sel.createEl('option', { text: '—', value: '' })
+          for (const w of ccWallets) {
+            const opt = sel.createEl('option', { text: w.name, value: w.name })
+            if (w.name === this.fromWallet) opt.selected = true
+          }
+          sel.addEventListener('change', () => {
+            this.fromWallet = sel.value
+            this.toWallet = sel.value
+          })
+          onPickerTouch(sel)
+          return sel
+        })
+      } else {
+        const fromWallets = this.category === 'credit_card_payment'
+          ? activeWallets.filter(w => w.type !== 'creditCard')
+          : activeWallets
+        const toWallets = this.category === 'credit_card_payment'
+          ? activeWallets.filter(w => w.type === 'creditCard')
+          : activeWallets
+
+        this.addField(this.fieldsEl, t('modal.fromWallet'), () => {
+          const sel = createEl('select')
+          sel.createEl('option', { text: '—', value: '' })
+          for (const w of fromWallets) {
+            const opt = sel.createEl('option', { text: w.name, value: w.name })
+            if (w.name === this.fromWallet) opt.selected = true
+          }
+          sel.addEventListener('change', () => { this.fromWallet = sel.value })
+          onPickerTouch(sel)
+          return sel
+        })
+
+        this.addField(this.fieldsEl, t('modal.toWallet'), () => {
+          const sel = createEl('select')
+          sel.createEl('option', { text: '—', value: '' })
+          for (const w of toWallets) {
+            const opt = sel.createEl('option', { text: w.name, value: w.name })
+            if (w.name === this.toWallet) opt.selected = true
+          }
+          sel.addEventListener('change', () => { this.toWallet = sel.value })
+          onPickerTouch(sel)
+          return sel
+        })
+      }
     }
 
     this.addField(this.fieldsEl, t('modal.note'), () => {
@@ -286,7 +327,9 @@ export class TransactionModal extends Modal {
   protected getCategoryOptions(config: PennyWalletConfig): { key: string; label: string }[] {
     const catOptions = this.type === 'expense'
       ? config.options.categories.expense
-      : config.options.categories.income
+      : this.type === 'income'
+        ? config.options.categories.income
+        : config.options.categories.transfer
 
     const defaultKeys = catOptions.default
     const customs = catOptions.custom
@@ -318,19 +361,22 @@ export class TransactionModal extends Modal {
     if (this.type === 'expense' || this.type === 'income') {
       if (!this.wallet) { this.showError(t('err.walletRequired')); return false }
     } else {
-      if (!this.fromWallet) { this.showError(t('err.fromWalletRequired')); return false }
-      if (!this.toWallet) { this.showError(t('err.toWalletRequired')); return false }
-
-      if (this.type === 'transfer' && this.fromWallet === this.toWallet) {
-        this.showError(t('err.sameWallet')); return false
-      }
-
-      if (this.type === 'repayment') {
-        const config = this.walletFile.getConfig()
-        const from = config.wallets.find(w => w.name === this.fromWallet)
-        const to   = config.wallets.find(w => w.name === this.toWallet)
-        if (from?.type === 'creditCard') { this.showError(t('err.repaymentFromCredit')); return false }
-        if (to?.type !== 'creditCard')   { this.showError(t('err.repaymentToNonCredit')); return false }
+      if (this.category === 'credit_card_refund') {
+        if (!this.fromWallet) { this.showError(t('err.walletRequired')); return false }
+        const cfg = this.walletFile.getConfig()
+        const walletType = cfg.wallets.find(w => w.name === this.fromWallet)?.type
+        if (walletType !== 'creditCard') { this.showError(t('err.mustBeCreditCard')); return false }
+      } else {
+        if (!this.fromWallet) { this.showError(t('err.fromWalletRequired')); return false }
+        if (!this.toWallet) { this.showError(t('err.toWalletRequired')); return false }
+        if (this.category === 'credit_card_payment') {
+          const cfg = this.walletFile.getConfig()
+          const fromType = cfg.wallets.find(w => w.name === this.fromWallet)?.type
+          const toType   = cfg.wallets.find(w => w.name === this.toWallet)?.type
+          if (fromType === 'creditCard') { this.showError(t('err.fromMustNotBeCreditCard')); return false }
+          if (toType !== 'creditCard')   { this.showError(t('err.toMustBeCreditCard')); return false }
+        }
+        if (this.fromWallet === this.toWallet) { this.showError(t('err.sameWallet')); return false }
       }
     }
     return true
@@ -343,9 +389,9 @@ export class TransactionModal extends Modal {
       date: dateToMonthDay(this.date),
       type: this.type,
       wallet:     (this.type === 'expense' || this.type === 'income') ? this.wallet : undefined,
-      fromWallet: (this.type === 'transfer' || this.type === 'repayment') ? this.fromWallet : undefined,
-      toWallet:   (this.type === 'transfer' || this.type === 'repayment') ? this.toWallet : undefined,
-      category:   (this.type === 'expense' || this.type === 'income') ? (this.category || undefined) : undefined,
+      fromWallet: this.type === 'transfer' ? this.fromWallet : undefined,
+      toWallet:   this.type === 'transfer' ? this.toWallet : undefined,
+      category:   this.category || undefined,
       note: this.note,
       amount: parseFloat(this.amount),
     }

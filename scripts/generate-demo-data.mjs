@@ -62,10 +62,25 @@ const config = {
   folderName: 'PennyWallet',
   decimalPlaces: 0,
   options: {
-    types: { default: ['expense', 'income', 'transfer', 'repayment'], custom: [] },
+    types: { default: ['expense', 'income', 'transfer'], custom: [] },
     categories: {
-      expense: { default: ['food', 'transport', 'shopping', 'entertainment', 'medical', 'housing', 'other'], custom: [] },
-      income:  { default: ['salary', 'bonus', 'side_income', 'other'], custom: [] },
+      expense: {
+        default: ['food', 'clothing', 'housing', 'transport', 'education',
+          'entertainment', 'shopping', 'medical', 'cash_expense',
+          'insurance', 'fees', 'tax'],
+        custom: [],
+      },
+      income: {
+        default: ['salary', 'interest', 'side_income', 'bonus', 'lottery',
+          'rent', 'cashback', 'dividend', 'investment_profit',
+          'insurance_income', 'pension'],
+        custom: [],
+      },
+      transfer: {
+        default: ['account_transfer', 'credit_card_payment',
+          'credit_card_refund', 'investment_trade'],
+        custom: [],
+      },
     },
   },
 }
@@ -80,16 +95,25 @@ const expenseWalletPool = [CASH_WALLET, PRIMARY_BANK, SECONDARY_BANK, PRIMARY_CA
 const incomeWalletPool = [PRIMARY_BANK, SECONDARY_BANK, CASH_WALLET]
 const creditCards = [PRIMARY_CARD, SECONDARY_CARD]
 const notes = {
-  food: ['Breakfast', 'Lunch', 'Dinner', 'Coffee', 'Snack'],
-  transport: ['Metro', 'Bus', 'Parking', 'High Speed Rail'],
-  shopping: ['Groceries', 'Online Shopping', 'Clothing', 'Electronics'],
-  entertainment: ['Movie', 'Dining Out', 'Streaming', 'Weekend Trip'],
-  medical: ['Clinic Visit', 'Pharmacy', 'Health Check'],
+  food: ['早餐', 'Lunch', 'Dinner', 'Coffee', 'Snack', 'Groceries'],
+  clothing: ['Shirt', 'Shoes', 'Jacket', 'Accessories'],
   housing: ['Rent', 'Utilities', 'Management Fee', 'Internet Bill'],
-  other: ['Insurance', 'Service Fee', 'Miscellaneous'],
+  transport: ['Metro', 'Bus', 'Parking', 'High Speed Rail', 'Taxi'],
+  education: ['Online Course', 'Books', 'Workshop', 'Subscription'],
+  entertainment: ['Movie', 'Dining Out', 'Streaming', 'Weekend Trip', 'Concert'],
+  shopping: ['Online Shopping', 'Electronics', 'Household Items'],
+  medical: ['Clinic Visit', 'Pharmacy', 'Health Check'],
+  cash_expense: ['ATM Withdrawal', 'Cash Spending'],
+  insurance: ['Life Insurance', 'Health Insurance', 'Car Insurance'],
+  fees: ['Service Fee', 'Transaction Fee', 'Bank Fee'],
+  tax: ['Income Tax', 'Land Tax'],
   salary: ['Monthly Salary'],
   bonus: ['Performance Bonus', 'Year-end Bonus'],
-  side_income: ['Freelance Work', 'Marketplace Sale', 'Investment Cashback'],
+  side_income: ['Freelance Work', 'Marketplace Sale'],
+  interest: ['Savings Interest', 'Fixed Deposit'],
+  cashback: ['Credit Card Cashback', 'Platform Reward'],
+  dividend: ['Stock Dividend'],
+  investment_profit: ['ETF Gain', 'Fund Redemption'],
 }
 
 function mulberry32(value) {
@@ -191,12 +215,17 @@ function applyTransaction(state, tx) {
       break
     }
     case 'transfer':
-      if (tx.fromWallet) state.balances[tx.fromWallet] -= tx.amount
-      if (tx.toWallet) state.balances[tx.toWallet] += tx.amount
-      break
-    case 'repayment':
-      if (tx.fromWallet) state.balances[tx.fromWallet] -= tx.amount
-      if (tx.toWallet) state.balances[tx.toWallet] -= tx.amount
+      if (tx.category === 'credit_card_payment') {
+        // from (bank) decreases, to (credit card) debt decreases
+        if (tx.fromWallet) state.balances[tx.fromWallet] -= tx.amount
+        if (tx.toWallet) state.balances[tx.toWallet] -= tx.amount
+      } else if (tx.category === 'credit_card_refund' && tx.fromWallet === tx.toWallet) {
+        // credit card debt decreases once
+        if (tx.toWallet) state.balances[tx.toWallet] -= tx.amount
+      } else {
+        if (tx.fromWallet) state.balances[tx.fromWallet] -= tx.amount
+        if (tx.toWallet) state.balances[tx.toWallet] += tx.amount
+      }
       break
   }
 }
@@ -234,7 +263,7 @@ function generateLifestyleExpense(year, monthIndex, category, walletOptions, amo
   return makeTransaction(createDate(year, monthIndex, randInt(1, 28)), 'expense', {
     wallet: pick(walletOptions),
     category,
-    note: pick(notes[category]),
+    note: pick(notes[category] ?? ['Expense']),
     amount: randInt(amountRange[0], amountRange[1]),
   })
 }
@@ -245,19 +274,14 @@ function generateMonthTransactions(monthDate, state) {
   const monthNumber = monthIndex + 1
   const transactions = []
 
+  // ── Income ─────────────────────────────────────────────────────────────────
+
   const salaryAmount = randInt(68000, 78000)
   transactions.push(makeTransaction(createDate(year, monthIndex, randInt(3, 5)), 'income', {
     wallet: PRIMARY_BANK,
     category: 'salary',
     note: pick(notes.salary),
     amount: salaryAmount,
-  }))
-
-  transactions.push(makeTransaction(createDate(year, monthIndex, randInt(5, 8)), 'transfer', {
-    fromWallet: PRIMARY_BANK,
-    toWallet: CASH_WALLET,
-    note: 'Cash Withdrawal',
-    amount: randInt(6000, 12000),
   }))
 
   if (chance(0.8)) {
@@ -278,6 +302,44 @@ function generateMonthTransactions(monthDate, state) {
     }))
   }
 
+  if (chance(0.5)) {
+    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(15, 25)), 'income', {
+      wallet: PRIMARY_BANK,
+      category: 'interest',
+      note: pick(notes.interest),
+      amount: randInt(120, 800),
+    }))
+  }
+
+  if (chance(0.3)) {
+    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(10, 20)), 'income', {
+      wallet: SECONDARY_BANK,
+      category: 'cashback',
+      note: pick(notes.cashback),
+      amount: randInt(80, 600),
+    }))
+  }
+
+  // ── Transfers ──────────────────────────────────────────────────────────────
+
+  transactions.push(makeTransaction(createDate(year, monthIndex, randInt(5, 8)), 'transfer', {
+    fromWallet: PRIMARY_BANK,
+    toWallet: CASH_WALLET,
+    category: 'account_transfer',
+    note: 'Cash Withdrawal',
+    amount: randInt(6000, 12000),
+  }))
+
+  transactions.push(makeTransaction(createDate(year, monthIndex, randInt(7, 10)), 'transfer', {
+    fromWallet: PRIMARY_BANK,
+    toWallet: SECONDARY_BANK,
+    category: 'account_transfer',
+    note: 'Transfer to Savings',
+    amount: randInt(8000, 18000),
+  }))
+
+  // ── Fixed expenses ─────────────────────────────────────────────────────────
+
   transactions.push(makeTransaction(createDate(year, monthIndex, 2), 'expense', {
     wallet: PRIMARY_BANK,
     category: 'housing',
@@ -292,38 +354,65 @@ function generateMonthTransactions(monthDate, state) {
     amount: randInt(1200, 3200),
   }))
 
-  transactions.push(makeTransaction(createDate(year, monthIndex, randInt(7, 10)), 'transfer', {
-    fromWallet: PRIMARY_BANK,
-    toWallet: SECONDARY_BANK,
-    note: 'Transfer to Savings',
-    amount: randInt(8000, 18000),
-  }))
+  // Insurance (monthly or quarterly)
+  if (chance(0.4) || [3, 6, 9, 12].includes(monthNumber)) {
+    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(5, 15)), 'expense', {
+      wallet: PRIMARY_BANK,
+      category: 'insurance',
+      note: pick(notes.insurance),
+      amount: randInt(800, 3500),
+    }))
+  }
+
+  // ── Variable expenses ──────────────────────────────────────────────────────
 
   const foodCount = randInt(10, 18)
   const transportCount = randInt(6, 12)
   const shoppingCount = randInt(2, 5)
   const entertainmentCount = randInt(1, 4)
   const medicalCount = chance(0.55) ? randInt(0, 2) : 0
-  const otherCount = randInt(1, 3)
 
-  for (let index = 0; index < foodCount; index++) {
+  for (let i = 0; i < foodCount; i++) {
     transactions.push(generateFoodExpense(year, monthIndex))
   }
-  for (let index = 0; index < transportCount; index++) {
+  for (let i = 0; i < transportCount; i++) {
     transactions.push(generateTransportExpense(year, monthIndex))
   }
-  for (let index = 0; index < shoppingCount; index++) {
+  for (let i = 0; i < shoppingCount; i++) {
     transactions.push(generateLifestyleExpense(year, monthIndex, 'shopping', expenseWalletPool, [350, 4200]))
   }
-  for (let index = 0; index < entertainmentCount; index++) {
+  for (let i = 0; i < entertainmentCount; i++) {
     transactions.push(generateLifestyleExpense(year, monthIndex, 'entertainment', [PRIMARY_CARD, SECONDARY_CARD, SECONDARY_BANK], [280, 3600]))
   }
-  for (let index = 0; index < medicalCount; index++) {
+  for (let i = 0; i < medicalCount; i++) {
     transactions.push(generateLifestyleExpense(year, monthIndex, 'medical', [CASH_WALLET, SECONDARY_CARD, SECONDARY_BANK], [180, 1800]))
   }
-  for (let index = 0; index < otherCount; index++) {
-    transactions.push(generateLifestyleExpense(year, monthIndex, 'other', [PRIMARY_BANK, SECONDARY_BANK, PRIMARY_CARD], [120, 2600]))
+
+  // Occasional new categories
+  if (chance(0.35)) {
+    transactions.push(generateLifestyleExpense(year, monthIndex, 'clothing', [PRIMARY_CARD, SECONDARY_BANK], [500, 4000]))
   }
+  if (chance(0.25)) {
+    transactions.push(generateLifestyleExpense(year, monthIndex, 'education', [PRIMARY_BANK, SECONDARY_BANK], [300, 3000]))
+  }
+  if (chance(0.4)) {
+    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(15, 25)), 'expense', {
+      wallet: pick([PRIMARY_BANK, SECONDARY_BANK]),
+      category: 'fees',
+      note: pick(notes.fees),
+      amount: randInt(30, 300),
+    }))
+  }
+  if ([5, 11].includes(monthNumber)) {
+    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(10, 20)), 'expense', {
+      wallet: PRIMARY_BANK,
+      category: 'tax',
+      note: 'Income Tax',
+      amount: randInt(2000, 8000),
+    }))
+  }
+
+  // ── Credit card payments ───────────────────────────────────────────────────
 
   const monthlyCardSpend = Object.fromEntries(creditCards.map(card => [card, 0]))
   for (const tx of transactions) {
@@ -335,17 +424,18 @@ function generateMonthTransactions(monthDate, state) {
   for (const card of creditCards) {
     const outstandingDebt = state.balances[card] + monthlyCardSpend[card]
     const paymentBase = monthlyCardSpend[card] * (0.86 + random() * 0.1)
-    const extraPaydown = outstandingDebt > 5000 ? randInt(300, 1200) : 0
-    const repayment = Math.min(outstandingDebt, Math.round(paymentBase + extraPaydown))
-    if (repayment <= 0) continue
-    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(24, 27)), 'repayment', {
+    const extraAmount = outstandingDebt > 5000 ? randInt(300, 1200) : 0
+    const payment = Math.min(outstandingDebt, Math.round(paymentBase + extraAmount))
+    if (payment <= 0) continue
+    transactions.push(makeTransaction(createDate(year, monthIndex, randInt(24, 27)), 'transfer', {
       fromWallet: weightedPick([
         { value: PRIMARY_BANK, weight: 4 },
         { value: SECONDARY_BANK, weight: 2 },
       ]),
       toWallet: card,
+      category: 'credit_card_payment',
       note: 'Card Payment',
-      amount: repayment,
+      amount: payment,
     }))
   }
 

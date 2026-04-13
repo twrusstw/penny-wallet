@@ -14,29 +14,58 @@ obsidian://penny-wallet?參數1=值1&參數2=值2
 
 | 參數 | 必填 | 說明 |
 |------|------|------|
-| `type` | 否 | `expense`（預設）/ `income` / `transfer` / `repayment` |
+| `type` | 否 | `expense`（預設）/ `income` / `transfer` |
 | `amount` | 否 | 金額 |
 | `note` | 否 | 備註 |
 | `category` | 否 | 分類 key 或自訂名稱 |
 | `wallet` | 否 | 帳戶名稱（支出 / 收入用） |
-| `fromWallet` | 否 | 來源帳戶（轉帳 / 還款用） |
-| `toWallet` | 否 | 目標帳戶（轉帳 / 還款用） |
+| `fromWallet` | 否 | 來源帳戶（移轉用） |
+| `toWallet` | 否 | 目標帳戶（移轉用） |
 | `date` | 否 | 日期，格式 `yyyy-mm-dd`，預設今天 |
 
 ### 分類 key 對照
 
+**支出**
+
 | key | 中文 | 英文 |
 |-----|------|------|
-| `food` | 餐飲 | Food |
+| `food` | 飲食 | Food |
+| `clothing` | 服飾 | Clothing |
+| `housing` | 住家 | Home |
 | `transport` | 交通 | Transport |
+| `education` | 學習 | Education |
+| `entertainment` | 休閒娛樂 | Entertainment |
 | `shopping` | 購物 | Shopping |
-| `entertainment` | 娛樂 | Entertainment |
 | `medical` | 醫療 | Medical |
-| `housing` | 居家 | Home |
-| `other` | 其他 | Other |
+| `cash_expense` | 現金消費 | Cash Expense |
+| `insurance` | 保險 | Insurance |
+| `fees` | 費用／手續費 | Fees |
+| `tax` | 稅金 | Tax |
+
+**收入**
+
+| key | 中文 | 英文 |
+|-----|------|------|
 | `salary` | 薪資 | Salary |
+| `interest` | 利息所得 | Interest |
+| `side_income` | 兼職 | Side Income |
 | `bonus` | 獎金 | Bonus |
-| `side_income` | 副業 | Side Income |
+| `lottery` | 發票／彩券中獎 | Lottery |
+| `rent` | 租金 | Rent |
+| `cashback` | 優惠回饋 | Cashback |
+| `dividend` | 股利 | Dividend |
+| `investment_profit` | 投資獲利 | Investment Profit |
+| `insurance_income` | 保險理賠 | Insurance Claim |
+| `pension` | 退休金 | Pension |
+
+**移轉**
+
+| key | 中文 | 英文 |
+|-----|------|------|
+| `account_transfer` | 帳戶互轉 | Account Transfer |
+| `credit_card_payment` | 信用卡繳費 | Credit Card Payment |
+| `credit_card_refund` | 信用卡刷退 | Credit Card Refund |
+| `investment_trade` | 投資買賣 | Investment Trade |
 
 ---
 
@@ -53,7 +82,7 @@ obsidian://penny-wallet?type=expense&amount=280&category=food&note=午餐
 1. 打開 iPhone **捷徑** App → 點右上角 **+** 新增捷徑
 2. 新增動作「**詢問輸入**」→ 提示 `金額`、類型 `數字`，儲存為變數 `amount`
 3. 新增動作「**詢問輸入**」→ 提示 `備註（可留空）`、類型 `文字`，儲存為變數 `note`
-4. 新增動作「**從選單選擇**」→ 提示 `分類`、選項 `food`、`transport`、`shopping`、`entertainment`、`other`，儲存為變數 `category`
+4. 新增動作「**從選單選擇**」→ 提示 `分類`、選項 `food`、`transport`、`shopping`、`entertainment`、`medical`，儲存為變數 `category`
 5. 新增動作「**開啟 URL**」：
    ```
    obsidian://penny-wallet?type=expense&amount=[amount]&note=[note]&category=[category]

@@ -5,8 +5,7 @@ const translations = {
     // Transaction types
     'type.expense': '支出',
     'type.income': '收入',
-    'type.transfer': '轉帳',
-    'type.repayment': '還款',
+    'type.transfer': '移轉',
 
     // Wallet types
     'walletType.cash': '現金',
@@ -15,17 +14,39 @@ const translations = {
 
     // Default expense categories
     'cat.food': '飲食',
+    'cat.clothing': '服飾',
+    'cat.housing': '住家',
     'cat.transport': '交通',
+    'cat.education': '學習',
+    'cat.entertainment': '休閒娛樂',
     'cat.shopping': '購物',
-    'cat.entertainment': '娛樂',
     'cat.medical': '醫療',
-    'cat.housing': '居家',
-    'cat.other': '其他',
+    'cat.cash_expense': '現金消費',
+    'cat.insurance': '保險',
+    'cat.fees': '費用／手續費',
+    'cat.tax': '稅金',
 
     // Default income categories
     'cat.salary': '薪資',
+    'cat.interest': '利息所得',
+    'cat.side_income': '兼職',
     'cat.bonus': '獎金',
-    'cat.side_income': '副業',
+    'cat.lottery': '發票／彩券中獎',
+    'cat.rent': '租金',
+    'cat.cashback': '優惠回饋',
+    'cat.dividend': '股利',
+    'cat.investment_profit': '投資獲利',
+    'cat.insurance_income': '保險理賠',
+    'cat.pension': '退休金',
+
+    // Default transfer categories
+    'cat.account_transfer': '帳戶互轉',
+    'cat.credit_card_payment': '信用卡繳費',
+    'cat.credit_card_refund': '信用卡刷退',
+    'cat.investment_trade': '投資買賣',
+
+    // Fallback
+    'cat.uncategorized': '未分類',
 
     // UI labels
     'ui.addTransaction': '新增交易',
@@ -55,7 +76,6 @@ const translations = {
     'detail.filterExpense': '支出',
     'detail.filterIncome': '收入',
     'detail.filterTransfer': '轉帳',
-    'detail.filterRepayment': '還款',
     'detail.subtotalIncome': '收入小計',
     'detail.subtotalExpense': '支出小計',
     'detail.noTransactions': '無符合條件的交易',
@@ -92,8 +112,6 @@ const translations = {
     'err.fromWalletRequired': '請選擇轉出帳戶',
     'err.toWalletRequired': '請選擇轉入帳戶',
     'err.sameWallet': '來源與目標錢包不能相同',
-    'err.repaymentFromCredit': '來源錢包不能是信用卡',
-    'err.repaymentToNonCredit': '目標錢包必須是信用卡',
     'err.walletNameEmpty': '錢包名稱不能為空',
     'err.walletNameDuplicate': '錢包名稱已存在',
 
@@ -119,6 +137,7 @@ const translations = {
     'settings.customCategories': '自訂分類',
     'settings.expenseCategories': '支出',
     'settings.incomeCategories': '收入',
+    'settings.transferCategories': '移轉',
     'settings.addCategory': '新增分類',
     'settings.categoryPlaceholder': '輸入分類名稱',
 
@@ -152,6 +171,9 @@ const translations = {
     'err.categoryExists': '分類已存在',
     'err.categoryExistsInOtherList': '此分類名稱已存在於另一個清單中',
     'err.invalidDate': '日期格式無效',
+    'err.fromMustNotBeCreditCard': '轉出帳戶不能是信用卡',
+    'err.toMustBeCreditCard': '轉入帳戶必須是信用卡',
+    'err.mustBeCreditCard': '帳戶必須是信用卡',
 
     'ui.unarchive': '取消封存',
 
@@ -166,23 +188,42 @@ const translations = {
     'type.expense': 'Expense',
     'type.income': 'Income',
     'type.transfer': 'Transfer',
-    'type.repayment': 'Repayment',
 
     'walletType.cash': 'Cash',
     'walletType.bank': 'Bank Account',
     'walletType.creditCard': 'Credit Card',
 
     'cat.food': 'Food',
-    'cat.transport': 'Transport',
-    'cat.shopping': 'Shopping',
-    'cat.entertainment': 'Entertainment',
-    'cat.medical': 'Medical',
+    'cat.clothing': 'Clothing',
     'cat.housing': 'Home',
-    'cat.other': 'Other',
+    'cat.transport': 'Transport',
+    'cat.education': 'Education',
+    'cat.entertainment': 'Entertainment',
+    'cat.shopping': 'Shopping',
+    'cat.medical': 'Medical',
+    'cat.cash_expense': 'Cash Expense',
+    'cat.insurance': 'Insurance',
+    'cat.fees': 'Fees',
+    'cat.tax': 'Tax',
 
     'cat.salary': 'Salary',
-    'cat.bonus': 'Bonus',
+    'cat.interest': 'Interest',
     'cat.side_income': 'Side Income',
+    'cat.bonus': 'Bonus',
+    'cat.lottery': 'Lottery',
+    'cat.rent': 'Rent',
+    'cat.cashback': 'Cashback',
+    'cat.dividend': 'Dividend',
+    'cat.investment_profit': 'Investment Profit',
+    'cat.insurance_income': 'Insurance Claim',
+    'cat.pension': 'Pension',
+
+    'cat.account_transfer': 'Account Transfer',
+    'cat.credit_card_payment': 'Credit Card Payment',
+    'cat.credit_card_refund': 'Credit Card Refund',
+    'cat.investment_trade': 'Investment Trade',
+
+    'cat.uncategorized': 'Uncategorized',
 
     'ui.addTransaction': 'Add Transaction',
     'ui.detail': 'Transactions',
@@ -209,7 +250,6 @@ const translations = {
     'detail.filterExpense': 'Expense',
     'detail.filterIncome': 'Income',
     'detail.filterTransfer': 'Transfer',
-    'detail.filterRepayment': 'Repayment',
     'detail.subtotalIncome': 'Income Subtotal',
     'detail.subtotalExpense': 'Expense Subtotal',
     'detail.noTransactions': 'No matching transactions',
@@ -242,8 +282,6 @@ const translations = {
     'err.fromWalletRequired': 'Please select source account',
     'err.toWalletRequired': 'Please select target account',
     'err.sameWallet': 'Source and target accounts cannot be the same',
-    'err.repaymentFromCredit': 'Source account cannot be a credit card',
-    'err.repaymentToNonCredit': 'Target account must be a credit card',
     'err.walletNameEmpty': 'Account name cannot be empty',
     'err.walletNameDuplicate': 'Account name already exists',
 
@@ -268,6 +306,7 @@ const translations = {
     'settings.customCategories': 'Custom Categories',
     'settings.expenseCategories': 'Expense',
     'settings.incomeCategories': 'Income',
+    'settings.transferCategories': 'Transfer',
     'settings.addCategory': 'Add Category',
     'settings.categoryPlaceholder': 'Enter category name',
 
@@ -296,6 +335,9 @@ const translations = {
     'err.categoryExists': 'Category already exists',
     'err.categoryExistsInOtherList': 'This category already exists in the other list',
     'err.invalidDate': 'Invalid date',
+    'err.fromMustNotBeCreditCard': 'Source account cannot be a credit card',
+    'err.toMustBeCreditCard': 'Target account must be a credit card',
+    'err.mustBeCreditCard': 'Account must be a credit card',
 
     'ui.unarchive': 'Unarchive',
 
@@ -396,6 +438,7 @@ export function formatMonthLabel(yearMonth: string): string {
 
 /** Translate a category value from markdown (key or raw string) to display label */
 export function translateCategory(value: string): string {
+  if (!value || value === '-' || value === 'other') return t('cat.uncategorized')
   const key = `cat.${value}` as TranslationKey
   const dict = translations[currentLocale] as Record<string, string>
   return dict[key] ?? value  // custom categories return as-is

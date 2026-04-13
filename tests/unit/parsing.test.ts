@@ -40,10 +40,18 @@ describe('parseRow', () => {
     })
   })
 
-  it('maps legacy type "payment" → "repayment"', () => {
+  it('maps legacy type "payment" → transfer + credit_card_payment', () => {
     const line = '| 04/30 | payment | - | 玉山銀行 | 玉山信用卡 | - | 還款 | 5000 |'
     const tx = parseRow(line)
-    expect(tx?.type).toBe('repayment')
+    expect(tx?.type).toBe('transfer')
+    expect(tx?.category).toBe('credit_card_payment')
+  })
+
+  it('maps legacy type "repayment" → transfer + credit_card_payment', () => {
+    const line = '| 04/30 | repayment | - | 玉山銀行 | 玉山信用卡 | - | 還款 | 5000 |'
+    const tx = parseRow(line)
+    expect(tx?.type).toBe('transfer')
+    expect(tx?.category).toBe('credit_card_payment')
   })
 
   it('note dash → empty string', () => {
