@@ -2,6 +2,11 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
+## [0.0.8] - 2026-04-16
+
+### Added
+- Tags field on each transaction for flexible labeling and filtering
+
 ## [0.0.7] - 2026-04-14
 
 ### Changed
