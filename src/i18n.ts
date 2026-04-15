@@ -79,7 +79,7 @@ const translations = {
     'detail.subtotalIncome': '收入小計',
     'detail.subtotalExpense': '支出小計',
     'detail.noTransactions': '無符合條件的交易',
-    'detail.searchPlaceholder': '搜尋備註...',
+    'detail.searchPlaceholder': '搜尋備註/標籤...',
     'detail.filterCategory': '分類',
 
     // Trend view
@@ -102,6 +102,8 @@ const translations = {
     'modal.toWallet': '轉入帳戶',
     'modal.category': '分類',
     'modal.note': '備註',
+    'modal.tags': '標籤',
+    'modal.tagsPlaceholder': '輸入標籤後按 Enter',
     'modal.amount': '金額',
 
     // Validation errors
@@ -253,7 +255,7 @@ const translations = {
     'detail.subtotalIncome': 'Income Subtotal',
     'detail.subtotalExpense': 'Expense Subtotal',
     'detail.noTransactions': 'No matching transactions',
-    'detail.searchPlaceholder': 'Search notes...',
+    'detail.searchPlaceholder': 'Search notes/tags...',
     'detail.filterCategory': 'Category',
 
     'trend.3m': '3 Months',
@@ -273,6 +275,8 @@ const translations = {
     'modal.toWallet': 'To Account',
     'modal.category': 'Category',
     'modal.note': 'Note',
+    'modal.tags': 'Tags',
+    'modal.tagsPlaceholder': 'Type and press Enter',
     'modal.amount': 'Amount',
 
     'err.amountRequired': 'Amount is required',

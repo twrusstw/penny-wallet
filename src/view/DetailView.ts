@@ -280,7 +280,12 @@ export class DetailView extends ItemView {
     const filtered = this.cachedTransactions.filter(tx => {
       if (this.filterTypes.size > 0 && !this.filterTypes.has(tx.type)) return false
       if (this.filterCategories.size > 0 && !this.filterCategories.has(tx.category ?? '')) return false
-      if (this.filterSearch && !tx.note?.toLowerCase().includes(this.filterSearch.toLowerCase())) return false
+      if (this.filterSearch) {
+        const q = this.filterSearch.toLowerCase()
+        const matchNote = tx.note?.toLowerCase().includes(q) ?? false
+        const matchTags = tx.tags?.some(tag => tag.toLowerCase().includes(q)) ?? false
+        if (!matchNote && !matchTags) return false
+      }
       return true
     })
 
@@ -323,6 +328,12 @@ export class DetailView extends ItemView {
     const top = main.createDiv('pw-tx-top')
     const catText = translateCategory(tx.category ?? '')
     top.createEl('span', { text: catText, cls: 'pw-tx-cat' })
+    if (tx.tags?.length) {
+      const tagsEl = top.createSpan('pw-tx-tags')
+      for (const tag of tx.tags) {
+        tagsEl.createSpan({ text: `#${tag}`, cls: 'pw-tx-tag-chip' })
+      }
+    }
     if (tx.note) top.createEl('span', { text: tx.note, cls: 'pw-tx-note' })
     const walletText = tx.wallet ?? (tx.fromWallet && tx.toWallet ? `${tx.fromWallet} → ${tx.toWallet}` : '—')
     main.createDiv({ text: walletText, cls: 'pw-tx-wallet' })

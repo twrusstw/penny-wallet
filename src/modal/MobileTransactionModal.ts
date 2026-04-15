@@ -1,6 +1,7 @@
 import { TransactionType, PennyWalletConfig } from '../types'
 import { t } from '../i18n'
 import { TransactionModal } from './TransactionModal'
+import { validateTag } from '../utils'
 
 export class MobileTransactionModal extends TransactionModal {
   private mobileTabsEl!: HTMLElement
@@ -244,6 +245,80 @@ export class MobileTransactionModal extends TransactionModal {
     noteInput.setAttribute('enterkeyhint', 'done')
     noteInput.addEventListener('input', () => { this.note = noteInput.value })
     noteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') noteInput.blur() })
+
+    // Tags
+    const tagRow = this.mobileRowsEl.createDiv('pw-mobile-row')
+    tagRow.createEl('span', { cls: 'pw-mobile-row-label', text: t('modal.tags') })
+    const tagWrapper = tagRow.createDiv('pw-tag-input-wrapper')
+    const tagChipsEl = tagWrapper.createDiv('pw-tag-chips')
+    const tagInput = tagWrapper.createEl('input', {
+      type: 'text',
+      cls: 'pw-tag-input',
+      placeholder: t('modal.tagsPlaceholder'),
+    })
+    tagInput.setAttribute('enterkeyhint', 'done')
+    const tagDropdown = tagWrapper.createDiv('pw-tag-dropdown')
+    tagDropdown.hide()
+
+    const availableTags = this.walletFile.getConfig().tags
+
+    const updateMobDropdown = () => {
+      const val = tagInput.value.replace(/^#/, '').toLowerCase()
+      const suggestions = availableTags.filter(tag =>
+        !this.tags.includes(tag) && (val === '' || tag.toLowerCase().includes(val))
+      )
+      tagDropdown.empty()
+      if (suggestions.length === 0) { tagDropdown.hide(); return }
+      for (const tag of suggestions) {
+        const item = tagDropdown.createDiv({ cls: 'pw-tag-dropdown-item', text: tag })
+        item.addEventListener('mousedown', (e) => { e.preventDefault(); addMobTag(tag); updateMobDropdown() })
+      }
+      const rect = tagInput.getBoundingClientRect()
+      tagDropdown.style.left = `${rect.left}px`
+      tagDropdown.style.top = `${rect.bottom + 2}px`
+      tagDropdown.style.width = `${rect.width}px`
+      tagDropdown.show()
+    }
+
+    const renderMobChips = () => {
+      tagChipsEl.empty()
+      for (const tag of this.tags) {
+        const chip = tagChipsEl.createSpan('pw-tag-chip')
+        chip.createSpan({ text: `#${tag}` })
+        const x = chip.createSpan({ text: '×', cls: 'pw-tag-chip-remove' })
+        x.addEventListener('click', () => {
+          this.tags = this.tags.filter(t => t !== tag)
+          renderMobChips()
+          if (this.tags.length < 3) tagInput.removeAttribute('disabled')
+        })
+      }
+    }
+
+    const addMobTag = (value?: string) => {
+      const raw = (value ?? tagInput.value).replace(/^#/, '').trim()
+      if (!raw) return
+      if (!validateTag(raw)) { tagInput.value = ''; tagDropdown.hide(); return }
+      if (this.tags.includes(raw)) { tagInput.value = ''; tagDropdown.hide(); return }
+      if (this.tags.length >= 3) return
+      this.tags = [...this.tags, raw]
+      tagInput.value = ''
+      tagDropdown.hide()
+      renderMobChips()
+      if (this.tags.length >= 3) tagInput.setAttribute('disabled', 'true')
+    }
+
+    tagInput.addEventListener('input', updateMobDropdown)
+    tagInput.addEventListener('focus', updateMobDropdown)
+    tagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addMobTag() }
+      if (e.key === 'Escape') tagDropdown.hide()
+    })
+    tagInput.addEventListener('blur', () => {
+      setTimeout(() => tagDropdown.hide(), 150)
+      addMobTag()
+    })
+    renderMobChips()
+    if (this.tags.length >= 3) tagInput.setAttribute('disabled', 'true')
   }
 
   private addMobilePickerRow(

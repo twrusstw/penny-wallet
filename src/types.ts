@@ -9,6 +9,7 @@ export interface Transaction {
   toWallet?: string   // transfer / repayment
   category?: string   // expense / income; default categories stored as key (e.g. "food"), custom as raw string
   note: string
+  tags?: string[]
   amount: number
   createdAt?: string  // ISO 8601 timestamp; absent in data written before this field was added
 }
@@ -52,12 +53,14 @@ export interface PennyWalletConfig {
   folderName: string
   decimalPlaces: 0 | 2
   options: PennyWalletOptions
+  tags: string[]
 }
 
 export interface TransactionModalParams {
   type?: TransactionType
   amount?: number
   note?: string
+  tags?: string[]
   category?: string
   wallet?: string
   fromWallet?: string
@@ -116,4 +119,5 @@ export const DEFAULT_CONFIG: PennyWalletConfig = {
       },
     },
   },
+  tags: [],
 }

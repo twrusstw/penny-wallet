@@ -13,37 +13,66 @@ import {
 } from '../types'
 
 const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
-const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Amount | CreatedAt |
-|------|------|--------|------|----|----------|------|--------|-----------|`
+const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Tags | Amount | CreatedAt |
+|------|------|--------|------|----|----------|------|------|--------|-----------|`
 
 // ─── Markdown Table Parsing ───────────────────────────────────────────────────
 
 export function parseRow(line: string): Transaction | null {
   const cols = line.split('|').map(c => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1)
-  if (cols.length !== 8 && cols.length !== 9) return null
-  const [date, type, wallet, fromWallet, toWallet, category, note, amountStr, createdAtStr] = cols
+  if (cols.length < 8 || cols.length > 10) return null
+  const [date, type, wallet, fromWallet, toWallet, category, note] = cols
   if (!date || !type) return null
+
+  let tagsStr: string | undefined
+  let amountStr: string
+  let createdAtStr: string | undefined
+
+  if (cols.length === 8) {
+    // old: no tags, no createdAt
+    amountStr = cols[7]
+  } else if (cols.length === 9) {
+    // col[7] numeric → old format (amount, createdAt); non-numeric → tags present (no createdAt)
+    if (/^-?\d+(\.\d+)?$/.test(cols[7])) {
+      amountStr = cols[7]
+      createdAtStr = cols[8]
+    } else {
+      tagsStr = cols[7]
+      amountStr = cols[8]
+    }
+  } else {
+    // 10 cols: date type wallet from to category note tags amount createdAt
+    tagsStr = cols[7]
+    amountStr = cols[8]
+    createdAtStr = cols[9]
+  }
 
   const amount = parseFloat(amountStr)
   if (isNaN(amount)) return null
 
-  const txType = type as TransactionType
-  let txCategory = category === '-' ? undefined : category
+  // Legacy type mapping
+  let txType = type as TransactionType
+  let txCategory: string | undefined = category === '-' ? undefined : category
+  if (type === 'payment' || type === 'repayment') {
+    txType = 'transfer'
+    txCategory = 'credit_card_payment'
+  }
 
   return {
     date,
     type: txType,
-    wallet: wallet === '-' ? undefined : wallet,
+    wallet:     wallet     === '-' ? undefined : wallet,
     fromWallet: fromWallet === '-' ? undefined : fromWallet,
-    toWallet: toWallet === '-' ? undefined : toWallet,
-    category: txCategory,
-    note: note === '-' ? '' : note,
+    toWallet:   toWallet   === '-' ? undefined : toWallet,
+    category:   txCategory,
+    note:       note       === '-' ? '' : note,
+    tags:       (tagsStr && tagsStr !== '-') ? tagsStr.split(',').filter(t => t.length > 0) : undefined,
     amount,
-    createdAt: (createdAtStr && createdAtStr !== '-') ? createdAtStr : undefined,
+    createdAt:  (createdAtStr && createdAtStr !== '-') ? createdAtStr : undefined,
   }
 }
 
-function formatRow(tx: Transaction): string {
+export function formatRow(tx: Transaction): string {
   const d = tx.date
   const type = tx.type
   const wallet = tx.wallet ?? '-'
@@ -51,9 +80,10 @@ function formatRow(tx: Transaction): string {
   const to = tx.toWallet ?? '-'
   const cat = tx.category ?? '-'
   const note = tx.note || '-'
+  const tags = tx.tags?.length ? tx.tags.join(',') : '-'
   const amount = tx.amount
   const createdAt = tx.createdAt ?? '-'
-  return `| ${d} | ${type} | ${wallet} | ${from} | ${to} | ${cat} | ${note} | ${amount} | ${createdAt} |`
+  return `| ${d} | ${type} | ${wallet} | ${from} | ${to} | ${cat} | ${note} | ${tags} | ${amount} | ${createdAt} |`
 }
 
 export function parseMonthFile(content: string): Transaction[] {
@@ -203,6 +233,15 @@ export class WalletFile {
     }
   }
 
+  private mergeTags(newTags: string[]): void {
+    if (!newTags.length) return
+    const existing = new Set(this.config.tags)
+    for (const tag of newTags) {
+      existing.add(tag)
+    }
+    this.config = { ...this.config, tags: [...existing].sort() }
+  }
+
   async saveConfig(): Promise<void> {
     const path = ROOT_CONFIG_PATH
     const content = JSON.stringify(this.config, null, 2)
@@ -312,6 +351,10 @@ export class WalletFile {
       if (a.createdAt && b.createdAt) return a.createdAt.localeCompare(b.createdAt)
       return 0
     })
+    if (tx.tags?.length) {
+      this.mergeTags(tx.tags)
+      await this.saveConfig()
+    }
     const summary = this.computeSummary(transactions)
     await this.writeMonthFile(yearMonth, buildMonthContent(yearMonth, transactions, summary))
   }
@@ -338,6 +381,10 @@ export class WalletFile {
         if (a.createdAt && b.createdAt) return a.createdAt.localeCompare(b.createdAt)
         return 0
       })
+      if (newTx.tags?.length) {
+        this.mergeTags(newTx.tags)
+        await this.saveConfig()
+      }
       const summary = this.computeSummary(transactions)
       await this.writeMonthFile(oldYearMonth, buildMonthContent(oldYearMonth, transactions, summary))
     } else {
@@ -394,6 +441,7 @@ export class WalletFile {
       (tx.fromWallet ?? '') === (target.fromWallet ?? '') &&
       (tx.toWallet ?? '') === (target.toWallet ?? '') &&
       (tx.category ?? '') === (target.category ?? '') &&
+      (tx.tags ?? []).join(',') === (target.tags ?? []).join(',') &&
       (tx.createdAt === undefined || target.createdAt === undefined || tx.createdAt === target.createdAt),
     )
   }

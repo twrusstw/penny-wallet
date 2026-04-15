@@ -1551,3 +1551,96 @@ select.pw-add-wallet-input {
 .is-mobile .pw-asset-right > .pw-card:last-child {
   flex: none;
 }
+
+/* ── Tag chips in transaction rows ── */
+.pw-tx-tags {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pw-tx-tag-chip {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Tag input in modals ── */
+.pw-tag-input-wrapper {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+
+.pw-tag-dropdown {
+  position: fixed;
+  z-index: 9999;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.pw-tag-dropdown-item {
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-normal);
+  border-radius: 4px;
+}
+
+.pw-tag-dropdown-item:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.pw-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pw-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.pw-tag-chip-remove {
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.pw-tag-chip-remove:hover {
+  color: var(--text-normal);
+}
+
+.pw-tag-input-wrapper .pw-tag-input {
+  flex: 1;
+  min-width: 80px;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-normal);
+  padding: 0;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { stepMonth, isAfterCurrentMonth, formatAmount } from '../../src/utils'
+import { stepMonth, isAfterCurrentMonth, formatAmount, validateTag } from '../../src/utils'
 import { dateToYearMonth, dateToMonthDay } from '../../src/io/WalletFile'
 
 // ── stepMonth ─────────────────────────────────────────────────────────────────
@@ -108,5 +108,37 @@ describe('dateToMonthDay', () => {
 
   it('works for single-digit month and day', () => {
     expect(dateToMonthDay('2026-01-09')).toBe('01/09')
+  })
+})
+
+// ── validateTag ───────────────────────────────────────────────────────────────
+
+describe('validateTag', () => {
+  it('accepts short ASCII tag', () => {
+    expect(validateTag('food')).toBe(true)
+  })
+  it('accepts 10-char ASCII tag', () => {
+    expect(validateTag('abcdefghij')).toBe(true)
+  })
+  it('rejects 11-char ASCII tag', () => {
+    expect(validateTag('abcdefghijk')).toBe(false)
+  })
+  it('accepts 5-char CJK tag', () => {
+    expect(validateTag('日常通勤飲')).toBe(true)      // 5 chars → true
+  })
+  it('rejects 6-char CJK tag', () => {
+    expect(validateTag('日常通勤飲食')).toBe(false)
+  })
+  it('rejects empty string', () => {
+    expect(validateTag('')).toBe(false)
+  })
+  it('rejects tag with comma', () => {
+    expect(validateTag('foo,bar')).toBe(false)
+  })
+  it('rejects tag with pipe', () => {
+    expect(validateTag('foo|bar')).toBe(false)
+  })
+  it('rejects whitespace-only tag', () => {
+    expect(validateTag('  ')).toBe(false)
   })
 })

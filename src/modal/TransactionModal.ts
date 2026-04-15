@@ -2,6 +2,7 @@ import { App, Modal, Notice } from 'obsidian'
 import { Transaction, TransactionType, TransactionModalParams, PennyWalletConfig } from '../types'
 import { WalletFile, dateToMonthDay, dateToYearMonth } from '../io/WalletFile'
 import { t, translateCategory } from '../i18n'
+import { validateTag } from '../utils'
 
 export class TransactionModal extends Modal {
   protected walletFile: WalletFile
@@ -19,6 +20,7 @@ export class TransactionModal extends Modal {
   protected toWallet: string = ''
   protected category: string = ''
   protected note: string = ''
+  protected tags: string[] = []
   protected amount: string = ''
 
   // DOM refs
@@ -63,6 +65,7 @@ export class TransactionModal extends Modal {
       this.toWallet = tx.toWallet ?? ''
       this.category = tx.category ?? ''
       this.note = tx.note
+      this.tags = tx.tags ? [...tx.tags] : []
       this.amount = String(tx.amount)
     } else {
       this.type = (this.params.type as TransactionType) ?? 'expense'
@@ -75,6 +78,7 @@ export class TransactionModal extends Modal {
       this.toWallet = this.params.toWallet ?? ''
       this.category = this.params.category ?? ''
       this.note = this.params.note ?? ''
+      this.tags = this.params.tags ? [...this.params.tags] : []
       this.amount = this.params.amount != null ? String(this.params.amount) : ''
     }
   }
@@ -302,6 +306,10 @@ export class TransactionModal extends Modal {
       return input
     })
 
+    this.addField(this.fieldsEl, t('modal.tags'), () => {
+      return this.buildTagInput(this.walletFile.getConfig().tags)
+    })
+
     this.addField(this.fieldsEl, t('modal.amount'), () => {
       const dp = this.walletFile.getConfig().decimalPlaces ?? 0
       const input = createEl('input', { type: 'number', placeholder: dp === 2 ? '0.00' : '0' })
@@ -322,6 +330,79 @@ export class TransactionModal extends Modal {
     const input = buildInput()
     input.addClass('pw-field-input')
     row.appendChild(input)
+  }
+
+  private buildTagInput(availableTags: string[]): HTMLElement {
+    const wrapper = createDiv('pw-tag-input-wrapper')
+    const chipsEl = wrapper.createDiv('pw-tag-chips')
+    const input = wrapper.createEl('input', {
+      type: 'text',
+      cls: 'pw-tag-input',
+      placeholder: t('modal.tagsPlaceholder'),
+    })
+    input.setAttribute('enterkeyhint', 'done')
+    const dropdown = wrapper.createDiv('pw-tag-dropdown')
+    dropdown.hide()
+
+    const updateDropdown = () => {
+      const val = input.value.replace(/^#/, '').toLowerCase()
+      const suggestions = availableTags.filter(tag =>
+        !this.tags.includes(tag) && (val === '' || tag.toLowerCase().includes(val))
+      )
+      dropdown.empty()
+      if (suggestions.length === 0) { dropdown.hide(); return }
+      for (const tag of suggestions) {
+        const item = dropdown.createDiv({ cls: 'pw-tag-dropdown-item', text: tag })
+        item.addEventListener('mousedown', (e) => { e.preventDefault(); addTag(tag); updateDropdown() })
+      }
+      const rect = input.getBoundingClientRect()
+      dropdown.style.left = `${rect.left}px`
+      dropdown.style.top = `${rect.bottom + 2}px`
+      dropdown.style.width = `${rect.width}px`
+      dropdown.show()
+    }
+
+    const renderChips = () => {
+      chipsEl.empty()
+      for (const tag of this.tags) {
+        const chip = chipsEl.createSpan('pw-tag-chip')
+        chip.createSpan({ text: `#${tag}` })
+        const x = chip.createSpan({ text: '×', cls: 'pw-tag-chip-remove' })
+        x.addEventListener('click', () => {
+          this.tags = this.tags.filter(tg => tg !== tag)
+          renderChips()
+          if (this.tags.length < 3) input.removeAttribute('disabled')
+        })
+      }
+    }
+
+    const addTag = (value?: string) => {
+      const raw = (value ?? input.value).replace(/^#/, '').trim()
+      if (!raw) return
+      if (!validateTag(raw)) { input.value = ''; dropdown.hide(); return }
+      if (this.tags.includes(raw)) { input.value = ''; dropdown.hide(); return }
+      if (this.tags.length >= 3) return
+      this.tags = [...this.tags, raw]
+      input.value = ''
+      dropdown.hide()
+      renderChips()
+      if (this.tags.length >= 3) input.setAttribute('disabled', 'true')
+    }
+
+    input.addEventListener('input', updateDropdown)
+    input.addEventListener('focus', updateDropdown)
+    input.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() }
+      if (e.key === 'Escape') dropdown.hide()
+    })
+    input.addEventListener('blur', () => {
+      setTimeout(() => dropdown.hide(), 150)
+      addTag()
+    })
+
+    renderChips()
+    if (this.tags.length >= 3) input.setAttribute('disabled', 'true')
+    return wrapper
   }
 
   protected getCategoryOptions(config: PennyWalletConfig): { key: string; label: string }[] {
@@ -394,6 +475,7 @@ export class TransactionModal extends Modal {
       category:   this.category || undefined,
       note: this.note,
       amount: parseFloat(this.amount),
+      tags: this.tags.length ? this.tags : undefined,
     }
 
     const newYearMonth = dateToYearMonth(this.date)

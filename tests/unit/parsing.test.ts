@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   parseRow,
+  formatRow,
   parseMonthFile,
   parseFrontmatter,
   buildMonthContent,
@@ -143,6 +144,70 @@ describe('parseFrontmatter', () => {
     expect(fm.income).toBe(1000)
     expect(fm.expense).toBeUndefined()
     expect(fm.netAsset).toBeUndefined()
+  })
+})
+
+// ── tags parsing ──────────────────────────────────────────────────────────────
+
+describe('parseRow — tags', () => {
+  it('parses 10-col row with tags', () => {
+    const line = '| 04/03 | expense | 玉山 | - | - | food | 午餐 | 通勤,日常 | 250 | 2026-04-03T10:00:00.000Z |'
+    const tx = parseRow(line)
+    expect(tx?.tags).toEqual(['通勤', '日常'])
+    expect(tx?.amount).toBe(250)
+    expect(tx?.createdAt).toBe('2026-04-03T10:00:00.000Z')
+  })
+
+  it('parses 10-col row with dash tags (no tags)', () => {
+    const line = '| 04/03 | expense | 玉山 | - | - | food | 午餐 | - | 250 | 2026-04-03T10:00:00.000Z |'
+    const tx = parseRow(line)
+    expect(tx?.tags).toBeUndefined()
+    expect(tx?.amount).toBe(250)
+  })
+
+  it('parses old 9-col row (no tags, has createdAt) correctly', () => {
+    // col[7] is numeric → old format: amount=col[7], createdAt=col[8]
+    const line = '| 04/03 | expense | 玉山 | - | - | food | 午餐 | 250 | 2026-04-03T10:00:00.000Z |'
+    const tx = parseRow(line)
+    expect(tx?.tags).toBeUndefined()
+    expect(tx?.amount).toBe(250)
+    expect(tx?.createdAt).toBe('2026-04-03T10:00:00.000Z')
+  })
+
+  it('parses migrated 9-col row (has tags, no createdAt)', () => {
+    // col[7] is non-numeric → new format: tags=col[7], amount=col[8]
+    const line = '| 04/03 | expense | 玉山 | - | - | food | 午餐 | 通勤 | 250 |'
+    const tx = parseRow(line)
+    expect(tx?.tags).toEqual(['通勤'])
+    expect(tx?.amount).toBe(250)
+    expect(tx?.createdAt).toBeUndefined()
+  })
+
+  it('parses old 8-col row (no tags, no createdAt)', () => {
+    const line = '| 04/03 | expense | 玉山 | - | - | food | 午餐 | 250 |'
+    const tx = parseRow(line)
+    expect(tx?.tags).toBeUndefined()
+    expect(tx?.amount).toBe(250)
+    expect(tx?.createdAt).toBeUndefined()
+  })
+})
+
+describe('formatRow — tags', () => {
+  it('formats tags as comma-separated string', () => {
+    const tx: Transaction = {
+      date: '04/03', type: 'expense', wallet: '玉山', note: '午餐',
+      tags: ['通勤', '日常'], amount: 250,
+    }
+    const row = formatRow(tx)
+    expect(row).toContain('| 通勤,日常 |')
+  })
+
+  it('formats missing tags as dash', () => {
+    const tx: Transaction = {
+      date: '04/03', type: 'expense', wallet: '玉山', note: '午餐', amount: 250,
+    }
+    const row = formatRow(tx)
+    expect(row).toContain('| - | 250 |')  // tags dash, then amount
   })
 })
 
