@@ -438,7 +438,7 @@ export function formatMonthLabel(yearMonth: string): string {
 
 /** Translate a category value from markdown (key or raw string) to display label */
 export function translateCategory(value: string): string {
-  if (!value || value === '-' || value === 'other') return t('cat.uncategorized')
+  if (!value || value === '-') return t('cat.uncategorized')
   const key = `cat.${value}` as TranslationKey
   const dict = translations[currentLocale] as Record<string, string>
   return dict[key] ?? value  // custom categories return as-is

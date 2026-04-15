@@ -27,18 +27,8 @@ export function parseRow(line: string): Transaction | null {
   const amount = parseFloat(amountStr)
   if (isNaN(amount)) return null
 
-  // backward compat: 'payment' → 'repayment' → 'transfer'
-  const rawType: string = type
-  let txType: TransactionType = rawType === 'expense' || rawType === 'income' || rawType === 'transfer'
-    ? rawType
-    : 'transfer'  // unknown/legacy types default to transfer
-
+  const txType = type as TransactionType
   let txCategory = category === '-' ? undefined : category
-
-  if (rawType === 'payment' || rawType === 'repayment') {
-    txType = 'transfer'
-    if (!txCategory) txCategory = 'credit_card_payment'
-  }
 
   return {
     date,
