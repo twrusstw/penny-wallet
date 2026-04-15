@@ -233,19 +233,6 @@ export class MobileTransactionModal extends TransactionModal {
       }
     }
 
-    // Note
-    const noteRow = this.mobileRowsEl.createDiv('pw-mobile-row')
-    noteRow.createEl('span', { cls: 'pw-mobile-row-label', text: t('modal.note') })
-    const noteInput = noteRow.createEl('input', {
-      type: 'text',
-      cls: 'pw-mobile-note-input',
-      placeholder: t('modal.note'),
-    })
-    noteInput.value = this.note
-    noteInput.setAttribute('enterkeyhint', 'done')
-    noteInput.addEventListener('input', () => { this.note = noteInput.value })
-    noteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') noteInput.blur() })
-
     // Tags
     const tagRow = this.mobileRowsEl.createDiv('pw-mobile-row')
     tagRow.createEl('span', { cls: 'pw-mobile-row-label', text: t('modal.tags') })
@@ -319,6 +306,19 @@ export class MobileTransactionModal extends TransactionModal {
     })
     renderMobChips()
     if (this.tags.length >= 3) tagInput.setAttribute('disabled', 'true')
+
+    // Note
+    const noteRow = this.mobileRowsEl.createDiv('pw-mobile-row')
+    noteRow.createEl('span', { cls: 'pw-mobile-row-label', text: t('modal.note') })
+    const noteInput = noteRow.createEl('input', {
+      type: 'text',
+      cls: 'pw-mobile-note-input',
+      placeholder: t('modal.note'),
+    })
+    noteInput.value = this.note
+    noteInput.setAttribute('enterkeyhint', 'done')
+    noteInput.addEventListener('input', () => { this.note = noteInput.value })
+    noteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') noteInput.blur() })
   }
 
   private addMobilePickerRow(

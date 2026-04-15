@@ -297,6 +297,10 @@ export class TransactionModal extends Modal {
       }
     }
 
+    this.addField(this.fieldsEl, t('modal.tags'), () => {
+      return this.buildTagInput(this.walletFile.getConfig().tags)
+    })
+
     this.addField(this.fieldsEl, t('modal.note'), () => {
       const input = createEl('input', { type: 'text', placeholder: t('modal.note') })
       input.value = this.note
@@ -304,10 +308,6 @@ export class TransactionModal extends Modal {
       input.addEventListener('input', () => { this.note = input.value })
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur() })
       return input
-    })
-
-    this.addField(this.fieldsEl, t('modal.tags'), () => {
-      return this.buildTagInput(this.walletFile.getConfig().tags)
     })
 
     this.addField(this.fieldsEl, t('modal.amount'), () => {
