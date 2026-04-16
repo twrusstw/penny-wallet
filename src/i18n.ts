@@ -104,6 +104,7 @@ const translations = {
     'modal.note': '備註',
     'modal.tags': '標籤',
     'modal.tagsPlaceholder': '輸入標籤後按 Enter',
+    'modal.done': '完成',
     'modal.amount': '金額',
 
     // Validation errors
@@ -277,6 +278,7 @@ const translations = {
     'modal.note': 'Note',
     'modal.tags': 'Tags',
     'modal.tagsPlaceholder': 'Type and press Enter',
+    'modal.done': 'Done',
     'modal.amount': 'Amount',
 
     'err.amountRequired': 'Amount is required',

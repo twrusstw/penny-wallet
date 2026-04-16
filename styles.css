@@ -253,9 +253,34 @@
   color: var(--text-faint);
 }
 
-/* Hide numpad when note field is focused (iOS keyboard replaces it) */
-.pw-mobile-rows:has(.pw-mobile-note-input:focus) ~ .pw-mobile-numpad {
+/* Hide numpad when note or tag field is focused (iOS keyboard replaces it) */
+.pw-mobile-rows:has(.pw-mobile-note-input:focus) ~ .pw-mobile-numpad,
+.pw-mobile-rows:has(.pw-tag-input:focus) ~ .pw-mobile-numpad {
   display: none;
+}
+
+/* Keyboard dismiss toolbar — sits above iOS software keyboard via position:fixed */
+.pw-kb-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.pw-kb-toolbar-done {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 /* Custom numpad — gap:1px uses the grid background as hairline dividers between cells.
@@ -1587,8 +1612,15 @@ select.pw-add-wallet-input {
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  max-height: 180px;
+  max-height: 320px; /* desktop: ~10 items before scroll */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile: keyboard open, dropdown shows above input */
+.pw-tag-dropdown--above {
+  max-height: 152px; /* ~4 items */
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .pw-tag-dropdown-item {
