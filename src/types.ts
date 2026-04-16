@@ -54,6 +54,7 @@ export interface PennyWalletConfig {
   decimalPlaces: 0 | 2
   options: PennyWalletOptions
   tags: string[]
+  autoValidateOnLoad: boolean
 }
 
 export interface TransactionModalParams {
@@ -120,4 +121,23 @@ export const DEFAULT_CONFIG: PennyWalletConfig = {
     },
   },
   tags: [],
+  autoValidateOnLoad: true,
 }
+
+export interface FrontmatterIssue {
+  type: 'frontmatter'
+  yearMonth: string
+  storedIncome: number
+  storedExpense: number
+  actualIncome: number
+  actualExpense: number
+}
+
+export interface OrphanedWalletIssue {
+  type: 'orphanedWallet'
+  walletName: string
+  transactionCount: number
+  yearMonths: string[]
+}
+
+export type ValidationIssue = FrontmatterIssue | OrphanedWalletIssue

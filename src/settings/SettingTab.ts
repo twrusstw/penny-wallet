@@ -90,6 +90,17 @@ export class PennyWalletSettingTab extends PluginSettingTab {
           this.app.workspace.trigger('penny-wallet:refresh')
         })
       })
+
+    new Setting(group)
+      .setName(t('settings.autoValidate'))
+      .setDesc(t('settings.autoValidateDesc'))
+      .addToggle(toggle => toggle
+        .setValue(config.autoValidateOnLoad)
+        .onChange(async (value) => {
+          this.walletFile.updateConfig({ autoValidateOnLoad: value })
+          await this.walletFile.saveConfig()
+        }),
+      )
   }
 
   private renderActiveWallets(walletBalances: WalletBalance[], walletsWithTransactions: Set<string>) {

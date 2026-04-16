@@ -144,6 +144,22 @@ const translations = {
     'settings.addCategory': '新增分類',
     'settings.categoryPlaceholder': '輸入分類名稱',
 
+    // Validation
+    'validation.modalTitle': '資料驗算報告',
+    'validation.noIssues': '資料驗算完成，無任何問題。',
+    'validation.fixAll': '全部修復',
+    'validation.fix': '修復',
+    'validation.remap': '重新指定',
+    'validation.remapTo': '改指向',
+    'validation.frontmatterSection': 'Frontmatter 快取不一致',
+    'validation.frontmatterDesc': '{month}：收入應為 {actualIncome}（現為 {storedIncome}），支出應為 {actualExpense}（現為 {storedExpense}）',
+    'validation.orphanSection': '孤兒帳戶引用',
+    'validation.orphanDesc': '帳戶「{wallet}」不存在於設定中，共 {count} 筆交易引用（{months}）',
+    'validation.repaired': '已修復 {count} 個問題',
+    'settings.autoValidate': '啟動時自動驗算',
+    'settings.autoValidateDesc': '開啟 Obsidian 時自動掃描所有資料，偵測 frontmatter 快取不一致與孤兒帳戶',
+    'notice.validationClean': '驗算完成，資料無誤。',
+
     // Confirm dialogs
     'confirm.deleteTransaction': '確定要刪除這筆交易？此操作無法復原。',
     'confirm.archiveWallet': '確定要封存此錢包？封存後無法復原，該錢包將不再出現在交易入口中。',
@@ -315,6 +331,22 @@ const translations = {
     'settings.transferCategories': 'Transfer',
     'settings.addCategory': 'Add Category',
     'settings.categoryPlaceholder': 'Enter category name',
+
+    // Validation
+    'validation.modalTitle': 'Data Validation Report',
+    'validation.noIssues': 'Validation complete — no issues found.',
+    'validation.fixAll': 'Fix All',
+    'validation.fix': 'Fix',
+    'validation.remap': 'Remap',
+    'validation.remapTo': 'Remap to',
+    'validation.frontmatterSection': 'Frontmatter Cache Mismatch',
+    'validation.frontmatterDesc': '{month}: income should be {actualIncome} (stored: {storedIncome}), expense should be {actualExpense} (stored: {storedExpense})',
+    'validation.orphanSection': 'Orphaned Wallet References',
+    'validation.orphanDesc': 'Wallet "{wallet}" not found in config — {count} transaction(s) affected ({months})',
+    'validation.repaired': 'Fixed {count} issue(s)',
+    'settings.autoValidate': 'Validate data on startup',
+    'settings.autoValidateDesc': 'Scan all data when Obsidian loads to detect frontmatter mismatches and orphaned wallet references',
+    'notice.validationClean': 'Validation complete — data looks good.',
 
     'confirm.deleteTransaction': 'Delete this transaction? This cannot be undone.',
     'confirm.archiveWallet': 'Archive this wallet? This cannot be undone. The wallet will no longer appear in transaction forms.',
