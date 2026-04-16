@@ -253,9 +253,34 @@
   color: var(--text-faint);
 }
 
-/* Hide numpad when note field is focused (iOS keyboard replaces it) */
-.pw-mobile-rows:has(.pw-mobile-note-input:focus) ~ .pw-mobile-numpad {
+/* Hide numpad when note or tag field is focused (iOS keyboard replaces it) */
+.pw-mobile-rows:has(.pw-mobile-note-input:focus) ~ .pw-mobile-numpad,
+.pw-mobile-rows:has(.pw-tag-input:focus) ~ .pw-mobile-numpad {
   display: none;
+}
+
+/* Keyboard dismiss toolbar — sits above iOS software keyboard via position:fixed */
+.pw-kb-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.pw-kb-toolbar-done {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 /* Custom numpad — gap:1px uses the grid background as hairline dividers between cells.
@@ -1587,8 +1612,15 @@ select.pw-add-wallet-input {
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  max-height: 180px;
+  max-height: 320px; /* desktop: ~10 items before scroll */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile: keyboard open, dropdown shows above input */
+.pw-tag-dropdown--above {
+  max-height: 152px; /* ~4 items */
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .pw-tag-dropdown-item {
@@ -1643,4 +1675,160 @@ select.pw-add-wallet-input {
   font-size: 13px;
   color: var(--text-normal);
   padding: 0;
+}
+
+/* ── ValidationModal ── */
+
+.pw-validation-modal {
+  padding: 0;
+}
+
+/* Header: [X] [title] [spacer] — 三欄，title 置中 */
+.pw-validation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  height: 44px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.pw-validation-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.pw-validation-close-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.pw-validation-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin: 0;
+  text-align: center;
+  flex: 1;
+}
+
+.pw-validation-header-spacer {
+  width: 32px;
+  flex-shrink: 0;
+}
+
+/* Content area */
+.pw-validation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Section */
+.pw-validation-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pw-validation-section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Issue card */
+.pw-validation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.pw-validation-card-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Footer row for frontmatter cards (fix button, right-aligned) */
+.pw-validation-card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Actions row for orphan cards (remap select + fix button) */
+.pw-validation-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pw-validation-remap-select {
+  flex: 1;
+  font-size: 12px;
+}
+
+.pw-validation-fix-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.pw-validation-fix-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Divider */
+.pw-validation-divider {
+  height: 1px;
+  background: var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+/* Footer: full-width fix-all button */
+.pw-validation-footer {
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.pw-validation-fix-all-btn {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 10px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pw-validation-fix-all-btn:hover {
+  background: var(--interactive-accent-hover);
 }

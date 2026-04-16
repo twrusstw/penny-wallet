@@ -14,4 +14,4 @@ main.js
 demo-vault/*
 !demo-vault/.obsidian/
 demo-vault/.obsidian/*
-!demo-vault/.obsidian/community-plugins.json
+!demo-vault/.obsidian/community-plugins.json.worktrees/

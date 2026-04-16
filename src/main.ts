@@ -6,6 +6,7 @@ import { DashboardView, DASHBOARD_VIEW_TYPE } from './view/DashboardView'
 import { DetailView, DETAIL_VIEW_TYPE } from './view/DetailView'
 import { AssetView, ASSET_VIEW_TYPE } from './view/AssetView'
 import { PennyWalletSettingTab } from './settings/SettingTab'
+import { ValidationModal } from './modal/ValidationModal'
 import { TransactionModalParams, TransactionType } from './types'
 import { initI18n, t } from './i18n'
 import pluginIcon from './assets/plugin-icon.svg'
@@ -31,6 +32,7 @@ export default class PennyWalletPlugin extends Plugin {
     this.addCommand({ id: 'open-asset', name: 'Open assets', callback: () => { void this.openAssetView() } })
     this.addCommand({ id: 'open-detail', name: 'Open transactions', callback: () => { void this.openDetailView() } })
     this.addCommand({ id: 'add-transaction', name: 'Add transaction', callback: () => this.openTransactionModal() })
+    this.addCommand({ id: 'validate-data', name: 'Validate data', callback: () => void this.runValidation(true) })
     this.addCommand({ id: 'refresh', name: 'Refresh views', callback: () => {
       this.app.workspace.trigger('penny-wallet:refresh')
     } })
@@ -55,10 +57,25 @@ export default class PennyWalletPlugin extends Plugin {
       if (this.walletFile.didCreateDefaultConfigOnLastLoad()) {
         new Notice(t('onboard.welcome'), 8000)
       }
+
+      if (this.walletFile.getConfig().autoValidateOnLoad) {
+        void this.runValidation(false)
+      }
     } catch (e) {
       console.error('PennyWallet: failed to load config', e)
       new Notice(t('notice.loadFailed'))
     }
+  }
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+
+  async runValidation(showNoticeIfClean: boolean) {
+    const issues = await this.walletFile.validateAllData()
+    if (issues.length === 0) {
+      if (showNoticeIfClean) new Notice(t('notice.validationClean'))
+      return
+    }
+    new ValidationModal(this.app, this.walletFile, issues).open()
   }
 
   // ── Open Views ──────────────────────────────────────────────────────────────

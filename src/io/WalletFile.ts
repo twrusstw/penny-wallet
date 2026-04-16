@@ -11,6 +11,7 @@ import {
   DEFAULT_INCOME_CATEGORIES,
   DEFAULT_TRANSFER_CATEGORIES,
 } from '../types'
+import type { Wallet, FrontmatterIssue, OrphanedWalletIssue, ValidationIssue } from '../types'
 
 const ROOT_CONFIG_PATH = normalizePath('.penny-wallet.json')
 const TABLE_HEADER = `| Date | Type | Wallet | From | To | Category | Note | Tags | Amount | CreatedAt |
@@ -138,6 +139,57 @@ export function dateToYearMonth(date: string): string {
 /** "yyyy-MM-DD" → "MM/DD" (the format stored in markdown) */
 export function dateToMonthDay(date: string): string {
   return date.substring(5).replace('-', '/')
+}
+
+// ─── Validation Helpers (pure functions) ─────────────────────────────────────
+
+export function detectFrontmatterIssues(
+  yearMonth: string,
+  transactions: Transaction[],
+  stored: { income: number; expense: number },
+): FrontmatterIssue[] {
+  let actualIncome = 0
+  let actualExpense = 0
+  for (const tx of transactions) {
+    if (tx.type === 'income') actualIncome += tx.amount
+    else if (tx.type === 'expense') actualExpense += tx.amount
+  }
+  if (actualIncome === stored.income && actualExpense === stored.expense) return []
+  return [{
+    type: 'frontmatter',
+    yearMonth,
+    storedIncome: stored.income,
+    storedExpense: stored.expense,
+    actualIncome,
+    actualExpense,
+  }]
+}
+
+export function detectOrphanedWallets(
+  monthData: Map<string, Transaction[]>,
+  wallets: Wallet[],
+): OrphanedWalletIssue[] {
+  const knownNames = new Set(wallets.map(w => w.name))
+  const orphanMap = new Map<string, { count: number; months: Set<string> }>()
+
+  for (const [ym, txs] of monthData) {
+    for (const tx of txs) {
+      for (const name of [tx.wallet, tx.fromWallet, tx.toWallet]) {
+        if (!name || knownNames.has(name)) continue
+        if (!orphanMap.has(name)) orphanMap.set(name, { count: 0, months: new Set() })
+        const entry = orphanMap.get(name)!
+        entry.count++
+        entry.months.add(ym)
+      }
+    }
+  }
+
+  return [...orphanMap.entries()].map(([walletName, { count, months }]) => ({
+    type: 'orphanedWallet' as const,
+    walletName,
+    transactionCount: count,
+    yearMonths: [...months].sort(),
+  }))
 }
 
 // ─── WalletFile class ─────────────────────────────────────────────────────────
@@ -479,6 +531,58 @@ export class WalletFile {
     const transactions = parseMonthFile(content)
     const summary = this.computeSummary(transactions)
     await this.writeMonthFile(yearMonth, buildMonthContent(yearMonth, transactions, summary))
+  }
+
+  // ── Data Validation ──────────────────────────────────────────────────────────
+
+  async validateAllData(): Promise<ValidationIssue[]> {
+    const issues: ValidationIssue[] = []
+    const files = this.app.vault.getMarkdownFiles().filter((f: TFile) =>
+      f.path.startsWith(this.config.folderName + '/') &&
+      /^\d{4}-\d{2}$/.test(f.basename),
+    )
+
+    const monthData = new Map<string, Transaction[]>()
+
+    for (const file of files) {
+      const content = await this.app.vault.read(file)
+      const ym = file.basename
+      const transactions = parseMonthFile(content)
+      monthData.set(ym, transactions)
+
+      const fm = parseFrontmatter(content)
+      if (fm.income !== undefined && fm.expense !== undefined && fm.netAsset !== undefined) {
+        const fmIssues = detectFrontmatterIssues(ym, transactions, {
+          income: fm.income,
+          expense: fm.expense,
+        })
+        issues.push(...fmIssues)
+      }
+    }
+
+    const orphanIssues = detectOrphanedWallets(monthData, this.config.wallets)
+    issues.push(...orphanIssues)
+
+    return issues
+  }
+
+  async repairOrphanedWallet(walletName: string): Promise<void> {
+    const already = this.config.wallets.find(w => w.name === walletName)
+    if (already) return  // 已存在，不重複建立
+    this.config = {
+      ...this.config,
+      wallets: [
+        ...this.config.wallets,
+        {
+          name: walletName,
+          type: 'bank',
+          initialBalance: 0,
+          status: 'archived',
+          includeInNetAsset: false,
+        },
+      ],
+    }
+    await this.saveConfig()
   }
 
   // ── Net Asset & Wallet Balance Calculation ────────────────────────────────────

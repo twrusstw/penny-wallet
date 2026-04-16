@@ -7,6 +7,7 @@ export class MobileTransactionModal extends TransactionModal {
   private mobileTabsEl!: HTMLElement
   private mobileRowsEl!: HTMLElement
   private mobileAmountEl!: HTMLElement
+  private viewportCleanups: (() => void)[] = []
 
   onOpen() {
     const config = this.walletFile.getConfig()
@@ -249,6 +250,27 @@ export class MobileTransactionModal extends TransactionModal {
 
     const availableTags = this.walletFile.getConfig().tags
 
+    const TAG_DROPDOWN_MAX_H_ABOVE = 152 // must match CSS .pw-tag-dropdown--above
+    const TAG_DROPDOWN_MAX_H_BELOW = 320 // must match CSS .pw-tag-dropdown default
+    let tagInputFocused = false
+
+    const repositionMobDropdown = () => {
+      if (tagDropdown.style.display === 'none') return
+      const rect = tagInput.getBoundingClientRect()
+      if (tagInputFocused) {
+        // keyboard open: show above
+        tagDropdown.addClass('pw-tag-dropdown--above')
+        tagDropdown.style.top = `${rect.top - TAG_DROPDOWN_MAX_H_ABOVE - 2}px`
+      } else {
+        // no keyboard: show below
+        tagDropdown.removeClass('pw-tag-dropdown--above')
+        tagDropdown.style.top = `${rect.bottom + 2}px`
+        void TAG_DROPDOWN_MAX_H_BELOW // referenced to avoid unused warning
+      }
+      tagDropdown.style.left = `${rect.left}px`
+      tagDropdown.style.width = `${rect.width}px`
+    }
+
     const updateMobDropdown = () => {
       const val = tagInput.value.replace(/^#/, '').toLowerCase()
       const suggestions = availableTags.filter(tag =>
@@ -260,12 +282,12 @@ export class MobileTransactionModal extends TransactionModal {
         const item = tagDropdown.createDiv({ cls: 'pw-tag-dropdown-item', text: tag })
         item.addEventListener('mousedown', (e) => { e.preventDefault(); addMobTag(tag); updateMobDropdown() })
       }
-      const rect = tagInput.getBoundingClientRect()
-      tagDropdown.style.left = `${rect.left}px`
-      tagDropdown.style.top = `${rect.bottom + 2}px`
-      tagDropdown.style.width = `${rect.width}px`
       tagDropdown.show()
+      repositionMobDropdown()
     }
+
+    window.visualViewport?.addEventListener('resize', repositionMobDropdown)
+    this.viewportCleanups.push(() => window.visualViewport?.removeEventListener('resize', repositionMobDropdown))
 
     const renderMobChips = () => {
       tagChipsEl.empty()
@@ -294,14 +316,31 @@ export class MobileTransactionModal extends TransactionModal {
       if (this.tags.length >= 3) tagInput.setAttribute('disabled', 'true')
     }
 
+    // Keyboard dismiss toolbar (iOS: fixed bar pushed above keyboard)
+    const kbToolbar = this.contentEl.createDiv('pw-kb-toolbar')
+    kbToolbar.hide()
+    const doneBtn = kbToolbar.createEl('button', { cls: 'pw-kb-toolbar-done', text: t('modal.done') })
+    doneBtn.addEventListener('mousedown', (e) => e.preventDefault()) // prevent blur before click
+    doneBtn.addEventListener('click', () => tagInput.blur())
+    this.viewportCleanups.push(() => kbToolbar.remove())
+
     tagInput.addEventListener('input', updateMobDropdown)
-    tagInput.addEventListener('focus', updateMobDropdown)
+    tagInput.addEventListener('focus', () => {
+      tagInputFocused = true
+      kbToolbar.show()
+      updateMobDropdown()
+      setTimeout(() => {
+        tagInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        repositionMobDropdown()
+      }, 300)
+    })
     tagInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addMobTag() }
       if (e.key === 'Escape') tagDropdown.hide()
     })
     tagInput.addEventListener('blur', () => {
-      setTimeout(() => tagDropdown.hide(), 150)
+      tagInputFocused = false
+      setTimeout(() => { tagDropdown.hide(); kbToolbar.hide() }, 150)
       addMobTag()
     })
     renderMobChips()
@@ -441,6 +480,8 @@ export class MobileTransactionModal extends TransactionModal {
   }
 
   onClose() {
+    this.viewportCleanups.forEach(fn => fn())
+    this.viewportCleanups = []
     this.containerEl.removeClass('pw-transaction-modal-container')
     super.onClose()
   }
