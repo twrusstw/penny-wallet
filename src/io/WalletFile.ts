@@ -484,6 +484,12 @@ export class WalletFile {
   }
 
   private findTransactionIndex(transactions: Transaction[], target: Transaction): number {
+    // When target has a createdAt, use it as the unique key to avoid
+    // accidentally matching a different transaction with identical fields.
+    if (target.createdAt) {
+      return transactions.findIndex(tx => tx.createdAt === target.createdAt)
+    }
+    // Fallback for legacy transactions that have no createdAt: match by all fields.
     return transactions.findIndex(tx =>
       tx.date === target.date &&
       tx.type === target.type &&
@@ -493,8 +499,7 @@ export class WalletFile {
       (tx.fromWallet ?? '') === (target.fromWallet ?? '') &&
       (tx.toWallet ?? '') === (target.toWallet ?? '') &&
       (tx.category ?? '') === (target.category ?? '') &&
-      (tx.tags ?? []).join(',') === (target.tags ?? []).join(',') &&
-      (tx.createdAt === undefined || target.createdAt === undefined || tx.createdAt === target.createdAt),
+      (tx.tags ?? []).join(',') === (target.tags ?? []).join(','),
     )
   }
 

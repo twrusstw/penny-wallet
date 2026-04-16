@@ -133,7 +133,6 @@ describe('updateTransaction', () => {
     expect(newTxs).toHaveLength(1)
     expect(newTxs[0].note).toBe('Lunch')
   })
-})
 
   it('targets the correct transaction when two identical rows exist (uses createdAt)', async () => {
     const { wf } = await makeWalletFile()
@@ -168,6 +167,7 @@ describe('updateTransaction', () => {
     const amounts = txs.map(t => t.amount).sort((a, b) => a - b)
     expect(amounts).toEqual([150, 777])
   })
+})
 
 // ── deleteTransaction ─────────────────────────────────────────────────────────
 
