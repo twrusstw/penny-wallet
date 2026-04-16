@@ -2,6 +2,14 @@
 
 All notable changes to PennyWallet will be documented in this file.
 
+## [0.0.9] - 2026-04-17
+
+### Added
+- Data validation: detects malformed transaction rows and surfaces errors in the UI
+
+### Fixed
+- Mobile tag dropdown on iOS no longer triggers the system keyboard; uses native tap-to-select flow instead
+
 ## [0.0.8] - 2026-04-16
 
 ### Added
