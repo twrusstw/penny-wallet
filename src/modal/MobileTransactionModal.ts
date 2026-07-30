@@ -176,7 +176,13 @@ export class MobileTransactionModal extends TransactionModal {
         })
         return dateInput
       },
-      () => dateInput.focus(),
+      () => {
+        if (typeof dateInput.showPicker === 'function') {
+          dateInput.showPicker()
+        } else {
+          dateInput.focus()
+        }
+      },
     ).addClass('pw-mobile-date-row')
 
     const categories = this.getCategoryOptions(config)
