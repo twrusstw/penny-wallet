@@ -131,6 +131,10 @@ export function buildMonthContent(yearMonth: string, transactions: Transaction[]
 
 // ─── Validation Helpers (pure functions) ─────────────────────────────────────
 
+export function cleanAmount(n: number): number {
+  return Number(n.toFixed(10))
+}
+
 export function detectFrontmatterIssues(
   yearMonth: string,
   transactions: Transaction[],
@@ -142,6 +146,8 @@ export function detectFrontmatterIssues(
     if (tx.type === 'income') actualIncome += tx.amount
     else if (tx.type === 'expense') actualExpense += tx.amount
   }
+  actualIncome = cleanAmount(actualIncome)
+  actualExpense = cleanAmount(actualExpense)
   if (actualIncome === stored.income && actualExpense === stored.expense) return []
   return [{
     type: 'frontmatter',
@@ -638,7 +644,7 @@ export class WalletFile {
       if (tx.type === 'expense') expense += tx.amount
     }
     // netAsset in monthly frontmatter = approximation; Dashboard re-computes from walletBalances
-    return { income, expense, netAsset: 0 }
+    return { income: cleanAmount(income), expense: cleanAmount(expense), netAsset: 0 }
   }
 
   /** Group transactions by category for pie chart */

@@ -210,6 +210,15 @@ describe('computeSummary', () => {
     ]
     expect(wf.computeSummary(txs)).toEqual({ income: 0, expense: 200, netAsset: 0 })
   })
+
+  it('strips floating-point noise (0.1 + 0.2 returns exactly 0.3)', () => {
+    const wf = makeWalletFile([])
+    const txs: Transaction[] = [
+      { date: '04/01', type: 'income', wallet: 'Bank', category: 'salary', note: '', amount: 0.1 },
+      { date: '04/02', type: 'income', wallet: 'Bank', category: 'salary', note: '', amount: 0.2 },
+    ]
+    expect(wf.computeSummary(txs)).toEqual({ income: 0.3, expense: 0, netAsset: 0 })
+  })
 })
 
 // ── groupByCategory ───────────────────────────────────────────────────────────

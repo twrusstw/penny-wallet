@@ -53,6 +53,25 @@ describe('detectFrontmatterIssues', () => {
     const issues = detectFrontmatterIssues('2026-04', txs, { income: 0, expense: 0, })
     expect(issues).toHaveLength(0)
   })
+
+  it('does not flag floating-point noise (0.1 + 0.2 vs stored 0.3)', () => {
+    const txs: Transaction[] = [
+      { date: '04/01', type: 'income', wallet: 'A', note: '', amount: 0.1 },
+      { date: '04/02', type: 'income', wallet: 'A', note: '', amount: 0.2 },
+    ]
+    const issues = detectFrontmatterIssues('2026-04', txs, { income: 0.3, expense: 0 })
+    expect(issues).toHaveLength(0)
+  })
+
+  it('does not flag a real month of decimal expenses summing to 1296.71', () => {
+    const amounts = [
+      39.85, 38.8, 25.95, 52.41, 38.51, 33.09, 24.25, 48.67, 91.05, 3.31, 2.84, 143.6,
+      135.89, 128.52, 6.26, 3.02, 73.12, 122.01, 25.73, 3.83, 15.96, 147.82, 92.22,
+    ]
+    const txs: Transaction[] = amounts.map(amount => makeExpense('A', amount))
+    const issues = detectFrontmatterIssues('2026-04', txs, { income: 0, expense: 1296.71 })
+    expect(issues).toHaveLength(0)
+  })
 })
 
 // ── detectOrphanedWallets ────────────────────────────────────────────────────
